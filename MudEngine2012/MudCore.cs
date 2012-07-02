@@ -27,7 +27,7 @@ namespace MudEngine2012
         public Database database { get; private set; }
         public ScriptEvaluater scriptEngine { get; private set; }
         private Dictionary<String, List<Verb>> verbs = new Dictionary<string, List<Verb>>();
-
+        private GenericScriptObject systemObject = new GenericScriptObject();
         private Dictionary<String, Client> ConnectedClients = new Dictionary<String, Client>();
 
         private Mutex _databaseLock = new Mutex();
@@ -153,7 +153,7 @@ namespace MudEngine2012
                                     matchContext.PushVariable("command", PendingCommand._Command);
                                     matchContext.PushVariable("actor", PendingCommand.Executor);
                                     matches = new ScriptList();
-                                    matches.Add(new PossibleMatch(tokens));
+                                    matches.Add(new GenericScriptObject("token", tokens));
                                     arguments.Clear();
                                     arguments.Add(matches);
                                     matches = verb.Matcher.Invoke(matchContext, PendingCommand.Executor, arguments) as ScriptList;
@@ -165,7 +165,7 @@ namespace MudEngine2012
                                 }
 
                                 if (matches == null || matches.Count == 0) continue;
-                                if (!(matches[0] is PossibleMatch))
+                                if (!(matches[0] is GenericScriptObject))
                                 {
                                     SendMessage(PendingCommand.Executor, "Matcher returned the wrong type.", true);
                                     continue;
@@ -183,7 +183,28 @@ namespace MudEngine2012
                                 SendMessage(PendingCommand.Executor, "No registered matchers matched.", false);
                         }
                         else
-                            SendMessage(PendingCommand.Executor, "I don't recognize that verb.", false);
+                        {
+                            arguments.Clear();
+                            arguments.Add(PendingCommand._Command);
+                            arguments.Add(PendingCommand.Executor);
+                            bool actionRan = false;
+                            if (systemObject.properties.ContainsKey("on_unknown_verb") &&
+                                systemObject.properties["on_unknown_verb"] is ScriptFunction)
+                            {
+                                try
+                                {
+                                    (systemObject.properties["on_unknown_verb"] as ScriptFunction).Invoke(
+                                        matchContext, PendingCommand.Executor, arguments);
+                                    actionRan = true;
+                                }
+                                catch (Exception e)
+                                {
+                                    SendMessage(PendingCommand.Executor, e.Message, true);
+                                }
+                            }
+                            if (!actionRan)
+                                SendMessage(PendingCommand.Executor, "I don't recognize that verb.", false);
+                        }
                     }
                     catch (Exception e)
                     {

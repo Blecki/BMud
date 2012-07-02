@@ -27,6 +27,7 @@ namespace MudEngine2012
                     return result;
                 });
 
+            scriptEngine.specialVariables.Add("system", (s, t) => { return systemObject; });
 
             #region Object Declaration Functions
             scriptEngine.functions.Add("prop", new ScriptFunction("prop", "property value : Set a property on this.", (context, thisObject, arguments) =>
@@ -40,6 +41,7 @@ namespace MudEngine2012
                 var result = new MudObject(database);
                 var code = ScriptEvaluater.ArgumentType<Irony.Parsing.ParseTreeNode>(arguments[0]);
                 scriptEngine.Evaluate(context, code, result, true);
+                result.SetAttribute("location", thisObject);
                 return result;
             }));
 
@@ -69,16 +71,7 @@ namespace MudEngine2012
                     return r;
                 }));
 
-            scriptEngine.functions.Add("new_match", new ScriptFunction("new_match", "match token <argument name> <argument value> : Create a new match", (context, thisObject, arguments) =>
-                {
-                    var from = ScriptEvaluater.ArgumentType<PossibleMatch>(arguments[0]);
-                    CommandTokenizer.Token token =
-                        arguments[1] == null ? null : ScriptEvaluater.ArgumentType<CommandTokenizer.Token>(arguments[1]);
-                    var r = new PossibleMatch(from.arguments, token);
-                    if (arguments.Count > 2)
-                        r.Upsert(arguments[2].ToString(), arguments[3]);
-                    return r;
-                }));
+           
 
             #endregion
 

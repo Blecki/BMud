@@ -59,7 +59,7 @@
     <None Include="database\setup.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\test.mud">
+    <None Include="database\players\god.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -271,6 +271,21 @@ namespace MudEngine2012
                     return r;
                 }));
 
+            functions.Add("clone", new ScriptFunction("clone", "record <List of key-value pairs> : Returns a new generic script object cloned from [record]",
+                (context, thisObject, arguments) =>
+                    {
+                        ArgumentCountOrGreater(1, arguments);
+                        var from = ArgumentType<ScriptObject>(arguments[0]);
+                        var r = (new GenericScriptObject(from)) as ScriptObject;
+                        foreach (var item in arguments.GetRange(1, arguments.Count - 1))
+                        {
+                            var list = item as ScriptList;
+                            if (list == null || list.Count != 2) throw new ScriptError("Clone expects only pairs as arguments.");
+                            r.SetProperty(list[0].ToString(), list[1]);
+                        }
+                        return r;
+                    }));
+
             functions.Add("var", new ScriptFunction("var", "name value : Assign value to a variable named [name].", (context, thisObject, arguments) =>
                 {
                     ArgumentCount(2, arguments);
@@ -288,6 +303,18 @@ namespace MudEngine2012
                     obj.SetProperty(vName, arguments[2]);
                     return arguments[2];
                 }));
+
+            functions.Add("delete", new ScriptFunction("delete", "object property : Deletes a property from an object.", 
+                (context, thisObject, arguments) =>
+                    {
+                        ArgumentCount(2, arguments);
+                        var obj = ArgumentType<ScriptObject>(arguments[0]);
+                        var value = obj.GetProperty(arguments[1].ToString());
+                        obj.DeleteProperty(arguments[1].ToString());
+                        return value;
+                    }));     
+            
+           
 
             functions.Add("eval", new ScriptFunction("eval", "code : Execute code.", (context, thisObject, arguments) =>
                 {

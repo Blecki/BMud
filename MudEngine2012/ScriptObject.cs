@@ -9,6 +9,7 @@ namespace MudEngine2012
     {
         Object GetProperty(String name);
         void SetProperty(String name, Object value);
+        void DeleteProperty(String name);
         ScriptList ListProperties();
     }
 
@@ -19,6 +20,11 @@ namespace MudEngine2012
             var field = this.GetType().GetField(name);
             if (field != null) return field.GetValue(this);
             throw new ScriptError("Objects of type " + this.GetType().ToString() + " do not have a member named " + name + ".");
+        }
+
+        void ScriptObject.DeleteProperty(String name)
+        {
+            throw new ScriptError("Objects of type " + this.GetType().ToString() + " are read-only.");
         }
 
         void ScriptObject.SetProperty(string name, object value)
@@ -45,6 +51,21 @@ namespace MudEngine2012
     {
         public Dictionary<String, Object> properties = new Dictionary<string, object>();
 
+        public GenericScriptObject() { }
+
+        public GenericScriptObject(ScriptObject cloneFrom)
+        {
+            foreach (var str in cloneFrom.ListProperties())
+                (this as ScriptObject).SetProperty(str as String, cloneFrom.GetProperty(str as String));
+        }
+
+        public GenericScriptObject(params Object[] args)
+        {
+            if (args.Length % 2 != 0) throw new InvalidProgramException("Generic Script Object must be initialized with pairs");
+            for (int i = 0; i < args.Length; i += 2)
+                (this as ScriptObject).SetProperty(args[i].ToString(), args[i + 1]);
+        }
+
         object ScriptObject.GetProperty(string name)
         {
             if (properties.ContainsKey(name)) return properties[name];
@@ -55,6 +76,11 @@ namespace MudEngine2012
         {
             if (properties.ContainsKey(Name)) properties[Name] = Value;
             else properties.Add(Name, Value);
+        }
+
+        void ScriptObject.DeleteProperty(String Name)
+        {
+            if (properties.ContainsKey(Name)) properties.Remove(Name);
         }
 
         ScriptList ScriptObject.ListProperties()

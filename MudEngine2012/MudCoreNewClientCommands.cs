@@ -27,7 +27,7 @@ namespace MudEngine2012
         private void Login(Client _client, String Name, String Password)
         {
             _databaseLock.WaitOne();
-            var playerObject = database.LoadObject(Name, null);
+            var playerObject = database.LoadObject("players/" + Name, null);
             if (playerObject == null || Password != playerObject.GetAttribute("password").ToString())
             {
                 _client.Send("Username or password is wrong.\n");
@@ -47,10 +47,10 @@ namespace MudEngine2012
                 //var Player = MudObject.FromID(PlayerObject, DatabaseService);
                 //MudObject.MoveObject(Player, MudObject.FromID(1, DatabaseService), "IN", 1);
                 //var TimerList = DatabaseService.QueryObjectTimers(PlayerObject);
-                _client.path = Name;
+                _client.path = playerObject.path;
                 _client.Status = ClientStatus.LoggedOn;
                 _client.PlayerObject = playerObject;
-                ConnectedClients.Add(Name, _client);
+                ConnectedClients.Add(playerObject.path, _client);
 
                 playerObject.SetAttribute("location", database.LoadObject("room", playerObject));
                 //DatabaseService.CommitChanges();

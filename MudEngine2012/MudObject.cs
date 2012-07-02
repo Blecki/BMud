@@ -47,5 +47,11 @@ namespace MudEngine2012
             r.Add("path");
             return r;
         }
+
+        void ScriptObject.DeleteProperty(String name)
+        {
+            if (name == "path") throw new ScriptError("Path is a read-only property.");
+            if (attributes.ContainsKey(name)) attributes.Remove(name);
+        }
     }
 }

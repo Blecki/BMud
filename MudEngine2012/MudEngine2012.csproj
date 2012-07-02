@@ -50,7 +50,6 @@
     <Compile Include="MudCore.cs" />
     <Compile Include="MudCoreNewClientCommands.cs" />
     <Compile Include="MudObject.cs" />
-    <Compile Include="PossibleMatch.cs" />
     <Compile Include="ScriptGrammar.cs" />
     <Compile Include="ScriptEvaluater.cs" />
     <Compile Include="ScriptContext.cs" />
