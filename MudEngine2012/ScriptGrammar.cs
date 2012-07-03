@@ -27,11 +27,9 @@ namespace MudEngine2012
             var expression = new NonTerminal("Expression");
             var argumentList = new NonTerminal("Argument List");
             var node = new NonTerminal("Node");
-            var objectLiteral = new NonTerminal("Object Literal");
             var stringPart = new NonTerminal("String Part");
             var whitespace = new NonTerminal("Whitespace");
             var embeddedString = new NonTerminal("Embedded String");
-            var objectPath = new NonTerminal("Object Path");
             
             var textLiteral = new FreeTextLiteral("Text Literal", FreeTextOptions.AllowEof, "(", "^", "*", "\"", "/", "$");
             textLiteral.Escapes.Add("\\^", "^");
@@ -48,10 +46,8 @@ namespace MudEngine2012
             memberAccess.Rule = expression + (ToTerm(":") | ".") + (token | node);
             argumentList.Rule = MakeStarRule(argumentList, whitespace, expression);
             node.Rule = (ToTerm("^") | "*" | "$").Q() + "(" + argumentList + ")";
-            objectPath.Rule = MakePlusRule(objectPath, ToTerm("/"), token);
-            objectLiteral.Rule = ToTerm("#") + objectPath;
             embeddedString.Rule = ToTerm("^").Q() + "\"" + root + "\"";
-            expression.Rule = token | integerLiteral | embeddedString | memberAccess | node | objectLiteral;
+            expression.Rule = token | integerLiteral | embeddedString | memberAccess | node;
             stringPart.Rule = node | textLiteral;
             root.Rule = MakeStarRule(root, stringPart);
 

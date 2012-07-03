@@ -24,21 +24,17 @@ namespace MudEngine2012
 
         private Dictionary<String, Object> attributes = new Dictionary<String, Object>();
 
-        public Object GetAttribute(String name) { return attributes[name]; }
-        public bool HasAttribute(String name) { return attributes.ContainsKey(name); }
-        public void SetAttribute(String name, Object value) { attributes.Upsert(name, value); }
-
         object ScriptObject.GetProperty(string name)
         {
             if (name == "path") return path;
-            if (HasAttribute(name)) return GetAttribute(name);
+            if (attributes.ContainsKey(name)) return attributes[name];
             return null;
         }
 
         void ScriptObject.SetProperty(string name, Object value)
         {
             if (name == "path") throw new ScriptError("Path is a read-only property.");
-            SetAttribute(name, value);
+            attributes.Upsert(name, value);
         }
 
         ScriptList ScriptObject.ListProperties()

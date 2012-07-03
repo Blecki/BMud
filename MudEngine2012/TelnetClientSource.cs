@@ -60,6 +60,8 @@ namespace MudEngine2012
             ListenSocket.Bind(new System.Net.IPEndPoint(0, Port));
             ListenSocket.Listen(16);
             ListenSocket.BeginAccept(OnNewClient, null);
+
+            Console.WriteLine("Listening on port " + Port);
         }
 
         void OnNewClient(IAsyncResult _asyncResult)
@@ -70,9 +72,10 @@ namespace MudEngine2012
             var NewClient = new StandardClient { Socket = ClientSocket };
             //MudCore.NewClientConnected(NewClient);            
             ClientSocket.BeginReceive(NewClient.Storage, 0, 1024, System.Net.Sockets.SocketFlags.Partial, OnData, NewClient);
+            Console.WriteLine("New client: " + ClientSocket.RemoteEndPoint.ToString());
         }
 
-        private static string ValidCharacters = "@=|^\\;?:#.,!\"'$*<>()[]{}-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
+        private static string ValidCharacters = "@=|^\\;?:#.,!\"'$*<>/()[]{}-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 
         void OnData(IAsyncResult _asyncResult)
         {

@@ -12,17 +12,11 @@ namespace MudScriptTest
             try
             {
                 var mudCore = new MudEngine2012.MudCore();
-                mudCore.Start("database/setup.mud", "database/");
-
-                var telnetListener = new MudEngine2012.TelnetClientSource();
-                telnetListener.Listen(mudCore);
-
-
-                //scriptEvaluater.functions.Add("prop", (context, thisObject, arguments) =>
-                //    {
-                //        thisObject.SetAttribute(arguments[0].ToString(), arguments[1]);
-                //        return null;
-                //    });
+                if (mudCore.Start("database/"))
+                {
+                    var telnetListener = new MudEngine2012.TelnetClientSource();
+                    telnetListener.Listen(mudCore);
+                }
 
             }
             catch (Exception e)

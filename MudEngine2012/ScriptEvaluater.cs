@@ -191,10 +191,7 @@ namespace MudEngine2012
             {
                 return Convert.ToInt32(node.FindTokenAndGetText());
             }
-            else if (node.Term.Name == "Object Literal")
-            {
-                return core.database.LoadObject(node.FindTokenAndGetText().Substring(1), context.actor);
-            }
+            
             throw new ScriptError("Internal evaluator error");
         }
 
@@ -247,7 +244,7 @@ namespace MudEngine2012
 
                 //newFunction.source = sourceSpan(context.activeSource, (arguments[3] as Irony.Parsing.ParseTreeNode).Span);
 
-                if (!String.IsNullOrEmpty(functionName)) functions.Add(functionName, newFunction);
+                if (!String.IsNullOrEmpty(functionName)) functions.Upsert(functionName, newFunction);
                 return newFunction;
             }));
 

@@ -19,7 +19,8 @@ namespace MudEngine2012
         {
             var field = this.GetType().GetField(name);
             if (field != null) return field.GetValue(this);
-            throw new ScriptError("Objects of type " + this.GetType().ToString() + " do not have a member named " + name + ".");
+            return null;
+            //throw new ScriptError("Objects of type " + this.GetType().ToString() + " do not have a member named " + name + ".");
         }
 
         void ScriptObject.DeleteProperty(String name)
@@ -66,24 +67,25 @@ namespace MudEngine2012
                 (this as ScriptObject).SetProperty(args[i].ToString(), args[i + 1]);
         }
 
-        object ScriptObject.GetProperty(string name)
+        public object GetProperty(string name)
         {
             if (properties.ContainsKey(name)) return properties[name];
-            else throw new ScriptError("No property with name " + name + " on object.");
+            else return null;
+            //else throw new ScriptError("No property with name " + name + " on object.");
         }
 
-        void ScriptObject.SetProperty(string Name, Object Value)
+        public void SetProperty(string Name, Object Value)
         {
             if (properties.ContainsKey(Name)) properties[Name] = Value;
             else properties.Add(Name, Value);
         }
 
-        void ScriptObject.DeleteProperty(String Name)
+        public void DeleteProperty(String Name)
         {
             if (properties.ContainsKey(Name)) properties.Remove(Name);
         }
 
-        ScriptList ScriptObject.ListProperties()
+        public ScriptList ListProperties()
         {
             return new ScriptList(properties.Select((p) => { return p.Key; }));
         }

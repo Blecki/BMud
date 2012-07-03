@@ -17,24 +17,20 @@ namespace MudEngine2012
             this.core = core;
         }
 
-        public MudObject LoadObject(String path, MudObject requestedBy)
+        public MudObject LoadObject(String path)
         {
             if (namedObjects.ContainsKey(path)) return namedObjects[path];
+            return ReLoadObject(path);
+        }
 
-            try
-            {
-                var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
-                var scriptContext = new ScriptContext();
-                var mudObject = new MudObject(this, path);
-                core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile);
-                namedObjects.Upsert(path, mudObject);
-                return mudObject;
-            }
-            catch (Exception e)
-            {
-                core.SendMessage(requestedBy, "Exception thrown while loading object " + path + "\n" + e.Message + "\n" + e.StackTrace + "\n", true);
-                return null;
-            }
+        public MudObject ReLoadObject(String path)
+        {
+            var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
+            var scriptContext = new ScriptContext();
+            var mudObject = new MudObject(this, path);
+            core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile);
+            namedObjects.Upsert(path, mudObject);
+            return mudObject;
         }
     }
 }

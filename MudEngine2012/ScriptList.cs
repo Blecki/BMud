@@ -14,7 +14,10 @@ namespace MudEngine2012
         {
             return "L" + Count.ToString() + "{" + String.Join(", ", this.Select((o) =>
                 {
-                    return (o == null ? "null" : (o is ScriptObject ? o.GetType().Name : o.ToString()));
+                    if (o == null) return "null";
+                    if (o is ScriptObject) return o.GetType().Name;
+                    if (o is ScriptList) return o.GetType().Name;
+                    return o.ToString();
                 })) + " }";
         }
     }

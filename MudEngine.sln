@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MudEngine2012", "MudEngine2
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MudServer", "MudServer\MudServer.csproj", "{B1A820EE-679A-4842-81DA-BADA06327D20}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DefaultDatabase", "DefaultDatabase\DefaultDatabase.csproj", "{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,16 @@ Global
 		{B1A820EE-679A-4842-81DA-BADA06327D20}.Release|Mixed Platforms.Build.0 = Release|x86
 		{B1A820EE-679A-4842-81DA-BADA06327D20}.Release|x86.ActiveCfg = Release|x86
 		{B1A820EE-679A-4842-81DA-BADA06327D20}.Release|x86.Build.0 = Release|x86
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

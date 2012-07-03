@@ -27,23 +27,49 @@ namespace MudEngine2012
                     return result;
                 });
 
-            scriptEngine.specialVariables.Add("system", (s, t) => { return systemObject; });
+            scriptEngine.specialVariables.Add("system", (s, t) => { return database.LoadObject("system"); });
 
             #region Object Declaration Functions
-            scriptEngine.functions.Add("prop", new ScriptFunction("prop", "property value : Set a property on this.", (context, thisObject, arguments) =>
-            {
-                (thisObject as MudObject).SetAttribute(arguments[0].ToString(), arguments[1]);
-                return null;
-            }));
+            
 
             scriptEngine.functions.Add("decor", new ScriptFunction("decor", "code : Create an anonymous decorative object. Executes [code] to initialize object.", (context, thisObject, arguments) =>
             {
-                var result = new MudObject(database);
+                var result = new GenericScriptObject();
                 var code = ScriptEvaluater.ArgumentType<Irony.Parsing.ParseTreeNode>(arguments[0]);
                 scriptEngine.Evaluate(context, code, result, true);
-                result.SetAttribute("location", thisObject);
+                result.SetProperty("location", thisObject);
                 return result;
             }));
+
+            scriptEngine.functions.Add("load", new ScriptFunction("load", "name : Loads an object from the database.",
+                (context, thisObject, arguments) =>
+                {
+                    ScriptEvaluater.ArgumentCount(1, arguments);
+                    try
+                    {
+                        return database.LoadObject(arguments[0].ToString());
+                    }
+                    catch (Exception e)
+                    {
+                        SendMessage(thisObject as MudObject, "Failed to load object " + arguments[0].ToString() + ": " + e.Message, true);
+                        return null;
+                    }
+                }));
+
+            scriptEngine.functions.Add("reload", new ScriptFunction("reload", "name : Reoads an object from the database.",
+                (context, thisObject, arguments) =>
+                {
+                    ScriptEvaluater.ArgumentCount(1, arguments);
+                    try
+                    {
+                        return database.ReLoadObject(arguments[0].ToString());
+                    }
+                    catch (Exception e)
+                    {
+                        SendMessage(thisObject as MudObject, "Failed to load object " + arguments[0].ToString() + ": " + e.Message, true);
+                        return null;
+                    }
+                }));
 
             #endregion
 
@@ -71,7 +97,14 @@ namespace MudEngine2012
                     return r;
                 }));
 
-           
+            scriptEngine.functions.Add("discard_verb", new ScriptFunction("discard_verb", "name : Throw away an entire verb set.",
+                 (context, thisObject, arguments) =>
+                 {
+                     ScriptEvaluater.ArgumentCount(1, arguments);
+                     if (verbs.ContainsKey(arguments[0].ToString()))
+                         verbs.Remove(arguments[0].ToString());
+                     return null;
+                 }));
 
             #endregion
 

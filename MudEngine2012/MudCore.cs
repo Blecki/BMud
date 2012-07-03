@@ -27,7 +27,6 @@ namespace MudEngine2012
         public Database database { get; private set; }
         public ScriptEvaluater scriptEngine { get; private set; }
         private Dictionary<String, List<Verb>> verbs = new Dictionary<string, List<Verb>>();
-        private GenericScriptObject systemObject = new GenericScriptObject();
         private Dictionary<String, Client> ConnectedClients = new Dictionary<String, Client>();
 
         private Mutex _databaseLock = new Mutex();
@@ -57,17 +56,28 @@ namespace MudEngine2012
             }
         }
 
-        public void Start(String startupScript, String basePath)
+        public bool Start(String basePath)
         {
-            scriptEngine = new ScriptEvaluater(this);
-            SetupScript();
-            database = new Database(basePath, this);
-            var script = System.IO.File.ReadAllText(startupScript);
-            var context = new ScriptContext();
-            scriptEngine.EvaluateString(context, null, script);
+            try
+            {
+                scriptEngine = new ScriptEvaluater(this);
+                SetupScript();
+                database = new Database(basePath, this);
+                database.LoadObject("system");
 
-            CommandExecutionThread = new Thread(CommandProcessingThread);
-            CommandExecutionThread.Start();
+                CommandExecutionThread = new Thread(CommandProcessingThread);
+                CommandExecutionThread.Start();
+
+                Console.WriteLine("Engine ready with path " + basePath + ".");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Failed to start mud engine.");
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+                return false;
+            }
+            return true;
         }
 
         public void Join()
@@ -133,6 +143,14 @@ namespace MudEngine2012
 
                     try
                     {
+                        if (PendingCommand._Command[0] == '/')
+                        {
+                            SendMessage(PendingCommand.Executor,
+                                scriptEngine.EvaluateString(new ScriptContext(), PendingCommand.Executor,
+                                PendingCommand._Command.Substring(1)).ToString(), true);
+                            continue;
+                        }
+
                         var tokens = CommandTokenizer.FullyTokenizeCommand(PendingCommand._Command);
                         var firstWord = tokens.word;
                         tokens = tokens.next;
@@ -187,22 +205,7 @@ namespace MudEngine2012
                             arguments.Clear();
                             arguments.Add(PendingCommand._Command);
                             arguments.Add(PendingCommand.Executor);
-                            bool actionRan = false;
-                            if (systemObject.properties.ContainsKey("on_unknown_verb") &&
-                                systemObject.properties["on_unknown_verb"] is ScriptFunction)
-                            {
-                                try
-                                {
-                                    (systemObject.properties["on_unknown_verb"] as ScriptFunction).Invoke(
-                                        matchContext, PendingCommand.Executor, arguments);
-                                    actionRan = true;
-                                }
-                                catch (Exception e)
-                                {
-                                    SendMessage(PendingCommand.Executor, e.Message, true);
-                                }
-                            }
-                            if (!actionRan)
+                            if (!InvokeSystem(PendingCommand.Executor, "on_unknown_verb", arguments, matchContext))
                                 SendMessage(PendingCommand.Executor, "I don't recognize that verb.", false);
                         }
                     }
@@ -219,6 +222,25 @@ namespace MudEngine2012
                     _databaseLock.ReleaseMutex();
                 }
             }
+        }
+
+        private bool InvokeSystem(MudObject executor, String property, ScriptList arguments, ScriptContext context)
+        {
+            var prop = (database.LoadObject("system") as ScriptObject).GetProperty(property);
+            if (prop is ScriptFunction)
+            {
+                try
+                {
+                    (prop as ScriptFunction).Invoke(context, executor, arguments);
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    SendMessage(executor, e.Message, true);
+                    return false;
+                }
+            }
+            return false;
         }
 
         private void SendPendingMessages()
