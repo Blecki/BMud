@@ -25,12 +25,27 @@ namespace MudEngine2012
 
         public MudObject ReLoadObject(String path)
         {
-            var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
-            var scriptContext = new ScriptContext();
-            var mudObject = new MudObject(this, path);
-            core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile);
-            namedObjects.Upsert(path, mudObject);
-            return mudObject;
+            try
+            {
+                var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
+                var scriptContext = new ScriptContext();
+                var mudObject = new MudObject(this, path);
+                core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, true);
+
+                if (namedObjects.ContainsKey(path))
+                    namedObjects[path].CopyFrom(mudObject);
+                else
+                    namedObjects.Upsert(path, mudObject);
+
+                Console.WriteLine("Loaded object " + basePath + path + ".");
+                return mudObject;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error loading object " + basePath + path + ".");
+                Console.WriteLine(e.Message);
+                throw e;
+            }
         }
     }
 }

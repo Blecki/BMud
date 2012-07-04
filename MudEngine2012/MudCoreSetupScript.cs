@@ -34,10 +34,9 @@ namespace MudEngine2012
 
             scriptEngine.functions.Add("decor", new ScriptFunction("decor", "code : Create an anonymous decorative object. Executes [code] to initialize object.", (context, thisObject, arguments) =>
             {
-                var result = new GenericScriptObject();
+                var result = new MudObject(database);
                 var code = ScriptEvaluater.ArgumentType<Irony.Parsing.ParseTreeNode>(arguments[0]);
                 scriptEngine.Evaluate(context, code, result, true);
-                result.SetProperty("location", thisObject);
                 return result;
             }));
 
@@ -45,13 +44,14 @@ namespace MudEngine2012
                 (context, thisObject, arguments) =>
                 {
                     ScriptEvaluater.ArgumentCount(1, arguments);
+                    var objectName = ScriptObject.AsString(arguments[0]);
                     try
                     {
-                        return database.LoadObject(arguments[0].ToString());
+                        return database.LoadObject(objectName);
                     }
                     catch (Exception e)
                     {
-                        SendMessage(thisObject as MudObject, "Failed to load object " + arguments[0].ToString() + ": " + e.Message, true);
+                        SendMessage(thisObject as MudObject, "Failed to load object " + objectName + ": " + e.Message, true);
                         return null;
                     }
                 }));
@@ -60,13 +60,14 @@ namespace MudEngine2012
                 (context, thisObject, arguments) =>
                 {
                     ScriptEvaluater.ArgumentCount(1, arguments);
+                    var objectName = ScriptObject.AsString(arguments[0]);
                     try
                     {
-                        return database.ReLoadObject(arguments[0].ToString());
+                        return database.ReLoadObject(objectName);
                     }
                     catch (Exception e)
                     {
-                        SendMessage(thisObject as MudObject, "Failed to load object " + arguments[0].ToString() + ": " + e.Message, true);
+                        SendMessage(thisObject as MudObject, "Failed to load object " + objectName + ": " + e.Message, true);
                         return null;
                     }
                 }));
@@ -76,7 +77,7 @@ namespace MudEngine2012
             #region Debug
             scriptEngine.functions.Add("print", new ScriptFunction("print", "object : Print to the console.", (context, thisObject, arguments) =>
                 {
-                    Console.WriteLine(String.Join(" ", arguments.Select((o, i) => { return o == null ? "NULL" : o.ToString(); })));
+                    Console.WriteLine(String.Join(" ", arguments.Select((o, i) => { return ScriptObject.AsString(o); })));
                     return null;
                 }));
             #endregion
@@ -85,13 +86,15 @@ namespace MudEngine2012
 
             scriptEngine.functions.Add("verb", new ScriptFunction("verb", "name matcher action : Register a verb.", (context, thisObject, arguments) =>
                 {
-                    if (!verbs.ContainsKey(arguments[0].ToString())) verbs.Add(arguments[0].ToString(), new List<Verb>());
-                    List<Verb> list = verbs[arguments[0].ToString()];
+                    ScriptEvaluater.ArgumentCount(3, arguments);
+                    var name = ScriptObject.AsString(arguments[0]);
+                    if (!verbs.ContainsKey(name)) verbs.Add(name, new List<Verb>());
+                    List<Verb> list = verbs[name];
                     var r = new Verb
                     {
-                        Matcher = arguments[1] as ScriptFunction,
-                        Action = arguments[2] as ScriptFunction,
-                        name = arguments[0].ToString()
+                        Matcher = ScriptEvaluater.ArgumentType<ScriptFunction>(arguments[1]),
+                        Action = ScriptEvaluater.ArgumentType<ScriptFunction>(arguments[2]),
+                        name = name
                     };
                     list.Add(r);
                     return r;
@@ -101,8 +104,8 @@ namespace MudEngine2012
                  (context, thisObject, arguments) =>
                  {
                      ScriptEvaluater.ArgumentCount(1, arguments);
-                     if (verbs.ContainsKey(arguments[0].ToString()))
-                         verbs.Remove(arguments[0].ToString());
+                     var name = ScriptObject.AsString(arguments[0]);
+                     if (verbs.ContainsKey(name)) verbs.Remove(name);
                      return null;
                  }));
 
@@ -122,10 +125,25 @@ namespace MudEngine2012
                 foreach (var obj in to)
                 {
                     var mudObject = obj as MudObject;
-                    if (mudObject != null) SendMessage(mudObject, arguments[1].ToString(), false);
+                    if (mudObject != null) SendMessage(mudObject, ScriptObject.AsString(arguments[1]), false);
                 }
                 return null;
             }));
+
+            scriptEngine.functions.Add("command", new ScriptFunction("command",
+                "player command : Send a command as if it came from player",
+                (context, thisObject, arguments) =>
+                {
+                    ScriptEvaluater.ArgumentCount(2, arguments);
+                    _commandLock.WaitOne();
+                    PendingCommands.AddLast(new Command
+                    {
+                        Executor = ScriptEvaluater.ArgumentType<MudObject>(arguments[0]),
+                        _Command = ScriptObject.AsString(arguments[1])
+                    });
+                    _commandLock.ReleaseMutex();
+                    return null;
+                }));
             #endregion
 
 

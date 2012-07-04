@@ -9,6 +9,7 @@ namespace MudEngine2012
     {
         public Database database { get; private set; }
         public String path { get; private set; }
+        public MudObject @base = null;
 
         public MudObject(Database database, String path)
         {
@@ -22,31 +23,54 @@ namespace MudEngine2012
             this.path = "";
         }
 
+        public void CopyFrom(MudObject obj)
+        {
+            this.path = obj.path;
+            this.@base = obj.@base;
+            this.attributes.Clear();
+            foreach (var attr in obj.attributes)
+                this.attributes.Add(attr.Key, attr.Value);
+        }
+
         private Dictionary<String, Object> attributes = new Dictionary<String, Object>();
 
-        object ScriptObject.GetProperty(string name)
+        object GetInheritedProperty(string name, List<MudObject> inheritanceStack)
+        {
+            if (inheritanceStack.Contains(this)) return null;
+            if (attributes.ContainsKey(name)) return attributes[name];
+            inheritanceStack.Add(this);
+            if (@base == null) return database.LoadObject("object").GetInheritedProperty(name, inheritanceStack);
+            else return @base.GetInheritedProperty(name, inheritanceStack);
+        }
+
+        override public object GetProperty(string name)
         {
             if (name == "path") return path;
+            if (name == "base") 
+                return @base;
             if (attributes.ContainsKey(name)) return attributes[name];
-            return null;
+            return GetInheritedProperty(name, new List<MudObject>());
         }
 
-        void ScriptObject.SetProperty(string name, Object value)
+        override public void SetProperty(string name, Object value)
         {
             if (name == "path") throw new ScriptError("Path is a read-only property.");
-            attributes.Upsert(name, value);
+            if (name == "base") @base = value as MudObject;
+            else attributes.Upsert(name, value);
         }
 
-        ScriptList ScriptObject.ListProperties()
+        override public ScriptList ListProperties()
         {
             var r = new ScriptList(attributes.Select((p) => { return p.Key; }));
             r.Add("path");
+            r.Add("base");
             return r;
         }
 
-        void ScriptObject.DeleteProperty(String name)
+        override public void DeleteProperty(String name)
         {
             if (name == "path") throw new ScriptError("Path is a read-only property.");
+            if (name == "base") throw new ScriptError("Can't delete base from mud object.");
             if (attributes.ContainsKey(name)) attributes.Remove(name);
         }
     }

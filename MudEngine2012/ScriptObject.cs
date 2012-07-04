@@ -5,46 +5,57 @@ using System.Text;
 
 namespace MudEngine2012
 {
-    public interface ScriptObject
+    public interface ScriptAsString
     {
-        Object GetProperty(String name);
-        void SetProperty(String name, Object value);
-        void DeleteProperty(String name);
-        ScriptList ListProperties();
+        String AsString(int depth);
+    }
+
+    public class ScriptObject : ScriptAsString
+    {
+        public virtual Object GetProperty(String name) { return null; }
+        public virtual void SetProperty(String name, Object value) { }
+        public virtual void DeleteProperty(String name) { }
+        public virtual ScriptList ListProperties() { return new ScriptList(); }
+
+        public String AsString(int depth)
+        {
+            if (depth > 0) return this.GetType().Name;
+            else return "SO{" + String.Join(", ", (this as ScriptObject).ListProperties().Select((o) =>
+            {
+                return o.ToString() + ": " + ScriptObject.AsString(this.GetProperty(o.ToString()), depth + 1);
+            })) + " }";
+        }
+
+        public static String AsString(Object obj, int depth = 0)
+        {
+            if (obj == null) return "null";
+            if (obj is ScriptAsString) return (obj as ScriptAsString).AsString(depth);
+            return obj.ToString();
+        }
     }
 
     public class ReflectionScriptObject : ScriptObject
     {
-        object ScriptObject.GetProperty(string name)
+        override public object GetProperty(string name)
         {
             var field = this.GetType().GetField(name);
             if (field != null) return field.GetValue(this);
             return null;
-            //throw new ScriptError("Objects of type " + this.GetType().ToString() + " do not have a member named " + name + ".");
         }
 
-        void ScriptObject.DeleteProperty(String name)
+        override public void DeleteProperty(String name)
         {
-            throw new ScriptError("Objects of type " + this.GetType().ToString() + " are read-only.");
+            throw new ScriptError("Objects of type " + this.GetType().Name + " are read-only.");
         }
 
-        void ScriptObject.SetProperty(string name, object value)
+        override public void SetProperty(string name, object value)
         {
-            throw new ScriptError("Objects of type " + this.GetType().ToString() + " are read-only.");
+            throw new ScriptError("Objects of type " + this.GetType().Name + " are read-only.");
         }
 
-        ScriptList ScriptObject.ListProperties()
+        override public ScriptList ListProperties()
         {
             return new ScriptList(this.GetType().GetFields().Select((info) => { return info.Name; }));
-        }
-
-        public override string ToString()
-        {
-            return "RSO{" + String.Join(", ", (this as ScriptObject).ListProperties().Select((o) =>
-                {
-                    var prop = (this as ScriptObject).GetProperty(o.ToString());
-                    return o.ToString() + ": " + (prop == null ? "null" : (prop is ScriptObject ? prop.GetType().Name : prop.ToString()));
-                })) + " }";
         }
     }
 
@@ -64,40 +75,31 @@ namespace MudEngine2012
         {
             if (args.Length % 2 != 0) throw new InvalidProgramException("Generic Script Object must be initialized with pairs");
             for (int i = 0; i < args.Length; i += 2)
-                (this as ScriptObject).SetProperty(args[i].ToString(), args[i + 1]);
+                SetProperty(ScriptObject.AsString(args[i]), args[i + 1]);
         }
 
-        public object GetProperty(string name)
+        override public object GetProperty(string name)
         {
             if (properties.ContainsKey(name)) return properties[name];
             else return null;
-            //else throw new ScriptError("No property with name " + name + " on object.");
         }
 
-        public void SetProperty(string Name, Object Value)
+        override public void SetProperty(string Name, Object Value)
         {
             if (properties.ContainsKey(Name)) properties[Name] = Value;
             else properties.Add(Name, Value);
         }
 
-        public void DeleteProperty(String Name)
+        override public void DeleteProperty(String Name)
         {
             if (properties.ContainsKey(Name)) properties.Remove(Name);
         }
 
-        public ScriptList ListProperties()
+        override public ScriptList ListProperties()
         {
             return new ScriptList(properties.Select((p) => { return p.Key; }));
         }
 
-        public override string ToString()
-        {
-            return "GSO{" + String.Join(", ", properties.Select((p) =>
-            {
-                return p.Key + ": " +
-                    (p.Value == null ? "null" : (p.Value is ScriptObject ? p.Value.GetType().Name : p.Value.ToString()));
-            })) + " }";
-        }
     }
 
 

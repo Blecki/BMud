@@ -146,8 +146,10 @@ namespace MudEngine2012
                         if (PendingCommand._Command[0] == '/')
                         {
                             SendMessage(PendingCommand.Executor,
-                                scriptEngine.EvaluateString(new ScriptContext(), PendingCommand.Executor,
-                                PendingCommand._Command.Substring(1)).ToString(), true);
+                                ScriptObject.AsString(
+                                    scriptEngine.EvaluateString(new ScriptContext(), PendingCommand.Executor,
+                                    PendingCommand._Command.Substring(1))), true);
+                            SendPendingMessages();
                             continue;
                         }
 

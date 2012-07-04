@@ -12,7 +12,7 @@ namespace MudEngine2012
 
             if (_client.Status == ClientStatus.LoggedOn)
             {
-                Console.WriteLine("Lost client " + _client.path.ToString() + "\n");
+                Console.WriteLine("Lost client " + _client.path + "\n");
                 _databaseLock.WaitOne();
                 //var Player = MudObject.FromID(_client.PlayerObject, DatabaseService);
                 //MudObject.MoveObject(Player, null, "", 1);
@@ -28,7 +28,7 @@ namespace MudEngine2012
         {
             _databaseLock.WaitOne();
             var playerObject = database.LoadObject("players/" + Name);
-            if (playerObject == null || Password != (playerObject as ScriptObject).GetProperty("password").ToString())
+            if (playerObject == null || Password != playerObject.GetProperty("password").ToString())
             {
                 _client.Send("Username or password is wrong.\n");
                 _databaseLock.ReleaseMutex();
@@ -51,8 +51,9 @@ namespace MudEngine2012
                 _client.Status = ClientStatus.LoggedOn;
                 _client.PlayerObject = playerObject;
                 ConnectedClients.Add(playerObject.path, _client);
-
-                (playerObject as ScriptObject).SetProperty("location", database.LoadObject("room"));
+                var arguments = new ScriptList();
+                arguments.Add(playerObject);
+                InvokeSystem(playerObject, "on_player_joined", arguments, new ScriptContext());
                 //DatabaseService.CommitChanges();
             }
             catch (Exception)

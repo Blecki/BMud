@@ -1,8 +1,14 @@
 ﻿(defun "depend" ^("on") ^() *(load on))
+(depend "object")
+(depend "move_object")
 
-(defun "prop" ^("name" "value") ^() *(set this name value))
+
 (prop "on_unknown_verb" (defun "" ^("command" "actor") ^() 
 	*(echo actor "Huh?")))
+(prop "on_player_joined" (defun "" ^("actor") ^()
+	*(nop
+		(move_object actor null "" (load "room") "contents")
+		(command actor "look"))))
 
 (defun "contains" ^("list" "what") ^()
 	*(atleast (count "item" list *(equal item what)) 1))
@@ -11,17 +17,6 @@
 	*(strcat $(map "object" object_list *("(object.short), "))))
 
 (defun "contents" ^("mudobject") ^() *(coalesce mudobject.contents ^()))
-
-(defun "remove" ^("what" "list") ^() *(where "item" (coalesce list ^()) *(not (equal item what))))
-(defun "add" ^("what" "list") ^() *(cat (coalesce list ^()) ^(what)))
-(defun "prop_remove" ^("object" "property" "item") ^() *(set object property (remove item (object.(property)))))
-(defun "prop_add" ^("object" "property" "item") ^() *(set object property (add item (coalesce (object.(property)) ^()))))
-
-(defun "move_object" ^("what" "to") ^() 
-	*(nop
-		(if (not (equal what.location null)) 
-			*(prop_remove what.location "contents" what))
-		(prop_add to "contents" what)))
 
 (depend "matchers")
 (depend "look")
