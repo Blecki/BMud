@@ -19,10 +19,10 @@ namespace MudEngine2012
 
         public String AsString(int depth)
         {
-            if (depth > 0) return this.GetType().Name;
+            if (depth < 0) return this.GetType().Name;
             else return "SO{" + String.Join(", ", (this as ScriptObject).ListProperties().Select((o) =>
             {
-                return o.ToString() + ": " + ScriptObject.AsString(this.GetProperty(o.ToString()), depth + 1);
+                return o.ToString() + ": " + ScriptObject.AsString(this.GetProperty(o.ToString()), depth - 1);
             })) + " }";
         }
 

@@ -40,20 +40,6 @@
 (defun "anything" ^() ^()
 	*(defun "" ^("matches") ^() *(matches)))
 
-/* Object sources for object matcher */
-
-(defun "location_contents" ^("match") ^() /* Return the contents of the actor's location. Perhaps remove the actor? */
-	*(contents actor.location))
-
-(defun "object" ^("source" "into") ^() /* Match an object in the list returned by 'source' */
-	*(defun "" ^("matches") ^("source" "into")
-		*(cat 																						/* Combine list of lists into single list */
-			$(map "match" matches																	/* Map existing matches to new matches */
-				*(map "object" 																		/* Map objects to matches */
-					(where "object" (source match) 													/* Result is a list of objects who'se noun property contains the next word in the command */
-						*(contains (coalesce object.nouns ^()) match.token.word))
-					*(clone match ^("token" match.token.next) ^(into object)))))))
-
 (defun "complete" ^("nested") ^()
 	*(defun "" ^("matches") ^("nested")
 		*(where "match" (nested matches) 
@@ -62,7 +48,7 @@
 (defun "here" ^("into") ^()
 	*(defun "" ^("matches") ^("into")
 		*(map "match" ((keyword "here") matches) 
-			*(clone match ^(into actor.location)))))
+			*(clone match ^(into actor.location.object)))))
 			
 (defun "me" ^("into") ^()
 	*(defun "" ^("matches") ^("into")
@@ -70,5 +56,5 @@
 			*(clone match ^(into actor)))))
 			
 (defun "any_object" ^("into") ^()
-	*(or (object location_contents into) (or (here into) (me into))))
+	*(or (object (location_source "actor" "contents") into) (or (here into) (me into))))
 					

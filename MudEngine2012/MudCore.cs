@@ -173,7 +173,7 @@ namespace MudEngine2012
                                     matchContext.PushVariable("command", PendingCommand._Command);
                                     matchContext.PushVariable("actor", PendingCommand.Executor);
                                     matches = new ScriptList();
-                                    matches.Add(new GenericScriptObject("token", tokens));
+                                    matches.Add(new GenericScriptObject("token", tokens, "actor", PendingCommand.Executor));
                                     arguments.Clear();
                                     arguments.Add(matches);
                                     matches = verb.Matcher.Invoke(matchContext, PendingCommand.Executor, arguments) as ScriptList;

@@ -7,7 +7,7 @@
 	*(echo actor "Huh?")))
 (prop "on_player_joined" (defun "" ^("actor") ^()
 	*(nop
-		(move_object actor null "" (load "room") "contents")
+		(move_object actor (load "room") "contents")
 		(command actor "look"))))
 
 (defun "contains" ^("list" "what") ^()
@@ -19,9 +19,12 @@
 (defun "contents" ^("mudobject") ^() *(coalesce mudobject.contents ^()))
 
 (depend "matchers")
+(depend "object_matcher")
 (depend "look")
 (depend "say")
 (depend "get")
+(depend "drop")
+(depend "go")
 
 (discard_verb "functions")
 (verb "functions" (none)
@@ -30,10 +33,10 @@
 			*(echo actor "(function.name) - (function.shortHelp)\n"))))
 			
 (discard_verb "examine")
-(verb "examine" (or (or (me "object") (here "object")) (object location_contents "object"))
+(verb "examine" (any_object "object")
 	(defun "" ^("match" "actor") ^()
 		*(echo actor
 			(strcat
 				$(map "prop_name" (members match.object)
-					*("(prop_name): (match.object.(prop_name))\n"))))))
+					*("(prop_name): (asstring match.object.(prop_name) 2)\n"))))))
 

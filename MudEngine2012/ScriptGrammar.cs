@@ -12,7 +12,7 @@ namespace MudEngine2012
     {
         public ScriptGrammar()
         {
-            this.WhitespaceChars = String.Empty;
+            //this.WhitespaceChars = String.Empty;
 
             var comment = new CommentTerminal("comment", "/*", "*/");
             NonGrammarTerminals.Add(comment);
@@ -42,9 +42,11 @@ namespace MudEngine2012
             textLiteral.Escapes.Add("\\\\", "\\");
             var root = new NonTerminal("Root");
 
-            whitespace.Rule = MakeStarRule(whitespace, ToTerm(" ") | "\n" | "\t" | "\r");
+            //whitespace.Rule = MakeStarRule(whitespace, ToTerm(" ") | "\n" | "\t" | "\r");
+            //whitespace.Precedence = 10;
+
             memberAccess.Rule = expression + (ToTerm(":") | ".") + (token | node);
-            argumentList.Rule = MakeStarRule(argumentList, whitespace, expression);
+            argumentList.Rule = MakeStarRule(argumentList, expression);
             node.Rule = (ToTerm("^") | "*" | "$").Q() + "(" + argumentList + ")";
             embeddedString.Rule = ToTerm("^").Q() + "\"" + root + "\"";
             expression.Rule = token | integerLiteral | embeddedString | memberAccess | node;

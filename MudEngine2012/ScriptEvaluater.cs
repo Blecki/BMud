@@ -124,9 +124,8 @@ namespace MudEngine2012
                     rhs = node.ChildNodes[2].FirstChild.FindTokenAndGetText();
                 else
                     rhs = ScriptObject.AsString(Evaluate(context, node.ChildNodes[2].FirstChild, thisObject, false));
-                //var rhs = node.ChildNodes[2].FindTokenAndGetText();// Evaluate(context, node.ChildNodes[2], thisObject);
 
-                if (lhs == null) throw new ScriptError("Left hand side is null.");
+                if (lhs == null) return null;// throw new ScriptError("Left hand side is null.");
 
                 if (lhs is ScriptObject)
                 {
@@ -138,7 +137,8 @@ namespace MudEngine2012
                     return result;
                 }
 
-                throw new ScriptError("Left hand side [" + ScriptObject.AsString(lhs) + "] is not a script object.");
+                return null;
+                //throw new ScriptError("Left hand side [" + ScriptObject.AsString(lhs) + "] is not a script object.");
             }
             else if (node.Term.Name == "Node")
             {
@@ -344,7 +344,7 @@ namespace MudEngine2012
             functions.Add("nop", new ScriptFunction("nop", "<n> : Returns null.",
                 (context, thisObject, arguments) => { return null; }));
 
-            functions.Add("equal", new ScriptFunction("equal", "<n> : True if all arguments equal, null otherwise.",
+            Func<ScriptContext, ScriptObject, ScriptList, Object> equalBody =
                 (context, thisObject, arguments) =>
                 {
                     if (arguments.Count == 0) return null;
@@ -360,9 +360,9 @@ namespace MudEngine2012
                     if (!allSameType) return null;
                     for (int i = 1; i < arguments.Count; ++i)
                     {
-                        if (firstType == typeof(String)) 
-                        { 
-                            if (arguments[i] as String != arguments[i - 1] as String) return null; 
+                        if (firstType == typeof(String))
+                        {
+                            if (arguments[i] as String != arguments[i - 1] as String) return null;
                         }
                         else if (firstType == typeof(int))
                         {
@@ -371,7 +371,24 @@ namespace MudEngine2012
                         else if (!Object.ReferenceEquals(arguments[i], arguments[i - 1])) return null;
                     }
                     return true;
+                };
+
+            functions.Add("equal", new ScriptFunction("equal", "<n> : True if all arguments equal, null otherwise.", equalBody));
+
+            functions.Add("notequal", new ScriptFunction("notequal", "<n> : Null if all arguments equal, true otherwise.",
+                (context, thisObject, arguments) =>
+                {
+                    if (equalBody(context, thisObject, arguments) == null) return true;
+                    return null;
                 }));
+
+            functions.Add("and", new ScriptFunction("and", "<n> : True if all arguments true.",
+                (context, thisObject, arguments) =>
+                {
+                    foreach (var arg in arguments) if (arg == null) return null;
+                    return true;
+                }));
+
 
             functions.Add("atleast", new ScriptFunction("atleast", "A B : true if A >= B, null otherwise.", 
                 (context, thisObject, arguments) =>
@@ -431,6 +448,15 @@ namespace MudEngine2012
                     ArgumentCount(2, arguments);
                     if (arguments[0] == null) return arguments[1];
                     return arguments[0];
+                }));
+
+            functions.Add("asstring", new ScriptFunction("asstring", "A B : convert A to a string to depth B.",
+                (context, thisObject, arguments) =>
+                {
+                    ArgumentCount(2, arguments);
+                    var depth = arguments[1] as int?;
+                    if (depth == null || !depth.HasValue) return ScriptObject.AsString(arguments[0]);
+                    else return ScriptObject.AsString(arguments[0], depth.Value);
                 }));
             #endregion
 

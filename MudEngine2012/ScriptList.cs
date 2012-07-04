@@ -12,10 +12,10 @@ namespace MudEngine2012
 
         public String AsString(int depth)
         {
-            if (depth > 1) return "L" + Count;
+            if (depth < 0) return "L" + Count;
             return "L" + Count + "{" + String.Join(", ", this.Select((o) =>
                 {
-                    return ScriptObject.AsString(o, depth + 1);
+                    return ScriptObject.AsString(o, depth - 1);
                 })) + " }";
         }
     }
