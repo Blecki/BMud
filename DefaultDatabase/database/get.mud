@@ -10,4 +10,19 @@
 		)
 	)
 )
+
+(verb "get" (flipper (object (contents_source "supporter" "on") "object") (keyword "from") (object (location_source "actor" "contents") "supporter"))
+	(defun "" ^("match" "actor") ^()
+		*(echo actor "Successfully matched (match.object:short).")
+	)
+)
+
+(verb "get" (flipper 
+	(object (contents_source_rel "supporter" "preposition") "object")
+	(sequence ^((optional (keyword "from")) (anyof ^("in" "on" "under") "preposition")))
+	(object (location_source "actor" "contents") "supporter"))
+	(defun "" ^("match" "actor") ^()
+		*(echo actor "Matched (match.object:short) (match.preposition) (match.supporter:short).")
+	)
+)
 			

@@ -6,6 +6,12 @@
 	)
 )
 
+(defun "contents_source_rel" ^("relative" "list") ^()
+	*(defun "" ^("match") ^("relative" "list")
+		*(coalesce match.(relative).(match.(list)) ^())
+	)
+)
+
 (defun "location_source" ^("relative" "list") ^() /*Search relative some object for the items*/
 	*(defun "" ^("match") ^("relative" "list") 
 		*(coalesce match.(relative).location.object.(list) ^())

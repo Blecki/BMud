@@ -11,6 +11,7 @@ namespace MudEngine2012
         private Dictionary<String, ScriptList> variables = new Dictionary<String, ScriptList>();
         public DateTime executionStart;
         public String activeSource { get; set; }
+        public Action<String> trace = null;
 
         public void Reset(MudObject actor)
         {

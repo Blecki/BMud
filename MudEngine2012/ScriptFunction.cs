@@ -21,14 +21,22 @@ namespace MudEngine2012
 
         public Object Invoke(ScriptContext context, ScriptObject thisObject, ScriptList arguments)
         {
+            if (context.trace != null)
+                context.trace("Entering " + name + " ( " + String.Join(", ", arguments.Select((o) => ScriptObject.AsString(o))) + " )\n");
+
             //try
             //{
-                return implementation(context, thisObject, arguments);
+                var r = implementation(context, thisObject, arguments);
             //}
             //catch (ScriptError e)
             //{
             //    throw new ScriptError(source + " " + e.Message);
             //}
+
+                if (context.trace != null)
+                    context.trace("Leaving " + name + "\n");
+
+                return r;
         }
 
     }

@@ -35,7 +35,7 @@ namespace MudEngine2012
             scriptEngine.functions.Add("decor", new ScriptFunction("decor", "code : Create an anonymous decorative object. Executes [code] to initialize object.", (context, thisObject, arguments) =>
             {
                 var result = new MudObject(database);
-                var code = ScriptEvaluater.ArgumentType<Irony.Parsing.ParseTreeNode>(arguments[0]);
+                var code = ScriptEvaluater.ArgumentType<ParseNode>(arguments[0]);
                 scriptEngine.Evaluate(context, code, result, true);
                 return result;
             }));

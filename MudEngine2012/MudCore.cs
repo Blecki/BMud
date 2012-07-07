@@ -58,8 +58,8 @@ namespace MudEngine2012
 
         public bool Start(String basePath)
         {
-            try
-            {
+            //try
+            //{
                 scriptEngine = new ScriptEvaluater(this);
                 SetupScript();
                 database = new Database(basePath, this);
@@ -69,14 +69,15 @@ namespace MudEngine2012
                 CommandExecutionThread.Start();
 
                 Console.WriteLine("Engine ready with path " + basePath + ".");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Failed to start mud engine.");
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-                return false;
-            }
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine("Failed to start mud engine.");
+            //    Console.WriteLine(e.Message);
+            //    Console.WriteLine(e.StackTrace);
+            //    throw e;
+            //    return false;
+            //}
             return true;
         }
 
@@ -159,6 +160,7 @@ namespace MudEngine2012
 
                         var arguments = new ScriptList();
                         var matchContext = new ScriptContext();
+                        //matchContext.trace = (s) => { SendMessage(PendingCommand.Executor, s, true); };
                         ScriptList matches = null;
 
 

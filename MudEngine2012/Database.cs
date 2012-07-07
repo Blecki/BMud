@@ -23,13 +23,24 @@ namespace MudEngine2012
             return ReLoadObject(path);
         }
 
+        private static int loadDepth = 0;
+
         public MudObject ReLoadObject(String path)
         {
+            if (!namedObjects.ContainsKey(path))
+                namedObjects.Upsert(path, new MudObject(this, path));
             try
             {
+                Console.WriteLine(new String(' ', loadDepth) + "Loading object " + basePath + path + ".");
+                loadDepth += 1;
                 var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
                 var scriptContext = new ScriptContext();
                 var mudObject = new MudObject(this, path);
+
+                //var root = ScriptParser.ParseRoot(inFile);
+                //Console.WriteLine("Parse tree of " + path);
+                //root.DebugEmit(0);
+
                 core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, true);
 
                 if (namedObjects.ContainsKey(path))
@@ -37,14 +48,16 @@ namespace MudEngine2012
                 else
                     namedObjects.Upsert(path, mudObject);
 
-                Console.WriteLine("Loaded object " + basePath + path + ".");
+                loadDepth -= 1;
+                Console.WriteLine(new String(' ', loadDepth) + "..Success.");
                 return mudObject;
             }
             catch (Exception e)
             {
                 Console.WriteLine("Error loading object " + basePath + path + ".");
                 Console.WriteLine(e.Message);
-                throw e;
+                loadDepth -= 1;
+                return null;
             }
         }
     }

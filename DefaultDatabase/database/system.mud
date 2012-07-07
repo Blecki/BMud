@@ -1,20 +1,18 @@
 ﻿(defun "depend" ^("on") ^() *(load on))
 (depend "object")
 (depend "move_object")
+(depend "lists")
 
 
 (prop "on_unknown_verb" (defun "" ^("command" "actor") ^() 
 	*(echo actor "Huh?")))
 (prop "on_player_joined" (defun "" ^("actor") ^()
 	*(nop
-		(move_object actor (load "room") "contents")
+		(move_object actor (load "start_room") "contents")
 		(command actor "look"))))
 
 (defun "contains" ^("list" "what") ^()
 	*(atleast (count "item" list *(equal item what)) 1))
-
-(defun "short_list" ^("object_list") ^() 
-	*(strcat $(map "object" object_list *("(object.short), "))))
 
 (defun "contents" ^("mudobject") ^() *(coalesce mudobject.contents ^()))
 

@@ -50,23 +50,14 @@
     <Compile Include="MudCore.cs" />
     <Compile Include="MudCoreNewClientCommands.cs" />
     <Compile Include="MudObject.cs" />
-    <Compile Include="ScriptGrammar.cs" />
     <Compile Include="ScriptEvaluater.cs" />
     <Compile Include="ScriptContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScriptParser.cs" />
     <Compile Include="TelnetClientSource.cs" />
     <Compile Include="Upsert.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Irony\010.Irony.2010.csproj">
-      <Project>{D81F5C91-D7DB-46E5-BC99-49488FB6814C}</Project>
-      <Name>010.Irony.2010</Name>
-    </ProjectReference>
-  </ItemGroup>
   <ItemGroup />
-  <ItemGroup>
-    <Content Include="todo.txt" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

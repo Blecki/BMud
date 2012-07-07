@@ -14,17 +14,11 @@ namespace MudEngine2012
     public class ScriptEvaluater
     {
         public Dictionary<String, ScriptFunction> functions = new Dictionary<String, ScriptFunction>();
-        private Irony.Parsing.Parser parser = new Irony.Parsing.Parser(new ScriptGrammar());
         public Dictionary<String, Func<ScriptContext, ScriptObject, Object>> specialVariables
             = new Dictionary<string, Func<ScriptContext, ScriptObject, object>>();
         public MudCore core { get; private set; }
         
         public TimeSpan allowedExecutionTime = TimeSpan.FromSeconds(10);
-
-        public static String sourceSpan(String source, Irony.Parsing.SourceSpan span)
-        {
-            return source.Substring(span.Location.Position, span.Length);
-        }
 
         public static T ArgumentType<T>(Object obj) where T : class
         {
@@ -53,144 +47,131 @@ namespace MudEngine2012
 
         public Object EvaluateString(ScriptContext context, ScriptObject thisObject, String str, bool discardResults = false)
         {
-            context.activeSource = str;   
-            var root = parser.Parse(str);
-            if (root.HasErrors())
-                throw new ScriptError(root.ParserMessages[0].Message);
-            return Evaluate(context, root.Root, thisObject, false, discardResults);
+            context.activeSource = str;
+            var root = ScriptParser.ParseRoot(str);
+            return Evaluate(context, root, thisObject, false, discardResults);
         }
 
         public Object Evaluate(
             ScriptContext context,
-            Irony.Parsing.ParseTreeNode node,
+            ParseNode node,
             ScriptObject thisObject,
             bool ignoreStar = false,
             bool discardResults = false)
         {
             //if (DateTime.Now - context.executionStart > allowedExecutionTime) throw new TimeoutError();
 
-            if (node.Term.Name == "Root")
+            if (node.type == "string")
+            {
+                return node.token;
+            }
+            else if (node.type == "string expression")
             {
                 if (discardResults)
                 {
-                    foreach (var piece in node.ChildNodes)
+                    foreach (var piece in node.childNodes)
                     {
-                        if (piece.Term.Name == "Text Literal")
+                        if (piece.type == "string")
                             continue;
-                        Evaluate(context, piece, thisObject);
+                        else
+                            Evaluate(context, piece, thisObject);
                     }
                     return null;
                 }
                 else
                 {
-                    if (node.ChildNodes.Count == 1)
-                    {
-                        if (node.ChildNodes[0].Term.Name == "Text Literal")
-                            return node.ChildNodes[0].FindTokenAndGetText();
-                        else
-                            return Evaluate(context, node.ChildNodes[0], thisObject);
-                    }
+                    if (node.childNodes.Count == 1)
+                        return Evaluate(context, node.childNodes[0], thisObject);
                     else
                     {
                         var resultString = String.Empty;
-                        foreach (var piece in node.ChildNodes)
-                            if (piece.Term.Name == "Text Literal")
-                                resultString += piece.FindTokenAndGetText();
-                            else
-                                resultString += ScriptObject.AsString(Evaluate(context, piece, thisObject));
+                        foreach (var piece in node.childNodes)
+                            resultString += ScriptObject.AsString(Evaluate(context, piece, thisObject));
                         return resultString;
                     }
                 }
             }
-            else if (node.Term.Name == "Token")
+            else if (node.type == "token")
             {
-                var value = node.FindTokenAndGetText();
+                var value = node.token;
                 if (specialVariables.ContainsKey(value)) return specialVariables[value](context, thisObject);
                 if (context.HasVariable(value)) return context.GetVariable(value);
                 if (functions.ContainsKey(value)) return functions[value];
                 throw new ScriptError("Could not find value with name " + value + ".");
             }
-            else if (node.Term.Name == "Embedded String")
+            else if (node.type == "member access")
             {
-                if (node.ChildNodes[0].ChildNodes.Count > 0) return node.ChildNodes[2];
-                var r = Evaluate(context, node.ChildNodes[2], thisObject);
-                return ScriptObject.AsString(r);
-            }
-            else if (node.Term.Name == "Member Access")
-            {
-                var lhs = Evaluate(context, node.ChildNodes[0], thisObject);
+                var lhs = Evaluate(context, node.childNodes[0], thisObject);
                 String rhs = "";
-                if (node.ChildNodes[2].FirstChild.Term.Name == "Token")
-                    rhs = node.ChildNodes[2].FirstChild.FindTokenAndGetText();
+                if (node.childNodes[1].type == "token")
+                    rhs = node.childNodes[1].token;
                 else
-                    rhs = ScriptObject.AsString(Evaluate(context, node.ChildNodes[2].FirstChild, thisObject, false));
+                    rhs = ScriptObject.AsString(Evaluate(context, node.childNodes[1], thisObject, false));
 
                 if (lhs == null) return null;// throw new ScriptError("Left hand side is null.");
 
                 if (lhs is ScriptObject)
                 {
                     var result = (lhs as ScriptObject).GetProperty(ScriptObject.AsString(rhs));
-                    if (result is String && node.ChildNodes[1].FindTokenAndGetText() == ":")
+                    if (result is String && node.token == ":")
                         result = EvaluateString(context, lhs as MudObject, result as String);
-                    else if (result is Irony.Parsing.ParseTreeNode && node.ChildNodes[1].FindTokenAndGetText() == ":")
-                        result = Evaluate(context, result as Irony.Parsing.ParseTreeNode, lhs as MudObject, true, false);
+                    else if (result is ParseNode && node.childNodes[1].token == ":")
+                        result = Evaluate(context, result as ParseNode, lhs as MudObject, true, false);
                     return result;
                 }
 
                 return null;
                 //throw new ScriptError("Left hand side [" + ScriptObject.AsString(lhs) + "] is not a script object.");
             }
-            else if (node.Term.Name == "Node")
+            else if (node.type == "node")
             {
-                
-                    if (!ignoreStar && node.ChildNodes[0].ChildNodes.Count > 0 && node.ChildNodes[0].FindTokenAndGetText() == "*")
-                        return node;
 
-                    var arguments = new ScriptList();
-                    try
-                    {
-                        foreach (var child in node.ChildNodes[2].ChildNodes)
-                        {
-                            var argument = Evaluate(context, child, thisObject);
-                            if (child.Term.Name == "Node" && child.ChildNodes[0].FindTokenAndGetText() == "$" && argument is ScriptList)
-                                arguments.AddRange(argument as ScriptList);
-                            else
-                                arguments.Add(argument);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        if (arguments.Count > 0 && arguments[0] is ScriptFunction)
-                            throw new ScriptError("[Arg for " + (arguments[0] as ScriptFunction).name + "] " + e.Message);
-                        throw e;
-                    }
+                if (!ignoreStar && node.token == "*")
+                    return node;
 
-                    //Call function referenced by first argument
-                    if (node.ChildNodes[0].ChildNodes.Count == 0 || node.ChildNodes[0].FindTokenAndGetText() != "^")
+                var arguments = new ScriptList();
+                //try
+                //{
+                    foreach (var child in node.childNodes)
                     {
-                        if (arguments[0] is ScriptFunction)
-                        {
-                            try
-                            {
-                                return (arguments[0] as ScriptFunction).Invoke(context, thisObject,
-                                    new ScriptList(arguments.GetRange(1, arguments.Count - 1)));
-                            }
-                            catch (Exception e)
-                            {
-                                throw new ScriptError("[" + (arguments[0] as ScriptFunction).name + "] " + e.Message);
-                            }
-                        }
+                        var argument = Evaluate(context, child, thisObject);
+                        if (child.type == "node" && child.token == "$" && argument is ScriptList)
+                            arguments.AddRange(argument as ScriptList);
                         else
-                            return arguments[0];
-                        //throw new ScriptError("First item is not a function.");
+                            arguments.Add(argument);
+                    }
+                //}
+                //catch (Exception e)
+                //{
+                //    if (arguments.Count > 0 && arguments[0] is ScriptFunction)
+                //        throw new ScriptError("[Arg for " + (arguments[0] as ScriptFunction).name + "] " + e.Message);
+                //    throw e;
+                //}
+
+                //Call function referenced by first argument
+                if (node.token == "^") return arguments;
+                else if (node.token != "*" || ignoreStar)
+                {
+                    if (arguments[0] is ScriptFunction)
+                    {
+                        try
+                        {
+                            return (arguments[0] as ScriptFunction).Invoke(context, thisObject,
+                                new ScriptList(arguments.GetRange(1, arguments.Count - 1)));
+                        }
+                        catch (Exception e)
+                        {
+                            throw new ScriptError("[" + (arguments[0] as ScriptFunction).name + "] " + e.Message);
+                        }
                     }
                     else
-                        return arguments;
-                
+                        return arguments[0];
+                    //throw new ScriptError("First item is not a function.");
+                }
             }
-            else if (node.Term.Name == "Integer")
+            else if (node.type == "integer")
             {
-                return Convert.ToInt32(node.FindTokenAndGetText());
+                return Convert.ToInt32(node.token);
             }
             
             throw new ScriptError("Internal evaluator error");
@@ -225,7 +206,7 @@ namespace MudEngine2012
                     return ScriptObject.AsString(o);
                 }));
 
-                var functionBody = ArgumentType<Irony.Parsing.ParseTreeNode>(arguments[3]);
+                var functionBody = ArgumentType<ParseNode>(arguments[3]);
 
                 var closedValues = new ScriptList();
 
@@ -434,6 +415,16 @@ namespace MudEngine2012
                 return null;
             }));
 
+            functions.Add("minus", new ScriptFunction("minus", "A B : return A-B.",
+                (context, thisObject, arguments) =>
+                {
+                    ArgumentCount(2, arguments);
+                    var first = arguments[0] as int?;
+                    var second = arguments[1] as int?;
+                    if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
+                    return first.Value - second.Value;
+                }));
+
             functions.Add("not", new ScriptFunction("not", "A : true if A is null, null otherwise.", 
                 (context, thisObject, arguments) =>
                 {
@@ -468,9 +459,9 @@ namespace MudEngine2012
                 {
                     if (arguments.Count != 2 && arguments.Count != 3) throw new ScriptError("If expects two or three arguments");
                     if (arguments[0] != null) 
-                        return Evaluate(context, arguments[1] as Irony.Parsing.ParseTreeNode, thisObject, true);
+                        return Evaluate(context, arguments[1] as ParseNode, thisObject, true);
                     else if (arguments.Count == 3)
-                        return Evaluate(context, arguments[2] as Irony.Parsing.ParseTreeNode, thisObject, true);
+                        return Evaluate(context, arguments[2] as ParseNode, thisObject, true);
                     return null;
                 }));
 
@@ -487,8 +478,8 @@ namespace MudEngine2012
                 (context, thisObject, arguments) =>
                 {
                     ArgumentCount(1, arguments);
-                    var list = ArgumentType<ScriptList>(arguments[0]);
-                    return list.Count;
+                    var list = arguments[0] as ScriptList;
+                    return list == null ? 0 : list.Count;
                 }));
 
             functions.Add("count", new ScriptFunction("count", "variable_name list code : Returns number of items in list for which code evaluated to true.",
@@ -497,7 +488,7 @@ namespace MudEngine2012
                     ArgumentCount(3, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
-                    var func = ArgumentType<Irony.Parsing.ParseTreeNode>(arguments[2]);
+                    var func = ArgumentType<ParseNode>(arguments[2]);
 
                     context.PushVariable(vName, null);
                     var result = (int)list.Count((o) =>
@@ -527,7 +518,7 @@ namespace MudEngine2012
                     ArgumentCount(3, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
-                    var code = ArgumentType<Irony.Parsing.ParseTreeNode>(arguments[2]);
+                    var code = ArgumentType<ParseNode>(arguments[2]);
                     var result = new ScriptList();
                     context.PushVariable(vName, null);
                     foreach (var item in list)
@@ -539,14 +530,53 @@ namespace MudEngine2012
                     return result;
                 }));
 
+            functions.Add("mapi", new ScriptFunction("mapi", "variable_name list code : Like map, except variable_name will hold the index not the value.",
+                (context, thisObject, arguments) =>
+                {
+                    ArgumentCount(3, arguments);
+                    var vName = ArgumentType<String>(arguments[0]);
+                    var list = ArgumentType<ScriptList>(arguments[1]);
+                    var code = ArgumentType<ParseNode>(arguments[2]);
+                    var result = new ScriptList();
+                    context.PushVariable(vName, null);
+                    for (int i = 0; i < list.Count; ++i)
+                    {
+                        context.ChangeVariable(vName, i);
+                        result.Add(Evaluate(context, code, thisObject, true));
+                    }
+                    context.PopVariable(vName);
+                    return result;
+                }));
 
+            functions.Add("mapex", new ScriptFunction("mapex", "variable_name start code next : Like map, but the next element is the result of 'next'. Stops when next = null.",
+                (context, thisObject, arguments) =>
+                {
+                    ArgumentCount(4, arguments);
+                    var vName = ArgumentType<String>(arguments[0]);
+                    var code = ArgumentType<ParseNode>(arguments[2]);
+                    var next = ArgumentType<ParseNode>(arguments[3]);
+                    var result = new ScriptList();
+                    var item = arguments[1];
+                    context.PushVariable(vName, null);
+
+                    while (item != null)
+                    {
+                        context.ChangeVariable(vName, item);
+                        result.Add(Evaluate(context, code, thisObject, true));
+                        item = Evaluate(context, next, thisObject, true);
+                    }
+
+                    context.PopVariable(vName);
+                    return result;
+                }));
+            
             functions.Add("for", new ScriptFunction("for", "variable_name list code : Execute code for each item in list", 
                 (context, thisObject, arguments) =>
                 {
                     ArgumentCount(3, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
-                    var list = arguments[1] as ScriptList;
-                    var func = arguments[2] as Irony.Parsing.ParseTreeNode;
+                    var list = ArgumentType<ScriptList>(arguments[1]);
+                    var func = ArgumentType<ParseNode>(arguments[2]);
                     context.PushVariable(vName, null);
 
                     foreach (var item in list)
@@ -567,7 +597,7 @@ namespace MudEngine2012
                     ArgumentCount(3, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
-                    var func = ArgumentType<Irony.Parsing.ParseTreeNode>(arguments[2]);
+                    var func = ArgumentType<ParseNode>(arguments[2]);
 
                     context.PushVariable(vName, null);
                     var result = new ScriptList(list.Where((o) =>
@@ -577,6 +607,19 @@ namespace MudEngine2012
                         }));
                     context.PopVariable(vName);
                     return result;
+                }));
+
+            functions.Add("while", new ScriptFunction("while",
+                "condition code : Repeat code while condition evaluates to true.",
+                (context, thisObject, arguments) =>
+                {
+                    ArgumentCount(2, arguments);
+                    var cond = ArgumentType<ParseNode>(arguments[0]);
+                    var code = ArgumentType<ParseNode>(arguments[1]);
+
+                    while (Evaluate(context, cond, thisObject, true) != null)
+                        Evaluate(context, code, thisObject, true);
+                    return null;
                 }));
 
             functions.Add("last", new ScriptFunction("last", "list : Returns last item in list.", 
@@ -596,6 +639,17 @@ namespace MudEngine2012
                 if (list.Count == 0) return null;
                 return list[0];
             }));
+
+            functions.Add("index", new ScriptFunction("index", "list n : Returns nth element in list.",
+                (context, thisObject, arguments) =>
+                {
+                    ArgumentCount(2, arguments);
+                    var list = ArgumentType<ScriptList>(arguments[0]);
+                    var index = arguments[1] as int?;
+                    if (index == null || !index.HasValue) return null;
+                    if (index.Value < 0 || index.Value >= list.Count) return null;
+                    return list[index.Value];
+                }));
             #endregion
 
             #region String Functions
