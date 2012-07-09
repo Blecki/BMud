@@ -5,6 +5,7 @@
 (prop "short" ^"(this.path)")
 (prop "nouns" ^("object"))
 (prop "a" ^"a (this:short)") /* 'an object' would be correct, but inheriting objects are more likely to need 'a'. */
+(prop "the" ^"the (this:short)")
 (prop "description" ^"(this:long)")
 (prop "long" ^"(this:short)")
 

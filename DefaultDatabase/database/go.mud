@@ -19,10 +19,11 @@
 
 
 (verb "go" (link_matcher)
-	(defun "" ^("match" "actor") ^()
+	(defun "" ^("matches" "actor") ^()
 		*(nop
-			(echo actor.location.object.contents "(actor:short) went (match.link).")
-			(move_object actor (first (where "link" actor.location.object.links *(equal match.link link.name))) "contents")
+			(if (greaterthan (length matches) 1) *(echo actor "[More than one possible match. Accepting first match.]\n"))
+			(echo actor.location.object.contents "(actor:short) went ((first matches).link).")
+			(move_object actor (first (where "link" actor.location.object.links *(equal (first matches).link link.name))) "contents")
 			(echo actor.location.object.contents "(actor:short) arrives.")
 		)
 	)

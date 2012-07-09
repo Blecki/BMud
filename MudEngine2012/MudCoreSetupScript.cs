@@ -15,7 +15,7 @@ namespace MudEngine2012
                 {
                     return new ScriptList(ConnectedClients.Select((p) =>
                         {
-                            return p.Value.PlayerObject;
+                            return p.Value.player;
                         }));
                 });
 
@@ -32,7 +32,7 @@ namespace MudEngine2012
             #region Object Declaration Functions
             
 
-            scriptEngine.functions.Add("decor", new ScriptFunction("decor", "code : Create an anonymous decorative object. Executes [code] to initialize object.", (context, thisObject, arguments) =>
+            scriptEngine.functions.Add("create", new ScriptFunction("create", "code : Create an anonymous object. Executes [code] to initialize object.", (context, thisObject, arguments) =>
             {
                 var result = new MudObject(database);
                 var code = ScriptEvaluater.ArgumentType<ParseNode>(arguments[0]);
@@ -100,6 +100,15 @@ namespace MudEngine2012
                     return r;
                 }));
 
+            scriptEngine.functions.Add("alias", new ScriptFunction("alias", "name value : Register a verb alias.",
+                (context, thisObject, arguments) =>
+                {
+                    ScriptEvaluater.ArgumentCount(2, arguments);
+                    aliases.Upsert(ScriptEvaluater.ArgumentType<String>(arguments[0]), ScriptEvaluater.ArgumentType<String>(arguments[1]));
+                    return null;
+                }
+            ));
+
             scriptEngine.functions.Add("discard_verb", new ScriptFunction("discard_verb", "name : Throw away an entire verb set.",
                  (context, thisObject, arguments) =>
                  {
@@ -116,17 +125,20 @@ namespace MudEngine2012
             {
                 ScriptEvaluater.ArgumentCount(2, arguments);
                 ScriptList to = null;
+                
                 if (arguments[0] is ScriptList) to = arguments[0] as ScriptList;
                 else
                 {
                     to = new ScriptList();
                     to.Add(arguments[0]);
                 }
+
                 foreach (var obj in to)
                 {
-                    var mudObject = obj as MudObject;
-                    if (mudObject != null) SendMessage(mudObject, ScriptObject.AsString(arguments[1]), false);
+                    if (obj is MudObject) SendMessage(obj as MudObject, ScriptObject.AsString(arguments[1]), false);
+                    else if (obj is Client) (obj as Client).Send(ScriptObject.AsString(arguments[1]));
                 }
+
                 return null;
             }));
 
@@ -135,13 +147,11 @@ namespace MudEngine2012
                 (context, thisObject, arguments) =>
                 {
                     ScriptEvaluater.ArgumentCount(2, arguments);
-                    _commandLock.WaitOne();
-                    PendingCommands.AddLast(new Command
+                    EnqueuAction(new Command
                     {
                         Executor = ScriptEvaluater.ArgumentType<MudObject>(arguments[0]),
                         _Command = ScriptObject.AsString(arguments[1])
                     });
-                    _commandLock.ReleaseMutex();
                     return null;
                 }));
             #endregion

@@ -18,6 +18,16 @@
 	)
 )
 
+(defun "filter_source" ^("source" "filter") ^()
+	*(defun "" ^("match") ^("source" "filter")
+		*(where "object" (source match) *(filter object match))
+	)
+)
+
+(defun "allow_preposition_filter" ^("object" "match") ^()
+	*(object:("allow_(match.preposition)"))
+)
+
 (defun "cat_source" ^("A" "B") ^() /* Cat two sources together*/
 	*(defun "" ^("match") ^("A" "B") 
 		*(cat (A match) (B match))

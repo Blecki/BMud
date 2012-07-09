@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012
+namespace MudServer
 {
-    public class StandardClient : Client
+    public class StandardClient : MudEngine2012.Client
     {
         public System.Net.Sockets.Socket Socket = null;
         public String CommandQueue = "";
@@ -42,13 +42,13 @@ namespace MudEngine2012
     {
         public int Port = 8669;
 
-        MudCore MudCore;
+        MudEngine2012.MudCore MudCore;
         System.Net.Sockets.Socket ListenSocket = null;
 
         static System.Threading.Mutex ClientLock = new System.Threading.Mutex();
         static LinkedList<StandardClient> Clients = new LinkedList<StandardClient>();
 
-        public void Listen(MudCore MudCore)
+        public void Listen(MudEngine2012.MudCore MudCore)
         {
             this.MudCore = MudCore;
 

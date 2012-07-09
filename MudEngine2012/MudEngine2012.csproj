@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandTokenizer.cs" />
+    <Compile Include="Command.cs" />
     <Compile Include="ScriptFunction.cs" />
     <Compile Include="ScriptList.cs" />
     <Compile Include="ScriptObject.cs" />
@@ -48,13 +49,11 @@
     <Compile Include="Client.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="MudCore.cs" />
-    <Compile Include="MudCoreNewClientCommands.cs" />
     <Compile Include="MudObject.cs" />
     <Compile Include="ScriptEvaluater.cs" />
     <Compile Include="ScriptContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScriptParser.cs" />
-    <Compile Include="TelnetClientSource.cs" />
     <Compile Include="Upsert.cs" />
   </ItemGroup>
   <ItemGroup />

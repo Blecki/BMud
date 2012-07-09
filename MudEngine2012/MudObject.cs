@@ -32,6 +32,8 @@ namespace MudEngine2012
                 this.attributes.Add(attr.Key, attr.Value);
         }
 
+        public void ClearProperties() { attributes.Clear(); }
+
         private Dictionary<String, Object> attributes = new Dictionary<String, Object>();
 
         object GetInheritedProperty(string name, List<MudObject> inheritanceStack)

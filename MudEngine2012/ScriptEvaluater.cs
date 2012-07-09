@@ -97,6 +97,7 @@ namespace MudEngine2012
                 if (specialVariables.ContainsKey(value)) return specialVariables[value](context, thisObject);
                 if (context.HasVariable(value)) return context.GetVariable(value);
                 if (functions.ContainsKey(value)) return functions[value];
+                if (value.StartsWith("@") && functions.ContainsKey(value.Substring(1))) return functions[value.Substring(1)];
                 throw new ScriptError("Could not find value with name " + value + ".");
             }
             else if (node.type == "member access")
@@ -183,6 +184,7 @@ namespace MudEngine2012
             specialVariables.Add("null", (c, s) => { return null; });
             specialVariables.Add("this", (c, s) => { return s; });
             specialVariables.Add("functions", (c, s) => { return new ScriptList(functions.Select((pair) => { return pair.Value; })); });
+            specialVariables.Add("true", (c, s) => { return true; });
             #endregion
 
             #region Foundational Functions
@@ -285,6 +287,32 @@ namespace MudEngine2012
                         throw new ScriptError("Can't assign to protected variable name.");
                     context.PushVariable(ScriptObject.AsString(arguments[0]), arguments[1]);
                     return arguments[1];
+                }));
+
+            functions.Add("let", new ScriptFunction("let", "^( ^(\"name\" value) ^(...) ) code : Create temporary variables, run code.",
+                (context, thisObject, arguments) =>
+                {
+                    ArgumentCount(2, arguments);
+                    var variables = ArgumentType<ScriptList>(arguments[0]);
+                    var code = ArgumentType<ParseNode>(arguments[1]);
+
+                    foreach (var item in variables)
+                    {
+                        var def = ArgumentType<ScriptList>(item);
+                        ArgumentCount(2, def);
+                        var name = ArgumentType<String>(def[0]);
+                        context.PushVariable(name, def[1]);
+                    }
+
+                    var result = Evaluate(context, code, thisObject, true);
+
+                    foreach (var item in variables)
+                    {
+                        var def = ArgumentType<ScriptList>(item);
+                        context.PopVariable(ArgumentType<String>(def[0]));
+                    }
+
+                    return result;
                 }));
 
             functions.Add("set", new ScriptFunction("set", "object property value : Set the member of an object.", (context, thisObject, arguments) =>

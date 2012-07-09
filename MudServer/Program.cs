@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudScriptTest
+namespace MudServer
 {
     class Program
     {
@@ -16,7 +16,7 @@ namespace MudScriptTest
                 var mudCore = new MudEngine2012.MudCore();
                 if (mudCore.Start("database/"))
                 {
-                    var telnetListener = new MudEngine2012.TelnetClientSource();
+                    var telnetListener = new TelnetClientSource();
                     telnetListener.Listen(mudCore);
                 }
                 

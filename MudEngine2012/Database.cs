@@ -35,7 +35,8 @@ namespace MudEngine2012
                 loadDepth += 1;
                 var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
                 var scriptContext = new ScriptContext();
-                var mudObject = new MudObject(this, path);
+                var mudObject = namedObjects[path];
+                mudObject.ClearProperties();
 
                 //var root = ScriptParser.ParseRoot(inFile);
                 //Console.WriteLine("Parse tree of " + path);
@@ -43,14 +44,9 @@ namespace MudEngine2012
 
                 core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, true);
 
-                if (namedObjects.ContainsKey(path))
-                    namedObjects[path].CopyFrom(mudObject);
-                else
-                    namedObjects.Upsert(path, mudObject);
-
                 loadDepth -= 1;
                 Console.WriteLine(new String(' ', loadDepth) + "..Success.");
-                return mudObject;
+                return namedObjects[path];
             }
             catch (Exception e)
             {

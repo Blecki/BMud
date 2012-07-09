@@ -6,11 +6,11 @@ using System.Threading;
 
 namespace MudEngine2012
 {
-    internal class Command
+    internal class PendingAction
     {
-        internal MudObject Executor;
-        internal String _Command;
+        public virtual void Execute(MudCore core) { }
     }
+
 
     internal class Verb : ReflectionScriptObject
     {
@@ -19,15 +19,58 @@ namespace MudEngine2012
         public String name;
     }
 
+    internal class ClientCommand : PendingAction
+    {
+        internal Client client;
+        internal String command;
+
+        public override void Execute(MudCore core)
+        {
+            try
+            {
+                var tokens = command.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var words = new ScriptList(tokens);
+                if (!core.InvokeSystem(client, "handle_client_command", new ScriptList(new object[] { client, words }), new ScriptContext()))
+                    core.SendMessage(client, "No command handler registered.\n", true);
+                if (client.logged_on) core.ConnectedClients.Add(client.player.path, client);
+            }
+            catch (Exception e)
+            {
+                core.PendingMessages.Clear();
+                core.SendMessage(client,
+                    e.Message + "\n" +
+                    e.StackTrace + "\n", true);
+            }
+        }
+    }
+
+    internal class InvokeAction : PendingAction
+    {
+        internal Client client;
+        internal String invoke;
+
+        internal InvokeAction(Client client, String invoke)
+        {
+            this.client = client;
+            this.invoke = invoke;
+        }
+
+        public override void Execute(MudCore core)
+        {
+            core.InvokeSystem(client, invoke, new ScriptList(new object[] { client }), new ScriptContext());
+        }
+    }
+
     public partial class MudCore
     {
         Mutex _commandLock = new Mutex();
-        LinkedList<Command> PendingCommands = new LinkedList<Command>();
-        Thread CommandExecutionThread;
+        LinkedList<PendingAction> PendingActions = new LinkedList<PendingAction>();
+        Thread ActionExecutionThread;
         public Database database { get; private set; }
         public ScriptEvaluater scriptEngine { get; private set; }
-        private Dictionary<String, List<Verb>> verbs = new Dictionary<string, List<Verb>>();
-        private Dictionary<String, Client> ConnectedClients = new Dictionary<String, Client>();
+        internal Dictionary<String, List<Verb>> verbs = new Dictionary<string, List<Verb>>();
+        internal Dictionary<String, String> aliases = new Dictionary<string, string>();
+        internal Dictionary<String, Client> ConnectedClients = new Dictionary<String, Client>();
 
         private Mutex _databaseLock = new Mutex();
 
@@ -35,25 +78,31 @@ namespace MudEngine2012
         {
         }
 
+        internal void EnqueuAction(PendingAction action)
+        {
+            _commandLock.WaitOne();
+            PendingActions.AddLast(action);
+            _commandLock.ReleaseMutex();
+        }
+
         public void ClientCommand(Client _client, String _rawCommand)
         {
-            switch (_client.Status)
+            if (_client.logged_on)
+                EnqueuAction(new Command { Executor = _client.player, _Command = _rawCommand });
+            else
+                EnqueuAction(new ClientCommand { client = _client, command = _rawCommand });
+        }
+
+        public void ClientDisconnected(Client client)
+        {
+            Console.WriteLine("Lost client " + (client.logged_on ? client.player.path : "null") + "\n");
+            if (client.logged_on)
             {
-                case ClientStatus.NewClient:
-                    NewClientCommand(_client, _rawCommand);
-                    break;
-                case ClientStatus.LoggedOn:
-                    _commandLock.WaitOne();
-                    PendingCommands.AddLast(new Command
-                    {
-                        Executor = _client.PlayerObject,
-                        _Command = _rawCommand
-                    });
-                    _commandLock.ReleaseMutex();
-                    break;
-                case ClientStatus.Disconnected:
-                    break;
+                _databaseLock.WaitOne();
+                ConnectedClients.Remove(client.player.path);
+                _databaseLock.ReleaseMutex();
             }
+            EnqueuAction(new InvokeAction(client, "handle_lost_client"));
         }
 
         public bool Start(String basePath)
@@ -65,8 +114,8 @@ namespace MudEngine2012
                 database = new Database(basePath, this);
                 database.LoadObject("system");
 
-                CommandExecutionThread = new Thread(CommandProcessingThread);
-                CommandExecutionThread.Start();
+                ActionExecutionThread = new Thread(CommandProcessingThread);
+                ActionExecutionThread.Start();
 
                 Console.WriteLine("Engine ready with path " + basePath + ".");
             //}
@@ -83,7 +132,7 @@ namespace MudEngine2012
 
         public void Join()
         {
-            CommandExecutionThread.Join();
+            ActionExecutionThread.Join();
         }
 
         internal class Message
@@ -92,17 +141,19 @@ namespace MudEngine2012
             public String _message;
         }
 
-        private List<Message> PendingMessages = new List<Message>();
+        internal List<Message> PendingMessages = new List<Message>();
 
-        public void SendMessage(MudObject Object, String _message, bool Immediate)
+        public void SendMessage(ScriptObject Object, String _message, bool Immediate)
         {
             _databaseLock.WaitOne();
-            if (ConnectedClients.ContainsKey(Object.path))
+            Client client = null;
+            if (Object is Client) client = Object as Client;
+            else if (Object is MudObject && ConnectedClients.ContainsKey((Object as MudObject).path))
+                client = ConnectedClients[(Object as MudObject).path];
+            if (client != null)
             {
-                if (Immediate)
-                    ConnectedClients[Object.path].Send(_message);
-                else
-                    PendingMessages.Add(new Message { _client = ConnectedClients[Object.path], _message = _message });
+                if (Immediate) client.Send(_message);
+                else PendingMessages.Add(new Message { _client = client, _message = _message });
             }
             _databaseLock.ReleaseMutex();
         }
@@ -115,127 +166,41 @@ namespace MudEngine2012
             return R;
         }
 
-        public void Command(MudObject Executor, String Command)
-        {
-            _commandLock.WaitOne();
-            PendingCommands.AddLast(new Command { Executor = Executor, _Command = Command });
-            _commandLock.ReleaseMutex();
-        }
-
         public void CommandProcessingThread()
         {
             while (true)
             {
                 System.Threading.Thread.Sleep(10);
 
-                Command PendingCommand = null;
+                PendingAction PendingCommand = null;
 
                 _commandLock.WaitOne();
-                if (PendingCommands.Count >= 1)
+                if (PendingActions.Count >= 1)
                 {
-                    PendingCommand = PendingCommands.First.Value;
-                    PendingCommands.RemoveFirst();
+                    PendingCommand = PendingActions.First.Value;
+                    PendingActions.RemoveFirst();
                 }
                 _commandLock.ReleaseMutex();
 
                 if (PendingCommand != null)
                 {
                     _databaseLock.WaitOne();
-
-                    try
-                    {
-                        if (PendingCommand._Command[0] == '/')
-                        {
-                            SendMessage(PendingCommand.Executor,
-                                ScriptObject.AsString(
-                                    scriptEngine.EvaluateString(new ScriptContext(), PendingCommand.Executor,
-                                    PendingCommand._Command.Substring(1))), true);
-                            SendPendingMessages();
-                            continue;
-                        }
-
-                        var tokens = CommandTokenizer.FullyTokenizeCommand(PendingCommand._Command);
-                        var firstWord = tokens.word;
-                        tokens = tokens.next;
-
-                        var arguments = new ScriptList();
-                        var matchContext = new ScriptContext();
-                        //matchContext.trace = (s) => { SendMessage(PendingCommand.Executor, s, true); };
-                        ScriptList matches = null;
-
-
-                        if (verbs.ContainsKey(firstWord))
-                        {
-                            bool matchFound = false;
-                            foreach (var verb in verbs[firstWord])
-                            {
-                                try
-                                {
-                                    matchContext.Reset(PendingCommand.Executor);
-                                    matchContext.PushVariable("command", PendingCommand._Command);
-                                    matchContext.PushVariable("actor", PendingCommand.Executor);
-                                    matches = new ScriptList();
-                                    matches.Add(new GenericScriptObject("token", tokens, "actor", PendingCommand.Executor));
-                                    arguments.Clear();
-                                    arguments.Add(matches);
-                                    matches = verb.Matcher.Invoke(matchContext, PendingCommand.Executor, arguments) as ScriptList;
-                                }
-                                catch (ScriptError e)
-                                {
-                                    SendMessage(PendingCommand.Executor, e.Message, true);
-                                    matches = null;
-                                }
-
-                                if (matches == null || matches.Count == 0) continue;
-                                if (!(matches[0] is GenericScriptObject))
-                                {
-                                    SendMessage(PendingCommand.Executor, "Matcher returned the wrong type.", true);
-                                    continue;
-                                }
-
-                                matchFound = true;
-                                arguments.Clear();
-                                arguments.Add(matches[0]);
-                                arguments.Add(PendingCommand.Executor);
-                                verb.Action.Invoke(matchContext, PendingCommand.Executor, arguments);
-                                break;
-                            }
-
-                            if (!matchFound)
-                                SendMessage(PendingCommand.Executor, "No registered matchers matched.", false);
-                        }
-                        else
-                        {
-                            arguments.Clear();
-                            arguments.Add(PendingCommand._Command);
-                            arguments.Add(PendingCommand.Executor);
-                            if (!InvokeSystem(PendingCommand.Executor, "on_unknown_verb", arguments, matchContext))
-                                SendMessage(PendingCommand.Executor, "I don't recognize that verb.", false);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        PendingMessages.Clear();
-                        //DatabaseService.DiscardChanges();
-                        SendMessage(PendingCommand.Executor,
-                            e.Message + "\n" +
-                            e.StackTrace + "\n", true);
-                    }
-
+                    PendingCommand.Execute(this);
                     SendPendingMessages();
                     _databaseLock.ReleaseMutex();
                 }
             }
         }
 
-        private bool InvokeSystem(MudObject executor, String property, ScriptList arguments, ScriptContext context)
+        internal bool InvokeSystem(ScriptObject executor, String property, ScriptList arguments, ScriptContext context)
         {
-            var prop = (database.LoadObject("system") as ScriptObject).GetProperty(property);
+            var system = database.LoadObject("system") as ScriptObject;
+            var prop = system.GetProperty(property);
             if (prop is ScriptFunction)
             {
                 try
                 {
-                    (prop as ScriptFunction).Invoke(context, executor, arguments);
+                    (prop as ScriptFunction).Invoke(context, system, arguments);
                     return true;
                 }
                 catch (Exception e)
@@ -247,7 +212,7 @@ namespace MudEngine2012
             return false;
         }
 
-        private void SendPendingMessages()
+        internal void SendPendingMessages()
         {
             foreach (var Message in PendingMessages)
                 Message._client.Send(Message._message);
