@@ -40,6 +40,15 @@ namespace MudEngine2012
                 return result;
             }));
 
+            scriptEngine.functions.Add("create_named", new ScriptFunction("create_named", "name : Create a new named object. Fails if object already exists.",
+                (context, thisObject, arguments) =>
+                {
+                    ScriptEvaluater.ArgumentCount(1, arguments);
+                    var objectName = ScriptObject.AsString(arguments[0]);
+                    return database.CreateObject(objectName);
+                }));
+
+
             scriptEngine.functions.Add("load", new ScriptFunction("load", "name : Loads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
@@ -84,9 +93,10 @@ namespace MudEngine2012
 
             #region Command Matching
 
-            scriptEngine.functions.Add("verb", new ScriptFunction("verb", "name matcher action : Register a verb.", (context, thisObject, arguments) =>
+            scriptEngine.functions.Add("verb", new ScriptFunction("verb", "name matcher action : Register a verb.",
+                (context, thisObject, arguments) =>
                 {
-                    ScriptEvaluater.ArgumentCount(3, arguments);
+                    ScriptEvaluater.ArgumentCountOrGreater(3, arguments);
                     var name = ScriptObject.AsString(arguments[0]);
                     if (!verbs.ContainsKey(name)) verbs.Add(name, new List<Verb>());
                     List<Verb> list = verbs[name];
@@ -97,6 +107,13 @@ namespace MudEngine2012
                         name = name
                     };
                     list.Add(r);
+
+                    if (arguments.Count > 3)
+                    {
+                        ScriptEvaluater.ArgumentCount(4, arguments);
+                        r.comment = ScriptObject.AsString(arguments[3]);
+                    }
+
                     return r;
                 }));
 

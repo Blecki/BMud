@@ -11,6 +11,8 @@ namespace MudEngine2012
         public String name;
         public String source;
         public String shortHelp;
+        public bool isLambda = false;
+        public ScriptList closedValues = null;
 
         public ScriptFunction(String name, String shortHelp, Func<ScriptContext, ScriptObject, ScriptList, Object> func)
         {
@@ -22,21 +24,28 @@ namespace MudEngine2012
         public Object Invoke(ScriptContext context, ScriptObject thisObject, ScriptList arguments)
         {
             if (context.trace != null)
-                context.trace("Entering " + name + " ( " + String.Join(", ", arguments.Select((o) => ScriptObject.AsString(o))) + " )\n");
+            {
+                context.trace(new String('.', context.traceDepth) + "Entering " + name + " ( " + String.Join(", ", arguments.Select((o) => ScriptObject.AsString(o, 2))) + " )\n");
+                if (closedValues != null && closedValues.Count > 0) context.trace(new String('.', context.traceDepth) + " closed: " + ScriptObject.AsString(closedValues, 2) + "\n");
+                context.traceDepth += 1;
+            }
 
             //try
             //{
-                var r = implementation(context, thisObject, arguments);
+            var r = implementation(context, thisObject, arguments);
             //}
             //catch (ScriptError e)
             //{
             //    throw new ScriptError(source + " " + e.Message);
             //}
 
-                if (context.trace != null)
-                    context.trace("Leaving " + name + "\n");
+            if (context.trace != null)
+            {
+                context.traceDepth -= 1;
+                context.trace(new String('.', context.traceDepth) + "Leaving " + name + "\n");
+            }
 
-                return r;
+            return r;
         }
 
     }

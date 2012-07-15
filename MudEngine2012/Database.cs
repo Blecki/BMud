@@ -17,6 +17,13 @@ namespace MudEngine2012
             this.core = core;
         }
 
+        public MudObject CreateObject(String path)
+        {
+            if (LoadObject(path) != null) return null;
+            namedObjects.Upsert(path, new MudObject(this, path));
+            return namedObjects[path];
+        }
+
         public MudObject LoadObject(String path)
         {
             if (namedObjects.ContainsKey(path)) return namedObjects[path];
@@ -52,6 +59,7 @@ namespace MudEngine2012
             {
                 Console.WriteLine("Error loading object " + basePath + path + ".");
                 Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
                 loadDepth -= 1;
                 return null;
             }

@@ -9,6 +9,8 @@
 (prop "description" ^"(this:long)")
 (prop "long" ^"(this:short)")
 
+(prop "can_get" true)
+
 (defun "add_object" ^("to" "list" "object") ^() 
 	*(nop
 		(prop_add to list object)

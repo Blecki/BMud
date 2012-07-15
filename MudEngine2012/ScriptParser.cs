@@ -134,7 +134,7 @@ namespace MudEngine2012
             {
                 result = ParseStringExpression(state);
             }
-            else if ("(*^$".Contains(state.Next()))
+            else if ("(*^$#".Contains(state.Next()))
             {
                 result = ParseNode(state);
             }
@@ -167,6 +167,7 @@ namespace MudEngine2012
             if (state.Next() == '*') { result.token = "*"; state.Advance(); }
             else if (state.Next() == '$') { result.token = "$"; state.Advance(); }
             else if (state.Next() == '^') { result.token = "^"; state.Advance(); }
+            else if (state.Next() == '#') { result.token = "#"; state.Advance(); }
             if (state.Next() != '(') throw new ParseError("Expected (");
             state.Advance();
             while (state.Next() != ')')

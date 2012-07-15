@@ -15,20 +15,32 @@ namespace MudEngine2012
         {
             try
             {
+                bool displayMatches = false;
+                bool displayTrace = false;
 
-                if (_Command[0] == '/')
+                if (_Command.StartsWith("/eval "))
                 {
                     core.SendMessage(Executor,
                         ScriptObject.AsString(
                             core.scriptEngine.EvaluateString(new ScriptContext(), Executor,
-                            _Command.Substring(1))), true);
+                            _Command.Substring(6))), true);
                     core.SendPendingMessages();
                     return;
                 }
+                else if (_Command.StartsWith("/match "))
+                    displayMatches = true;
+                else if (_Command.StartsWith("/trace "))
+                    displayTrace = true;
 
                 var tokens = CommandTokenizer.FullyTokenizeCommand(_Command);
                 var firstWord = tokens.word;
                 tokens = tokens.next;
+
+                if (displayMatches || displayTrace)
+                {
+                    firstWord = tokens.word;
+                    tokens = tokens.next;
+                }
 
                 var arguments = new ScriptList();
                 var matchContext = new ScriptContext();
@@ -44,13 +56,18 @@ namespace MudEngine2012
                     bool matchFound = false;
                     foreach (var verb in verbList)
                     {
+                        if (displayMatches || displayTrace) core.SendMessage(Executor, "Attempting to match " + verb.comment + "\n", true);
                         try
                         {
+                            if (displayTrace)
+                            {
+                                matchContext.trace = (s) => core.SendMessage(Executor, s, true);
+                                matchContext.traceDepth = 0;
+                            }
+
                             matchContext.Reset(Executor);
-                            matchContext.PushVariable("command", _Command);
-                            matchContext.PushVariable("actor", Executor);
                             matches = new ScriptList();
-                            matches.Add(new GenericScriptObject("token", tokens, "actor", Executor));
+                            matches.Add(new GenericScriptObject("token", tokens, "actor", Executor, "command", _Command));
                             arguments.Clear();
                             arguments.Add(matches);
                             matches = verb.Matcher.Invoke(matchContext, Executor, arguments) as ScriptList;
@@ -61,7 +78,12 @@ namespace MudEngine2012
                             matches = null;
                         }
 
-                        if (matches == null || matches.Count == 0) continue;
+                        if (matches == null || matches.Count == 0)
+                        {
+                            if (displayMatches) core.SendMessage(Executor, "No matches.\n", true);
+                            continue;
+                        }
+
                         if (!(matches[0] is GenericScriptObject))
                         {
                             core.SendMessage(Executor, "Matcher returned the wrong type.", true);
@@ -69,10 +91,20 @@ namespace MudEngine2012
                         }
 
                         matchFound = true;
-                        arguments.Clear();
-                        arguments.Add(matches);
-                        arguments.Add(Executor);
-                        verb.Action.Invoke(matchContext, Executor, arguments);
+
+                        if (displayMatches)
+                        {
+                            core.SendMessage(Executor, matches.Count.ToString() + " successful matches.\n", true);
+                            foreach (var match in matches)
+                                core.SendMessage(Executor, ScriptObject.AsString(match, 1) + "\n", true);
+                        }
+                        else
+                        {
+                            arguments.Clear();
+                            arguments.Add(matches);
+                            arguments.Add(Executor);
+                            verb.Action.Invoke(matchContext, Executor, arguments);
+                        }
                         break;
                     }
 

@@ -10,10 +10,24 @@
 )
 
 (verb "look" 
+	(sequence ^(
+		(optional (keyword "at"))
+		(flipper 
+			(object (contents_source_rel "supporter" "preposition") "object")
+			(anyof ^("in" "on" "under") "preposition")
+			(object (filter_source (visible_objects "actor") allow_preposition_filter) "supporter")
+		)
+	))
+	(defun "" ^("matches" "actor") ^()
+		*(echo actor (first matches).object:description)
+	)
+)
+
+(verb "look" 
 	(complete 
 		(sequence ^(
 			(anyof ^("in" "on" "under") "preposition")
-			(object (location_source "actor" "contents") "object")
+			(object (visible_objects "actor") "object")
 		))
 	)
 	(defun "" ^("matches" "actor") ^()

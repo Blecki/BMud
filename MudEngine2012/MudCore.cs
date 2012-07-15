@@ -17,6 +17,7 @@ namespace MudEngine2012
         public ScriptFunction Matcher;
         public ScriptFunction Action;
         public String name;
+        public String comment;
     }
 
     internal class ClientCommand : PendingAction
