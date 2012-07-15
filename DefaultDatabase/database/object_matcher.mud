@@ -1,32 +1,38 @@
 ﻿/* Object sources for object matcher */
 
-(defun "contents_source" ^("relative" "list") ^() /*Search relative some object for the items*/
+(defun "os-contents" ^("relative" "list") ^() /*Search relative some object for the items*/
 	*(defun "" ^("match") ^("relative" "list") 
 		*(coalesce match.(relative).(list) ^())
 	)
 )
 
-(defun "contents_source_rel" ^("relative" "list") ^()
+(defun "os-contents-v" ^("relative" "list") ^()
 	*(defun "" ^("match") ^("relative" "list")
 		*(coalesce match.(relative).(match.(list)) ^())
 	)
 )
 
-(defun "location_source" ^("relative") ^() /*Search relative some object for the items*/
+(defun "os-contents-l" ^("relative" "list") ^() /*Search relative some object for the items*/
+	*(lambda "lcontents_source_list" ^("match") ^("relative" "list") 
+		*(cat $(map "item" list *(coalesce match.(relative).(item) ^())))
+	)
+)
+
+(defun "os-location" ^("relative") ^() /*Search relative some object for the items*/
 	*(defun "" ^("match") ^("relative") 
 		*(cat 
-			(coalesce match.(relative).location.object.contents ^())
-			$(map "object" (coalesce match.(relative).location.object.contents ^())
-				*(coalesce object.on ^())
+			(where "object" (coalesce match.(relative).location.object.contents ^()) *(notequal object match.(relative)))
+			$(map "object" (where "object" (coalesce match.(relative).location.object.contents ^()) *(notequal object match.(relative)))
+				*(cat (coalesce object.on ^()) (coalesce object.in ^()))
 			)
 		)
 	)
 )
 
-(defun "visible_objects" ^("relative") ^() /*Everything that 'relative' can see*/
+(defun "os-visible" ^("relative") ^() /*Everything that 'relative' can see*/
 	*(defun "" ^("match") ^("relative")
 		*(cat
-			(coalesce match.(relative).location.object.contents ^())
+			(where "object" (coalesce match.(relative).location.object.contents ^()) *(notequal object match.(relative)))
 			(coalesce match.(relative).held ^())
 			(coalesce match.(relative).worn ^())
 			$(map "object" (coalesce match.(relative).location.object.contents ^())
@@ -37,29 +43,30 @@
 	)
 )
 
-(defun "filter_source" ^("source" "filter") ^()
-	*(defun "" ^("match") ^("source" "filter")
-		*(where "object" (source match) *(filter object match))
+(defun "os-mine" ^("relative") ^() /*Everything relative can see and also has*/
+	*(defun "" ^("match") ^("relative")
+		*(cat
+			(coalesce match.(relative).held ^())
+			(coalesce match.(relative).worn ^())
+			$(map "object" (cat (coalesce match.(relative).held ^()) (coalesce match.(relative).worn ^()))
+				*(cat (coalesce object.on ^()) (coalesce object.in ^())))
+		)
 	)
 )
 
-(defun "allow_preposition_filter" ^("object" "match") ^()
-	*(object:("allow_(match.preposition)"))
-)
-
-(defun "allow_preposition" ^("source") ^()
+(defun "os-allow-preposition" ^("source") ^()
 	*(lambda "lallow_preposition" ^("match") ^("source")
 		*(where "object" (source match) *(object:("allow_(match.preposition)")))
 	)
 )
 
-(defun "cat_source" ^("A" "B") ^() /* Cat two sources together*/
+(defun "os-cat" ^("A" "B") ^() /* Cat two sources together*/
 	*(defun "" ^("match") ^("A" "B") 
 		*(cat (A match) (B match))
 	)
 )
 
-(defun "object" ^("source" "into") ^() /* Match an object in the list returned by 'source' */
+(defun "m-object" ^("source" "into") ^() /* Match an object in the list returned by 'source' */
 	*(lambda "lobject" ^("matches") ^("source" "into")
 		*(cat 																						/* Combine list of lists into single list */
 			$(map "match" matches																	/* Map existing matches to new matches */

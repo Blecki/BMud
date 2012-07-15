@@ -1,52 +1,65 @@
 ﻿(discard_verb "look")
 
-(verb "look" (complete (optional (keyword "here")))
-	(defun "" ^("matches" "actor") ^() *(echo actor actor.location.object:description)))
-
-(verb "look" (complete (sequence ^((optional (keyword "at")) (any_object "object"))))
-	(defun "" ^("matches" "actor") ^()
-		*(echo actor (first matches).object:description)
-	)
-)
-
-(verb "look" 
-	(sequence ^(
-		(optional (keyword "at"))
-		(flipper 
-			(object (contents_source_rel "supporter" "preposition") "object")
-			(anyof ^("in" "on" "under") "preposition")
-			(object (filter_source (visible_objects "actor") allow_preposition_filter) "supporter")
-		)
-	))
-	(defun "" ^("matches" "actor") ^()
-		*(echo actor (first matches).object:description)
-	)
-)
-
-(verb "look" 
-	(complete 
-		(sequence ^(
-			(anyof ^("in" "on" "under") "preposition")
-			(object (visible_objects "actor") "object")
+(verb "look"
+	(m-filter-failures
+		(m-sequence ^(
+			(m-optional (m-keyword "at"))
+			(m-if-exclusive (m-nothing) 
+				(m-set-object-here)
+				(m-if-exclusive (m-complete (m-any-visible-object "object")) 
+					(m-nop)
+					(m-if-exclusive (m-preposition)
+						(m-if-exclusive (m-complete (m-any-visible-object "object"))
+							(m-if-exclusive (m-allows-preposition "object")
+								(m-set "look-preposition" true)
+								(m-fail ^"You can't look (this.preposition) that.\n")
+							)
+							(m-fail "I don't see that here.")
+						)
+						(m-if-exclusive
+							(m-flipper
+								(m-if-exclusive (m-flipper-complete (m-relative-object))
+									(m-nop)
+									(m-fail ^"I can't find that (this.preposition) (this.supporter:the).\n")
+								)
+								(m-from|preposition)
+								(m-if-exclusive (m-nothing)
+									(m-fail "Look at what?\n")
+									(m-complete (m-supporter))
+								)
+							)
+							(m-nop)
+							(m-fail "I don't see that here.")
+						)
+					)
+				)
+			)
 		))
 	)
 	(defun "" ^("matches" "actor") ^()
-		*(let ^(^("match" (first matches)))
-			*(if (match.object:"allow_(match.preposition)")
-				*(let ^(^("list" (coalesce match.object.(match.preposition) ^())))
-					*(if (equal (length list) 0)
-						*(echo actor "There is nothing (match.preposition) the (match.object:short).")
-						*(echo actor "(match.preposition) the (match.object:short) (short_list list).")
+		*(if (notequal (first matches).fail null)
+			*(echo actor (first matches):fail)
+			*(nop
+				(if (greaterthan (length matches) 1) *(echo actor "[Multiple possible matches. Accepting first match.]\n"))
+				(let ^(^("match" (first matches)))
+					*(if (match.look-preposition)
+						*(nop
+							(echo actor "[Looking (match.preposition) (match.object:the).]\n")
+							(echo actor "(match.preposition) (match.object:the) (short_list match.object.(match.preposition))\n")
+						)
+						*(if (and (notequal match.object actor.location.object) (notequal match.object.location.object actor.location.object))
+							*(nop
+								(echo actor "[Looking at (match.object:a) from (match.object.location.list) (match.object.location.object:the).]\n")
+								(echo actor "(match.object:description)\n")
+							)
+							*(nop
+								(echo actor "[Looking at (match.object:a).]\n")
+								(echo actor "(match.object:description)\n")
+							)
+						)
 					)
 				)
-				*(echo actor "You can't look (match.preposition) that.")
 			)
 		)
 	)
 )
-
-
-
-(verb "look" (anything)
-	(defun "" ^("matches" "actor") ^()
-		*(echo actor "I don't see that here.")))

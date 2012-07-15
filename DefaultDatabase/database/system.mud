@@ -64,13 +64,13 @@
 (depend "go")
 
 (discard_verb "functions")
-(verb "functions" (none)
+(verb "functions" (m-nothing)
 	(defun "" ^("matches" "actor") ^()
 		*(for "function" functions
 			*(echo actor "(function.name) - (function.shortHelp)\n"))))
 			
 (discard_verb "verbs")
-(verb "verbs" (none)
+(verb "verbs" (m-nothing)
 	(defun "" ^("matches" "actor") ^()
 		*(for "verb" verbs
 			*(echo actor "(verb.name)\n")
@@ -79,7 +79,7 @@
 )
 			
 (discard_verb "examine")
-(verb "examine" (any_object "object")
+(verb "examine" (m-any-visible-object "object")
 	(defun "" ^("matches" "actor") ^()
 		*(nop
 			(if (greaterthan (length matches) 1) *(echo actor "[More than one possible match. Accepting first.]\n"))
@@ -95,7 +95,7 @@
 )
 
 (discard_verb "teleport")
-(verb "teleport" (rest "text") 
+(verb "teleport" (m-rest "text") 
 	(defun "" ^("matches" "actor") ^()
 		*(let ^(^("destination" (load (first matches).text)))
 			*(if (notequal destination null)
@@ -109,11 +109,11 @@
 )
 
 (discard_verb "help")
-(verb "help" (rest "text")
+(verb "help" (m-rest "text")
 	(lambda "" ^("matches" "actor") ^()
 		*(nop
 			(echo actor #((first matches).text))
-			(let ^(^("test" "(first matches).text)")
+			(let ^(^("test" "(first matches).text)"))
 				*(echo actor "(test)")
 			)
 		)
