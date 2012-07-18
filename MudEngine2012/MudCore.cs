@@ -11,15 +11,6 @@ namespace MudEngine2012
         public virtual void Execute(MudCore core) { }
     }
 
-
-    internal class Verb : ReflectionScriptObject
-    {
-        public ScriptFunction Matcher;
-        public ScriptFunction Action;
-        public String name;
-        public String comment;
-    }
-
     internal class ClientCommand : PendingAction
     {
         internal Client client;
@@ -30,10 +21,14 @@ namespace MudEngine2012
             try
             {
                 var tokens = command.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                var words = new ScriptList(tokens);
-                if (!core.InvokeSystem(client, "handle_client_command", new ScriptList(new object[] { client, words }), new ScriptContext()))
+                var words = new MISP.ScriptList(tokens);
+                if (!core.InvokeSystem(
+                    client,
+                    "handle_client_command", 
+                    new MISP.ScriptList(new object[] { client, words }), 
+                    new MISP.ScriptContext()))
                     core.SendMessage(client, "No command handler registered.\n", true);
-                if (client.logged_on) core.ConnectedClients.Add(client.player.path, client);
+                if (client.logged_on) core.ConnectedClients.Add(client.player.GetProperty("@path").ToString(), client);
             }
             catch (Exception e)
             {
@@ -58,7 +53,7 @@ namespace MudEngine2012
 
         public override void Execute(MudCore core)
         {
-            core.InvokeSystem(client, invoke, new ScriptList(new object[] { client }), new ScriptContext());
+            core.InvokeSystem(client, invoke, new MISP.ScriptList(new object[] { client }), new MISP.ScriptContext());
         }
     }
 
@@ -68,9 +63,7 @@ namespace MudEngine2012
         LinkedList<PendingAction> PendingActions = new LinkedList<PendingAction>();
         Thread ActionExecutionThread;
         public Database database { get; private set; }
-        public ScriptEvaluater scriptEngine { get; private set; }
-        internal Dictionary<String, List<Verb>> verbs = new Dictionary<string, List<Verb>>();
-        internal Dictionary<String, String> aliases = new Dictionary<string, string>();
+        public MISP.ScriptEvaluater scriptEngine { get; private set; }
         internal Dictionary<String, Client> ConnectedClients = new Dictionary<String, Client>();
 
         private Mutex _databaseLock = new Mutex();
@@ -96,11 +89,11 @@ namespace MudEngine2012
 
         public void ClientDisconnected(Client client)
         {
-            Console.WriteLine("Lost client " + (client.logged_on ? client.player.path : "null") + "\n");
+            Console.WriteLine("Lost client " + (client.logged_on ? client.player.GetProperty("@path").ToString() : "null") + "\n");
             if (client.logged_on)
             {
                 _databaseLock.WaitOne();
-                ConnectedClients.Remove(client.player.path);
+                ConnectedClients.Remove(client.player.GetProperty("@path").ToString());
                 _databaseLock.ReleaseMutex();
             }
             EnqueuAction(new InvokeAction(client, "handle_lost_client"));
@@ -108,9 +101,9 @@ namespace MudEngine2012
 
         public bool Start(String basePath)
         {
-            //try
-            //{
-                scriptEngine = new ScriptEvaluater(this);
+            try
+            {
+            scriptEngine = new MISP.ScriptEvaluater(this);
                 SetupScript();
                 database = new Database(basePath, this);
                 database.LoadObject("system");
@@ -119,15 +112,15 @@ namespace MudEngine2012
                 ActionExecutionThread.Start();
 
                 Console.WriteLine("Engine ready with path " + basePath + ".");
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine("Failed to start mud engine.");
-            //    Console.WriteLine(e.Message);
-            //    Console.WriteLine(e.StackTrace);
-            //    throw e;
-            //    return false;
-            //}
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Failed to start mud engine.");
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+                throw e;
+                return false;
+            }
             return true;
         }
 
@@ -144,25 +137,57 @@ namespace MudEngine2012
 
         internal List<Message> PendingMessages = new List<Message>();
 
-        public void SendMessage(ScriptObject Object, String _message, bool Immediate)
+        public void SendMessage(MISP.ScriptObject Object, String _message, bool Immediate)
         {
             _databaseLock.WaitOne();
             Client client = null;
+
             if (Object is Client) client = Object as Client;
-            else if (Object is MudObject && ConnectedClients.ContainsKey((Object as MudObject).path))
-                client = ConnectedClients[(Object as MudObject).path];
+            else
+            {
+                var path = Object.GetLocalProperty("@path") as String;
+                if (path != null && ConnectedClients.ContainsKey(path))
+                    client = ConnectedClients[path];
+            }
+
             if (client != null)
             {
-                if (Immediate) client.Send(_message);
-                else PendingMessages.Add(new Message { _client = client, _message = _message });
+                //Process message formatting.
+                var realMessage = new StringBuilder();
+                int p = 0;
+                while (true)
+                {
+                    if (p >= _message.Length) break;
+                    if (_message[p] == '\\')
+                    {
+                        ++p;
+                        if (p >= _message.Length) break;
+                        if (_message[p] == 'n') realMessage.Append("\n\r");
+                        else if (_message[p] == 't') realMessage.Append("\t");
+                        else realMessage.Append(_message[p]);
+                    }
+                    else if (_message[p] == '^')
+                    {
+                        ++p;
+                        if (p >= _message.Length) break;
+                        realMessage.Append((new String(_message[p], 1)).ToUpperInvariant());
+                    }
+                    else
+                        realMessage.Append(_message[p]);
+
+                    ++p;
+                }
+
+                if (Immediate) client.Send(realMessage.ToString());
+                else PendingMessages.Add(new Message { _client = client, _message = realMessage.ToString() });
             }
             _databaseLock.ReleaseMutex();
         }
 
-        public bool IsPlayerConnected(String ID)
+        public bool IsPlayerConnected(String path)
         {
             _databaseLock.WaitOne();
-            bool R = ConnectedClients.ContainsKey(ID);
+            bool R = ConnectedClients.ContainsKey(path);
             _databaseLock.ReleaseMutex();
             return R;
         }
@@ -193,15 +218,19 @@ namespace MudEngine2012
             }
         }
 
-        internal bool InvokeSystem(ScriptObject executor, String property, ScriptList arguments, ScriptContext context)
+        internal bool InvokeSystem(
+            MISP.ScriptObject executor, 
+            String property, 
+            MISP.ScriptList arguments, 
+            MISP.ScriptContext context)
         {
-            var system = database.LoadObject("system") as ScriptObject;
+            var system = database.LoadObject("system") as MISP.ScriptObject;
             var prop = system.GetProperty(property);
-            if (prop is ScriptFunction)
+            if (prop is MISP.ScriptFunction)
             {
                 try
                 {
-                    (prop as ScriptFunction).Invoke(context, system, arguments);
+                    (prop as MISP.ScriptFunction).Invoke(context, system, arguments);
                     return true;
                 }
                 catch (Exception e)

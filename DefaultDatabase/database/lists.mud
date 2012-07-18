@@ -1,15 +1,15 @@
 ﻿(depend "grammar")
 
-(defun "remove" ^("what" "list") ^() *(where "item" (coalesce list ^()) *(notequal item what)))
-(defun "add" ^("what" "list") ^() *(cat (coalesce list ^()) ^(what)))
+(defun "list-remove" ^("what" "list") ^() *(where "item" (coalesce list ^()) *(notequal item what)))
+(defun "list-add" ^("what" "list") ^() *(cat (coalesce list ^()) ^(what)))
 
 (defun "prop_remove" ^("object" "property" "item") ^() 
 	*(set object property 
-		(remove item (object.(property)))
+		(list-remove item (object.(property)))
 	)
 )
 
-(defun "prop_add" ^("object" "property" "item") ^() *(set object property (add item (coalesce (object.(property)) ^()))))
+(defun "prop_add" ^("object" "property" "item") ^() *(set object property (list-add item (coalesce (object.(property)) ^()))))
 
 
 (defun "short_list" ^("list") ^()
@@ -19,7 +19,7 @@
 		*("(isare list) (strcat
 			$(mapi "i" list
 				*(if 
-					(equal i (minus (length list) 1))
+					(equal i (subtract (length list) 1))
 					*("and ((index list i):a).")
 					*("((index list i):a), ")
 				)
@@ -35,16 +35,16 @@
 		*("(isare list) (strcat
 			$(mapi "i" list
 				*(if 
-					(equal i (minus (length list) 1))
-					*("and ((index list i):a)(on_list (index list i)).")
-					*("((index list i):a)(on_list (index list i)), ")
+					(equal i (subtract (length list) 1))
+					*("and ((index list i):a)(on-list (index list i)).")
+					*("((index list i):a)(on-list (index list i)), ")
 				)
 			)
 		)")
 	)
 )
 
-(defun "on_list" ^("object") ^()
+(defun "on-list" ^("object") ^()
 	*(if (equal (length object.on) 0)
 		*("")
 		*(" [On which (short_list object.on)]")

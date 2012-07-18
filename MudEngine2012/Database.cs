@@ -8,7 +8,7 @@ namespace MudEngine2012
     public class Database
     {
         public String basePath { get; private set; }
-        private Dictionary<String, MudObject> namedObjects = new Dictionary<string, MudObject>();
+        private Dictionary<String, MISP.ScriptObject> namedObjects = new Dictionary<string, MISP.ScriptObject>();
         private MudCore core = null;
 
         public Database(String basePath, MudCore core)
@@ -17,14 +17,14 @@ namespace MudEngine2012
             this.core = core;
         }
 
-        public MudObject CreateObject(String path)
+        public MISP.ScriptObject CreateObject(String path)
         {
             if (LoadObject(path) != null) return null;
-            namedObjects.Upsert(path, new MudObject(this, path));
+            namedObjects.Upsert(path, new MISP.GenericScriptObject("@path", path));
             return namedObjects[path];
         }
 
-        public MudObject LoadObject(String path)
+        public MISP.ScriptObject LoadObject(String path)
         {
             if (namedObjects.ContainsKey(path)) return namedObjects[path];
             return ReLoadObject(path);
@@ -32,22 +32,21 @@ namespace MudEngine2012
 
         private static int loadDepth = 0;
 
-        public MudObject ReLoadObject(String path)
+        public MISP.ScriptObject ReLoadObject(String path)
         {
             if (!namedObjects.ContainsKey(path))
-                namedObjects.Upsert(path, new MudObject(this, path));
+                namedObjects.Upsert(path, new MISP.GenericScriptObject("@path", path));
             try
             {
                 Console.WriteLine(new String(' ', loadDepth) + "Loading object " + basePath + path + ".");
                 loadDepth += 1;
                 var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
-                var scriptContext = new ScriptContext();
+                var scriptContext = new MISP.ScriptContext();
                 var mudObject = namedObjects[path];
                 mudObject.ClearProperties();
 
-                //var root = ScriptParser.ParseRoot(inFile);
-                //Console.WriteLine("Parse tree of " + path);
-                //root.DebugEmit(0);
+                mudObject.SetProperty("@path", path);
+                if (path != "object") mudObject.SetProperty("@base", LoadObject("object"));
 
                 core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, true);
 

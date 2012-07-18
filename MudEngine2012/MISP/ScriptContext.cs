@@ -3,27 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012
+namespace MudEngine2012.MISP
 {
     public class ScriptContext
     {
-        public MudObject actor;
         private List<Dictionary<String, ScriptList>> variables = new List<Dictionary<String, ScriptList>>();
-        //private Dictionary<String, ScriptList> variables = new Dictionary<String, ScriptList>();
         public DateTime executionStart;
-        public String activeSource { get; set; }
+
         public Action<String> trace = null;
         public int traceDepth = 0;
 
-        public void Reset(MudObject actor)
+        public void Reset()
         {
-            this.actor = actor;
             variables.Clear();
-            variables.Add(new Dictionary<string, ScriptList>());
+            PushScope();
             executionStart = DateTime.Now;
         }
 
-        public ScriptContext() { Reset(null); }
+        public ScriptContext() { Reset(); }
 
         public Dictionary<String, ScriptList> Scope { get { return variables[variables.Count - 1]; } }
 
@@ -57,7 +54,8 @@ namespace MudEngine2012
 
         public void ChangeVariable(String name, Object newValue)
         {
-            if (!Scope.ContainsKey(name)) throw new ScriptError("Variable does not exist.");
+            if (!Scope.ContainsKey(name)) 
+                throw new ScriptError("Variable does not exist.");
             var list = Scope[name];
             list.RemoveAt(list.Count - 1);
             list.Add(newValue);

@@ -13,70 +13,45 @@ namespace MudEngine2012
 
             scriptEngine.specialVariables.Add("players", (s, t) =>
                 {
-                    return new ScriptList(ConnectedClients.Select((p) =>
+                    return new MISP.ScriptList(ConnectedClients.Select((p) =>
                         {
                             return p.Value.player;
                         }));
                 });
 
-            scriptEngine.specialVariables.Add("verbs", (s, t) =>
-                {
-                    var result = new ScriptList();
-                    foreach (var verb in verbs)
-                        result.AddRange(verb.Value);
-                    return result;
-                });
-
             scriptEngine.specialVariables.Add("system", (s, t) => { return database.LoadObject("system"); });
 
             #region Object Declaration Functions
-            
 
-            scriptEngine.functions.Add("create", new ScriptFunction("create", "code : Create an anonymous object. Executes [code] to initialize object.", (context, thisObject, arguments) =>
-            {
-                var result = new MudObject(database);
-                var code = ScriptEvaluater.ArgumentType<ParseNode>(arguments[0]);
-                scriptEngine.Evaluate(context, code, result, true);
-                return result;
-            }));
 
-            scriptEngine.functions.Add("create_named", new ScriptFunction("create_named", "name : Create a new named object. Fails if object already exists.",
+            scriptEngine.functions.Add("load", new MISP.ScriptFunction("load", "name : Loads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
-                    ScriptEvaluater.ArgumentCount(1, arguments);
-                    var objectName = ScriptObject.AsString(arguments[0]);
-                    return database.CreateObject(objectName);
-                }));
-
-
-            scriptEngine.functions.Add("load", new ScriptFunction("load", "name : Loads an object from the database.",
-                (context, thisObject, arguments) =>
-                {
-                    ScriptEvaluater.ArgumentCount(1, arguments);
-                    var objectName = ScriptObject.AsString(arguments[0]);
+                    MISP.ScriptEvaluater.ArgumentCount(1, arguments);
+                    var objectName = MISP.ScriptObject.AsString(arguments[0]);
                     try
                     {
                         return database.LoadObject(objectName);
                     }
                     catch (Exception e)
                     {
-                        SendMessage(thisObject as MudObject, "Failed to load object " + objectName + ": " + e.Message, true);
+                        SendMessage(thisObject, "Failed to load object " + objectName + ": " + e.Message, true);
                         return null;
                     }
                 }));
 
-            scriptEngine.functions.Add("reload", new ScriptFunction("reload", "name : Reoads an object from the database.",
+            scriptEngine.functions.Add("reload", new MISP.ScriptFunction("reload", "name : Reoads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
-                    ScriptEvaluater.ArgumentCount(1, arguments);
-                    var objectName = ScriptObject.AsString(arguments[0]);
+                    MISP.ScriptEvaluater.ArgumentCount(1, arguments);
+                    var objectName = MISP.ScriptObject.AsString(arguments[0]);
                     try
                     {
                         return database.ReLoadObject(objectName);
                     }
                     catch (Exception e)
                     {
-                        SendMessage(thisObject as MudObject, "Failed to load object " + objectName + ": " + e.Message, true);
+                        SendMessage(thisObject, "Failed to load object " + objectName + ": " + e.Message, true);
                         return null;
                     }
                 }));
@@ -84,90 +59,45 @@ namespace MudEngine2012
             #endregion
 
             #region Debug
-            scriptEngine.functions.Add("print", new ScriptFunction("print", "object : Print to the console.", (context, thisObject, arguments) =>
+            scriptEngine.functions.Add("print", new MISP.ScriptFunction("print", "object : Print to the console.", (context, thisObject, arguments) =>
                 {
-                    Console.WriteLine(String.Join(" ", arguments.Select((o, i) => { return ScriptObject.AsString(o); })));
+                    Console.WriteLine(String.Join(" ", arguments.Select((o, i) => { return MISP.ScriptObject.AsString(o); })));
                     return null;
                 }));
-            #endregion
-
-            #region Command Matching
-
-            scriptEngine.functions.Add("verb", new ScriptFunction("verb", "name matcher action : Register a verb.",
-                (context, thisObject, arguments) =>
-                {
-                    ScriptEvaluater.ArgumentCountOrGreater(3, arguments);
-                    var name = ScriptObject.AsString(arguments[0]);
-                    if (!verbs.ContainsKey(name)) verbs.Add(name, new List<Verb>());
-                    List<Verb> list = verbs[name];
-                    var r = new Verb
-                    {
-                        Matcher = ScriptEvaluater.ArgumentType<ScriptFunction>(arguments[1]),
-                        Action = ScriptEvaluater.ArgumentType<ScriptFunction>(arguments[2]),
-                        name = name
-                    };
-                    list.Add(r);
-
-                    if (arguments.Count > 3)
-                    {
-                        ScriptEvaluater.ArgumentCount(4, arguments);
-                        r.comment = ScriptObject.AsString(arguments[3]);
-                    }
-
-                    return r;
-                }));
-
-            scriptEngine.functions.Add("alias", new ScriptFunction("alias", "name value : Register a verb alias.",
-                (context, thisObject, arguments) =>
-                {
-                    ScriptEvaluater.ArgumentCount(2, arguments);
-                    aliases.Upsert(ScriptEvaluater.ArgumentType<String>(arguments[0]), ScriptEvaluater.ArgumentType<String>(arguments[1]));
-                    return null;
-                }
-            ));
-
-            scriptEngine.functions.Add("discard_verb", new ScriptFunction("discard_verb", "name : Throw away an entire verb set.",
-                 (context, thisObject, arguments) =>
-                 {
-                     ScriptEvaluater.ArgumentCount(1, arguments);
-                     var name = ScriptObject.AsString(arguments[0]);
-                     if (verbs.ContainsKey(name)) verbs.Remove(name);
-                     return null;
-                 }));
-
             #endregion
 
             #region Basic Mudding
-            scriptEngine.functions.Add("echo", new ScriptFunction("echo", "player<s> message : Send text to players", (context, thisObject, arguments) =>
+            scriptEngine.functions.Add("echo", new MISP.ScriptFunction("echo", "player<s> message : Send text to players", (context, thisObject, arguments) =>
             {
-                ScriptEvaluater.ArgumentCount(2, arguments);
-                ScriptList to = null;
-                
-                if (arguments[0] is ScriptList) to = arguments[0] as ScriptList;
+                MISP.ScriptEvaluater.ArgumentCount(2, arguments);
+                MISP.ScriptList to = null;
+
+                if (arguments[0] is MISP.ScriptList) to = arguments[0] as MISP.ScriptList;
                 else
                 {
-                    to = new ScriptList();
+                    to = new MISP.ScriptList();
                     to.Add(arguments[0]);
                 }
 
                 foreach (var obj in to)
                 {
-                    if (obj is MudObject) SendMessage(obj as MudObject, ScriptObject.AsString(arguments[1]), false);
-                    else if (obj is Client) (obj as Client).Send(ScriptObject.AsString(arguments[1]));
+                    if (obj is Client) (obj as Client).Send(MISP.ScriptObject.AsString(arguments[1]));
+                    else if (obj is MISP.ScriptObject) SendMessage(obj as MISP.ScriptObject, MISP.ScriptObject.AsString(arguments[1]), false);
+
                 }
 
                 return null;
             }));
 
-            scriptEngine.functions.Add("command", new ScriptFunction("command",
+            scriptEngine.functions.Add("command", new MISP.ScriptFunction("command",
                 "player command : Send a command as if it came from player",
                 (context, thisObject, arguments) =>
                 {
-                    ScriptEvaluater.ArgumentCount(2, arguments);
+                    MISP.ScriptEvaluater.ArgumentCount(2, arguments);
                     EnqueuAction(new Command
                     {
-                        Executor = ScriptEvaluater.ArgumentType<MudObject>(arguments[0]),
-                        _Command = ScriptObject.AsString(arguments[1])
+                        Executor = MISP.ScriptEvaluater.ArgumentType<MISP.ScriptObject>(arguments[0]),
+                        _Command = MISP.ScriptObject.AsString(arguments[1])
                     });
                     return null;
                 }));

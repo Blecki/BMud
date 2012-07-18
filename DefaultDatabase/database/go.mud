@@ -1,5 +1,4 @@
 ﻿(depend "move_object")
-(discard_verb "go")
 
 (defun "open_link" ^("object" "name" "to") ^() 
 	*(prop_add object "links" (record ^("name" name) ^("to" to)))
@@ -18,7 +17,7 @@
 
 
 
-(verb "go" (link_matcher)
+(add-global-verb "go" (link_matcher)
 	(defun "" ^("matches" "actor") ^()
 		*(nop
 			(if (greaterthan (length matches) 1) *(echo actor "[More than one possible match. Accepting first match.]\n"))
@@ -27,5 +26,6 @@
 			(echo actor.location.object.contents "(actor:short) arrives.")
 		)
 	)
+	"Move thyself"
 )
 			

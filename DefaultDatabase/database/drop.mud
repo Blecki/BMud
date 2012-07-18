@@ -1,7 +1,6 @@
 ﻿(depend "move_object")
-(discard_verb "drop")
 
-(verb "drop" (m-object (os-contents "actor" "held") "object")
+(add-global-verb "drop" (m-object (os-contents "actor" "held") "object")
 	(defun "" ^("matches" "actor") ^()
 		*(if (equal actor.location.object null)
 			*(echo actor "You don't seem to be anywhere.")
@@ -13,5 +12,6 @@
 			)
 		)
 	)
+	"Discard things you have"
 )
 			

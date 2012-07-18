@@ -1,32 +1,25 @@
 ﻿(depend "move_object")
-(discard_verb "get")
-(alias "take" "get")
 
 (prop "take" (defun "" ^("actor" "object" "message_suffix") ^()
-	*(if (equal object.on_get null) /* Invoke default get behavior. */
+	*(if (equal object.on-get null) /* Invoke default get behavior. */
 		*(
-			(if (object.can_get actor)
+			(if (object.can-get actor)
 				*(nop
 					(move_object object actor "held")
 					(echo actor "You take (object:a)(message_suffix).\n")
 					(echo 
 						(where "player" actor.location.object.contents *(notequal player actor)) 
-						"(actor:short) takes (object:a)(message_suffix).\n"
+						"^(actor:short) takes (object:a)(message_suffix).\n"
 					)	
 				)
 				*(echo actor "You can't get that.\n")
 			)
 		)
-		*(object.on_get actor) /* invoke custom get behavior */
+		*(object.on-get actor) /* invoke custom get behavior */
 	)
 ))
 
-(prop "take_from" (defun "" ^("actor" "object" "preposition" "from") ^()
-	*((load "get").take actor object " from (preposition) (from:the)")
-))
-					
-/* GET [ALL] X ((FROM [IN/ON/UNDER]) | IN/ON/UNDER) [MY] Y */
-(verb "get"
+(add-global-verb "get"
 	(m-filter-failures
 		(m-if-exclusive (m-nothing) (m-fail "Get what?\n")
 			(m-if-exclusive (m-sequence ^((m-keyword "all") (m-nothing))) (m-sequence ^((m-expand-objects (os-location "actor")) (m-set "all" true)))
@@ -59,7 +52,7 @@
 							)
 						)
 						(m-nop)
-						(m-fail "I don't see that here. [B]")
+						(m-fail "I don't see that here.\n")
 					)
 				)
 			)

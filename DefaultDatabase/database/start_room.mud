@@ -1,63 +1,28 @@
-﻿(prop "base" (load "room"))
-(prop "long" "Default start room.")
+﻿(prop "@base" (load "room"))
+(prop "long" 
+	"A small chamber lined with bookshelves. A narrow window crouches in one wall, above an ancient wooden desk. Ill-fitting stones jut from the walls above the bookshelves. Dark wooden beams criss cross over head.")
+	
+(add-detail this "window" "The window is tall and narrow with an arched top. It has small panes separated by thin leading. You could look through it.")
+(add-keyword-detail this ^("out" "through") "window" "You can see some mountains in the distance, poking up through the fog, but not much of anything else except fog.")
 
-(add_object this "contents" (create *(nop
-	(prop "short" "small dolphin statue")
-	(prop "nouns" ^("dolphin" "statue" "test"))
-	(prop "on_get" (defun "" ^("actor") ^()
-		*(echo actor "The small statue scurries just out of reach.\n")
-	))
+(add-object this "contents" (create *(nop
+	(prop "short" "dusty rug")
+	(prop "nouns" ^("rug"))
+	(prop "adjectives" ^("dusty"))
+	(prop "description" "It looks like an ordinary rug. Could use some cleaning.")
 )))
 
-(add_object this "contents" (create *(nop
-	(prop "short" "table")
-	(prop "nouns" ^("table" "test"))
-	(prop "allow_on" true)
-	(prop "allow_under" true)
-	(prop "on_get" (defun "" ^("actor") ^() *(echo actor "You couldn't possibly carry that.\n")))
+(add-object this "contents" (create *(nop
+	(prop "short" "desk")
+	(prop "nouns" ^("desk"))
+	(prop "adjectives" ^("ancient" "wooden" "wood"))
+	(prop "description" ^"This desk is made of rough wooden planks crudely joined.\n(on-list this)\n")
+	(prop "on-get" (lambda "" ^("actor") ^() *(echo actor "You couldn't possible carry that.\n")))
+	(prop "allow-on" true)
 	
-	(add_object this "on" (create *(nop
-		(prop "short" "candle")
-		(prop "nouns" ^("candle"))
-	)))
-	
-		(add_object this "on" (create *(nop
-		(prop "short" "orange")
-		(prop "nouns" ^("orange"))
-		(prop "a" ^"an (this:short)")
-	)))
-	
-		(add_object this "on" (create *(nop
-		(prop "short" "book")
-		(prop "nouns" ^("book"))
-	)))
-
-
-	
-	(add_object this "under" (create *(nop
-		(prop "short" "pen")
-		(prop "nouns" ^("pen"))
+	(add-object this "on" (create *(nop
+		(prop "short" "small inkwell")
+		(prop "nouns" ^("inkwell"))
+		(prop "adjectives" ^("small"))
 	)))
 )))
-
-(add_object this "contents" (create *(nop
-	(prop "short" "dresser")
-	(prop "nouns" ^("dresser"))
-	(prop "allow_on" true)
-	(prop "allow_in" true)
-	
-	(add_object this "on" (create *(nop
-		(prop "short" "candle")
-		(prop "nouns" ^("candle"))
-	)))
-	
-	(add_object this "in" (create *(nop
-		(prop "short" "book")
-		(prop "nouns" ^("book"))
-	)))
-)))
-
-
-
-/*(depend "go")
-(open_link this "west" "room")*/

@@ -66,11 +66,34 @@
 	)
 )
 
-(defun "m-object" ^("source" "into") ^() /* Match an object in the list returned by 'source' */
-	*(lambda "lobject" ^("matches") ^("source" "into")
-		*(cat 																						/* Combine list of lists into single list */
-			$(map "match" matches																	/* Map existing matches to new matches */
-				*(map "object" 																		/* Map objects to matches */
-					(where "object" (source match) 													/* Result is a list of objects who'se noun property contains the next word in the command */
-						*(contains (coalesce object.nouns ^()) match.token.word))
-					*(clone match ^("token" match.token.next) ^(into object)))))))
+(defun "m-object" ^("source" "into") ^()
+	*(lambda "lm-object" ^("matches") ^("source" "into")
+		*(reverse (sort "match" 
+			(where "match" 
+				(cat 
+					$(map "match" matches		
+						*(map "object" (source match)
+							*(let ^(^("nouns" (coalesce object.nouns ^())) ^("adjectives" (coalesce object.adjectives ^())))
+								*(lastarg
+									(while 
+										*(and (notequal match.token null) (contains adjectives match.token.word)) 
+										*(var "match" (clone match 
+											^("token" match.token.next) 
+											^("adjectives_matched" (add (coalesce match.adjectives_matched 0) 1))
+										))
+									)
+									(if (and (notequal match.token null) (contains nouns match.token.word))
+										*(clone match ^("token" match.token.next) ^(into object))
+										*(clone match ^("fail" "Did not match object."))
+									)
+								)
+							)
+						)
+					)
+				)
+				*(equal match.fail null)
+			)
+			*(coalesce match.adjectives_matched 0)
+		))
+	)
+)	

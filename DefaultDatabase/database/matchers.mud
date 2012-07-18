@@ -217,7 +217,7 @@
 
 (defun "m-allows-preposition" ^("object") ^()
 	*(lambda "lm-allows-preposition" ^("matches") ^("object")
-		*(where "match" matches *(match.(object):("allow_(match.preposition)")))
+		*(where "match" matches *(match.(object):("allow-(match.preposition)")))
 	)
 )
 
@@ -249,7 +249,7 @@
 )
 
 (defun "m-fail" ^("message") ^()
-	*(lambda "lset_fail" ^("matches") ^("message")
+	*(lambda "lm-fail" ^("matches") ^("message")
 		*(map "match" matches 
 			*(if (equal match.fail null)
 				*(clone match ^("fail" message))
@@ -257,6 +257,20 @@
 			)
 		)
 	)
+)
+
+(defun "m-switch" ^("list" "tail") ^()
+	*(if (greaterthan (length list) 1)
+		*(m-if-exclusive (first (first list))
+			(last (first list))
+			(m-switch (sub-list list 1) tail)
+		)
+		*(m-if-exclusive (first (first list))
+			(last (first list))
+			tail
+		)
+	)
+	"m-switch list tail: Implements a chain of m-if-exclusive. Each item in the list is the else clause of the item before it. Tail is the final else."
 )
 
 			

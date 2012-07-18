@@ -7,7 +7,7 @@ namespace MudEngine2012
 {
     public class CommandTokenizer
     {
-        public class Token : ReflectionScriptObject
+        public class Token : MISP.ReflectionScriptObject
         {
             public String word;
             public int place;

@@ -8,7 +8,7 @@ namespace MudEngine2012
 {
     internal class Command : PendingAction
     {
-        internal MudObject Executor;
+        internal MISP.ScriptObject Executor;
         internal String _Command;
 
         public override void Execute(MudEngine2012.MudCore core)
@@ -21,8 +21,8 @@ namespace MudEngine2012
                 if (_Command.StartsWith("/eval "))
                 {
                     core.SendMessage(Executor,
-                        ScriptObject.AsString(
-                            core.scriptEngine.EvaluateString(new ScriptContext(), Executor,
+                        MISP.ScriptObject.AsString(
+                            core.scriptEngine.EvaluateString(new MISP.ScriptContext(), Executor,
                             _Command.Substring(6))), true);
                     core.SendPendingMessages();
                     return;
@@ -42,88 +42,21 @@ namespace MudEngine2012
                     tokens = tokens.next;
                 }
 
-                var arguments = new ScriptList();
-                var matchContext = new ScriptContext();
-                ScriptList matches = null;
+                var matchContext = new MISP.ScriptContext();
 
-                List<Verb> verbList = null;
-                if (core.verbs.ContainsKey(firstWord)) verbList = core.verbs[firstWord];
-                else if (core.aliases.ContainsKey(firstWord) && core.verbs.ContainsKey(core.aliases[firstWord]))
-                    verbList = core.verbs[core.aliases[firstWord]];
-
-                if (verbList != null)
+                if (displayTrace)
                 {
-                    bool matchFound = false;
-                    foreach (var verb in verbList)
-                    {
-                        if (displayMatches || displayTrace) core.SendMessage(Executor, "Attempting to match " + verb.comment + "\n", true);
-                        try
-                        {
-                            if (displayTrace)
-                            {
-                                matchContext.trace = (s) => core.SendMessage(Executor, s, true);
-                                matchContext.traceDepth = 0;
-                            }
-
-                            matchContext.Reset(Executor);
-                            matches = new ScriptList();
-                            matches.Add(new GenericScriptObject("token", tokens, "actor", Executor, "command", _Command));
-                            arguments.Clear();
-                            arguments.Add(matches);
-                            matches = verb.Matcher.Invoke(matchContext, Executor, arguments) as ScriptList;
-                        }
-                        catch (ScriptError e)
-                        {
-                            core.SendMessage(Executor, e.Message, true);
-                            matches = null;
-                        }
-
-                        if (matches == null || matches.Count == 0)
-                        {
-                            if (displayMatches) core.SendMessage(Executor, "No matches.\n", true);
-                            continue;
-                        }
-
-                        if (!(matches[0] is GenericScriptObject))
-                        {
-                            core.SendMessage(Executor, "Matcher returned the wrong type.", true);
-                            continue;
-                        }
-
-                        matchFound = true;
-
-                        if (displayMatches)
-                        {
-                            core.SendMessage(Executor, matches.Count.ToString() + " successful matches.\n", true);
-                            foreach (var match in matches)
-                                core.SendMessage(Executor, ScriptObject.AsString(match, 1) + "\n", true);
-                        }
-                        else
-                        {
-                            arguments.Clear();
-                            arguments.Add(matches);
-                            arguments.Add(Executor);
-                            verb.Action.Invoke(matchContext, Executor, arguments);
-                        }
-                        break;
-                    }
-
-                    if (!matchFound)
-                        core.SendMessage(Executor, "No registered matchers matched.", false);
+                    matchContext.trace = (s) => core.SendMessage(Executor, s, true);
+                    matchContext.traceDepth = 0;
                 }
-                else
-                {
-                    arguments.Clear();
-                    arguments.Add(_Command);
-                    arguments.Add(Executor);
-                    if (!core.InvokeSystem(Executor, "on_unknown_verb", arguments, matchContext))
-                        core.SendMessage(Executor, "I don't recognize that verb.", false);
-                }
+
+                core.InvokeSystem(Executor, "handle_command",
+                    new MISP.ScriptList(Executor, firstWord, _Command, tokens, displayMatches == true ? (object)true : null),
+                    matchContext);
             }
             catch (Exception e)
             {
                 core.PendingMessages.Clear();
-                //DatabaseService.DiscardChanges();
                 core.SendMessage(Executor,
                     e.Message + "\n" +
                     e.StackTrace + "\n", true);

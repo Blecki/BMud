@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012
+namespace MudEngine2012.MISP
 {
     public class ScriptFunction : ReflectionScriptObject
     {
         private Func<ScriptContext, ScriptObject, ScriptList, Object> implementation = null;
         public String name;
-        public String source;
         public String shortHelp;
         public bool isLambda = false;
         public ScriptList closedValues = null;
@@ -30,14 +29,7 @@ namespace MudEngine2012
                 context.traceDepth += 1;
             }
 
-            //try
-            //{
             var r = implementation(context, thisObject, arguments);
-            //}
-            //catch (ScriptError e)
-            //{
-            //    throw new ScriptError(source + " " + e.Message);
-            //}
 
             if (context.trace != null)
             {

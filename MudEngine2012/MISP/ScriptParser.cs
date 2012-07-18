@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012
+namespace MudEngine2012.MISP
 {
     public class ParseNode
     {
@@ -134,7 +134,11 @@ namespace MudEngine2012
             {
                 result = ParseStringExpression(state);
             }
-            else if ("(*^$#".Contains(state.Next()))
+            else if (state.MatchNext("*(") 
+                | state.MatchNext("^(")
+                | state.MatchNext("$(") 
+                | state.MatchNext("#(") 
+                | state.MatchNext("("))
             {
                 result = ParseNode(state);
             }
@@ -142,7 +146,7 @@ namespace MudEngine2012
             {
                 result = ParseInteger(state);
             }
-            else
+            else 
             {
                 result = ParseToken(state);
             }

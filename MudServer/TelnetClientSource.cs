@@ -19,8 +19,7 @@ namespace MudServer
 
             if (!String.IsNullOrEmpty(CommandQueue)) message = "\r" + message + CommandQueue;
 
-            message = message.Replace("\\n", "\n");
-            message = message.Replace("\n", "\n\r");
+            
 
             while (bytesSent < message.Length)
             {
