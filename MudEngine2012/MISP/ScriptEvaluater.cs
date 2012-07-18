@@ -17,6 +17,7 @@ namespace MudEngine2012.MISP
         public Dictionary<String, Func<ScriptContext, ScriptObject, Object>> specialVariables
             = new Dictionary<string, Func<ScriptContext, ScriptObject, object>>();
         public MudCore core { get; private set; }
+        private Random random = new Random();
 
         public TimeSpan allowedExecutionTime = TimeSpan.FromSeconds(10);
 
@@ -504,6 +505,16 @@ namespace MudEngine2012.MISP
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
                     return first.Value + second.Value;
+                }));
+
+            functions.Add("random", new ScriptFunction("random", "A B : return a random value in range (A,B).",
+                (context, thisObject, arguments) =>
+                {
+                    ArgumentCount(2, arguments);
+                    var first = arguments[0] as int?;
+                    var second = arguments[1] as int?;
+                    if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
+                    return random.Next(first.Value, second.Value);
                 }));
 
             functions.Add("multiply", new ScriptFunction("multiply", "A B : return A*B.",
