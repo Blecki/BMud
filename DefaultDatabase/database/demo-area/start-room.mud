@@ -5,6 +5,8 @@
 (add-detail this "window" "The window is tall and narrow with an arched top. It has small panes separated by thin leading. You could look through it.")
 (add-keyword-detail this ^("out" "through") "window" "You can see some mountains in the distance, poking up through the fog, but not much of anything else except fog.")
 
+(open-link this "demo-area/balcony" ^("west" "w"))
+
 (defun "random-item" ^("list") ^()
 	*(index list (random 0 (length list)))
 )

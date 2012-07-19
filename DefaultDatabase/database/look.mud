@@ -21,7 +21,7 @@
 					(m-from|preposition)
 					(m-if-exclusive (m-nothing)
 						(m-fail "Look at what?\n")
-						(m-complete (m-supporter))
+						(m-complete (m-supporter ^"You can't look (this.preposition) that.\n"))
 					)) 
 					(m-nop)
 				))

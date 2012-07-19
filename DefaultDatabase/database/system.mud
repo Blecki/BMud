@@ -15,6 +15,15 @@
 	)
 )
 
+(defun "add-global-alias" ^("name" "verb") ^()
+	*(let ^(^("system" (load "system")))
+		*(nop
+			(if (equal system.aliases null) *(set system "aliases" (record)))
+			(set system.aliases name verb)
+		)
+	)
+)
+
 (defun "verbs" ^() ^()
 	*(let ^(^("system" (load "system")))
 		(map "verb" (members system.verbs)
@@ -33,7 +42,7 @@
 						*(nop
 							(set client "player" player_object)
 							(set client "logged_on" true)
-							(move_object player_object (load "start_room") "contents")
+							(move_object player_object (load "demo-area/start-room") "contents")
 							(command player_object "look")
 						)
 						*(echo client "Wrong password.\n")
@@ -49,7 +58,7 @@
 						(set client "player" player_object)
 						(set client "logged_on" true)
 						(set player_object "password" (index words 2))
-						(move_object player_object (load "start_room") "contents")
+						(move_object player_object (load "demo-area/start-room") "contents")
 						(command player_object "look")
 					)
 					*(echo client "Couldn't create that player.\n")
@@ -62,11 +71,14 @@
 
 
 (defun "find-verb-list" ^("actor" "verb") ^()
-	*(where "match" (cat 
-			(where "potential-match" (coalesce actor.location.object.verbs ^()) *(equal potential-match.name verb))
-			((load "system").verbs.(verb))
+	*(let ^(^("system" (load "system")))
+		*(lastarg
+			(if system.aliases.(verb) *(var "verb" system.aliases.(verb)))
+			(cat
+				(where "potential-match" (coalesce actor.location.object.verbs ^()) *(equal potential-match.name verb))
+				(system.verbs.(verb))
+			)
 		)
-		*(match)
 	)
 )
 

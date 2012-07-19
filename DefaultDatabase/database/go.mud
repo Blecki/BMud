@@ -1,31 +1,35 @@
 ﻿(depend "move_object")
 
-(defun "open_link" ^("object" "name" "to") ^() 
-	*(prop_add object "links" (record ^("name" name) ^("to" to)))
-)
-
-(defun "link_matcher" ^() ^() 
-	*(defun "" ^("matches") ^()
-		*(map "match" 
-			(where "match" matches  
-				*(atleast (count "link" actor.location.object.links *(equal link.name match.token.word)) 1)
+(defun "make-link-lambda" ^("to" "name") ^()
+	*(lambda "lgo" ^("matches" "actor") ^("to" "name")
+		*(let ^(^("previous" actor.location.object))
+			*(nop
+				(echo (load to).contents "^(actor:short) arrived.\n")
+				(move_object actor (load to) "contents")
+				(echo previous.contents "^(actor:short) went (name).\n")
+				(echo actor "You went (name).\n")
+				(command actor "look")
 			)
-			*(clone match ^("token" match.token.next) ^("link" match.token.word))
 		)
 	)
 )
 
-
-
-(add-global-verb "go" (link_matcher)
-	(defun "" ^("matches" "actor") ^()
-		*(nop
-			(if (greaterthan (length matches) 1) *(echo actor "[More than one possible match. Accepting first match.]\n"))
-			(echo actor.location.object.contents "(actor:short) went ((first matches).link).")
-			(move_object actor (first (where "link" actor.location.object.links *(equal (first matches).link link.name))) "contents")
-			(echo actor.location.object.contents "(actor:short) arrives.")
+(defun "open-link" ^("from" "to" "names") ^()
+	*(nop
+		(prop_add from "links" (first names))
+		(for "name" names
+			*(nop
+				(add-verb from name (m-nothing)
+					(make-link-lambda to (first names))
+					"Move (first names)."
+				)
+				(add-verb from "go" (m-complete (m-keyword name))
+					(make-link-lambda to (first names))
+					"Move (first names)."
+				)
+			)
 		)
 	)
-	"Move thyself"
 )
-			
+
+(add-global-verb "go" (m-always-pass) (lambda "" ^("matches" "actor") ^() *(echo actor "You can't go that way.\n")) "Move thyself.")

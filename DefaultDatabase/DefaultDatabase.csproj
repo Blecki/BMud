@@ -52,7 +52,10 @@
     <None Include="database\grammar.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\start_room.mud">
+    <None Include="database\demo-area\balcony.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="database\demo-area\start-room.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="database\go.mud">

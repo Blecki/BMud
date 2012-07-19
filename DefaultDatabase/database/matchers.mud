@@ -221,9 +221,12 @@
 	)
 )
 
-(defun "m-supporter" ^() ^()
-	*(m-if-exclusive (m-sequence ^((m-any-visible-object "supporter") (m-allows-preposition "supporter")))
-		(m-nop)
+(defun "m-supporter" ^("message") ^()
+	*(m-if-exclusive (m-any-visible-object "supporter")
+		(m-if-exclusive (m-allows-preposition "supporter")
+			(m-nop)
+			(m-fail message)
+		)
 		(m-fail "I don't see that here.\n")
 	)
 )
@@ -234,6 +237,10 @@
 
 (defun "m-expand-supported-objects" ^() ^()
 	*(m-expand-objects (os-contents-v "supporter" "preposition"))
+)
+
+(defun "m-expand-held-objects" ^() ^()
+	*(m-expand-objects (os-contents "actor" "held"))
 )
 
 (defun "m-expand-objects" ^("source") ^()

@@ -2,18 +2,16 @@
 
 (prop "take" (defun "" ^("actor" "object" "message_suffix") ^()
 	*(if (equal object.on-get null) /* Invoke default get behavior. */
-		*(
-			(if (object.can-get actor)
-				*(nop
-					(move_object object actor "held")
-					(echo actor "You take (object:a)(message_suffix).\n")
-					(echo 
-						(where "player" actor.location.object.contents *(notequal player actor)) 
-						"^(actor:short) takes (object:a)(message_suffix).\n"
-					)	
-				)
-				*(echo actor "You can't get that.\n")
+		*(if (object.can-get actor)
+			*(nop
+				(move_object object actor "held")
+				(echo actor "You take (object:a)(message_suffix).\n")
+				(echo 
+					(where "player" actor.location.object.contents *(notequal player actor)) 
+					"^(actor:short) takes (object:a)(message_suffix).\n"
+				)	
 			)
+			*(echo actor "You can't get that.\n")
 		)
 		*(object.on-get actor) /* invoke custom get behavior */
 	)
@@ -48,7 +46,7 @@
 							(m-from|preposition)
 							(m-if-exclusive (m-nothing)
 								(m-fail "Get from what?\n")
-								(m-complete (m-supporter))
+								(m-complete (m-supporter ^"You can't get things from (this.preposition) that.\n"))
 							)
 						)
 						(m-nop)
@@ -63,11 +61,11 @@
 			*(echo actor (first matches):fail)
 			*(if (equal (first matches).all true)
 				*(for "match" matches
-					*(imple_get actor match)
+					*(imple-get actor match)
 				)
 				*(nop
 					(if (greaterthan (length matches) 1) *(echo actor "[Multiple possible matches. Accepting first match.]\n"))
-					(imple_get actor (first matches))
+					(imple-get actor (first matches))
 				)
 			)						
 		)
@@ -75,7 +73,7 @@
 	"GET [ALL] X \(\(FROM [IN/ON/UNDER]\) | IN/ON/UNDER\) [MY] Y"
 )
 
-(defun "imple_get" ^("actor" "match") ^()
+(defun "imple-get" ^("actor" "match") ^()
 	*(if (notequal match.object.location.object actor.location.object)
 		*(nop
 			(echo actor "[Taking (match.object:a) from (match.object.location.list) (match.object.location.object:the).]\n")
