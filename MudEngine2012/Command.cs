@@ -17,6 +17,7 @@ namespace MudEngine2012
             {
                 bool displayMatches = false;
                 bool displayTrace = false;
+                bool time = false;
 
                 if (_Command.StartsWith("/eval "))
                 {
@@ -31,12 +32,14 @@ namespace MudEngine2012
                     displayMatches = true;
                 else if (_Command.StartsWith("/trace "))
                     displayTrace = true;
+                else if (_Command.StartsWith("/time "))
+                    time = true;
 
                 var tokens = CommandTokenizer.FullyTokenizeCommand(_Command);
                 var firstWord = tokens.word;
                 tokens = tokens.next;
 
-                if (displayMatches || displayTrace)
+                if (displayMatches || displayTrace || time)
                 {
                     firstWord = tokens.word;
                     tokens = tokens.next;
@@ -53,6 +56,12 @@ namespace MudEngine2012
                 core.InvokeSystem(Executor, "handle_command",
                     new MISP.ScriptList(Executor, firstWord, _Command, tokens, displayMatches == true ? (object)true : null),
                     matchContext);
+
+                if (time)
+                {
+                    var elapsed = DateTime.Now - matchContext.executionStart;
+                    core.SendMessage(Executor, "[Command executed in " + elapsed.TotalMilliseconds + " milliseconds.]\n", true);
+                }
             }
             catch (Exception e)
             {

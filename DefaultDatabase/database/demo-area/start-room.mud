@@ -83,4 +83,6 @@
 		(prop "short" "quill")
 		(prop "nouns" ^("quill"))
 	)))
+	
+	(add-object this "on" (load "demo-area/admin-ball"))
 )))

@@ -16,4 +16,7 @@
 		)
 	)
 )
+
+(defun "is-held-by" [object who] [] (and (equal object.location.object who) (equal object.location.list "held")) )
+
 		

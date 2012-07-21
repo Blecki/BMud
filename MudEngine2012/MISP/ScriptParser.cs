@@ -59,7 +59,7 @@ namespace MudEngine2012.MISP
         public static ParseNode ParseToken(ParseState state)
         {
             var result = new ParseNode("token", state.start);
-            while (!state.AtEnd() && !(" \t\r\n:.)".Contains(state.Next()))) state.Advance();
+            while (!state.AtEnd() && !(" \t\r\n:.)]".Contains(state.Next()))) state.Advance();
             result.end = state.start;
             result.token = state.source.Substring(result.start, result.end - result.start);
             return result;
@@ -121,7 +121,12 @@ namespace MudEngine2012.MISP
         public static ParseNode ParseExpression(ParseState state)
         {
             ParseNode result = null;
-            if (state.MatchNext("^\"")) //escaped string
+            if (state.Next() == '[') //Dictionary Entry
+            {
+                result = ParseNode(state, "[", "]");
+                result.type = "dictionary-entry";
+            }
+            else if (state.MatchNext("^\"")) //escaped string
             {
                 state.Advance();
                 var stringNode = ParseStringExpression(state);
@@ -165,19 +170,19 @@ namespace MudEngine2012.MISP
                         
 
 
-        public static ParseNode ParseNode(ParseState state)
+        public static ParseNode ParseNode(ParseState state, String start = "(", String end = ")")
         {
             var result = new ParseNode("node", state.start);
             if (state.Next() == '*') { result.token = "*"; state.Advance(); }
             else if (state.Next() == '$') { result.token = "$"; state.Advance(); }
             else if (state.Next() == '^') { result.token = "^"; state.Advance(); }
             else if (state.Next() == '#') { result.token = "#"; state.Advance(); }
-            if (state.Next() != '(') throw new ParseError("Expected (");
-            state.Advance();
-            while (state.Next() != ')')
+            if (!state.MatchNext(start)) throw new ParseError("Expected " + start);
+            state.Advance(start.Length);
+            while (!state.MatchNext(end))
             {
                 DevourWhitespace(state);
-                if (state.Next() != ')')
+                if (!state.MatchNext(end))
                 {
                     var expression = ParseExpression(state);
                     if (expression.type == "member access") expression = ReorderMemberAccessNode(expression);
@@ -185,7 +190,7 @@ namespace MudEngine2012.MISP
                 }
                 DevourWhitespace(state);
             }
-            state.Advance();
+            state.Advance(end.Length);
             return result;
         }
 

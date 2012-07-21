@@ -43,6 +43,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="database\demo-area\admin-ball.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="database\lists.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

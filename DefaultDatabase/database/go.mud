@@ -21,11 +21,17 @@
 			*(nop
 				(add-verb from name (m-nothing)
 					(make-link-lambda to (first names))
-					"Move (first names)."
+					"Move (name)."
 				)
 				(add-verb from "go" (m-complete (m-keyword name))
 					(make-link-lambda to (first names))
-					"Move (first names)."
+					"Move (name)."
+				)
+				(add-verb from "look" (m-complete (m-keyword name))
+					(lambda "llook-direction" ^("matches" "actor") ^("to" "names")
+						*(echo actor "To the (first names) you see...\n\n((load to):description)")
+					)
+					"Look (name)."
 				)
 			)
 		)

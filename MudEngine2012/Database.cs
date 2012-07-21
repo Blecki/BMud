@@ -24,7 +24,7 @@ namespace MudEngine2012
             return namedObjects[path];
         }
 
-        public MISP.ScriptObject LoadObject(String path)
+        public MISP.ScriptObject LoadObject(String path, bool timeOut = true)
         {
             if (namedObjects.ContainsKey(path)) return namedObjects[path];
             return ReLoadObject(path);
@@ -32,7 +32,7 @@ namespace MudEngine2012
 
         private static int loadDepth = 0;
 
-        public MISP.ScriptObject ReLoadObject(String path)
+        public MISP.ScriptObject ReLoadObject(String path, bool timeOut = true)
         {
             if (!namedObjects.ContainsKey(path))
                 namedObjects.Upsert(path, new MISP.GenericScriptObject("@path", path));
@@ -42,6 +42,7 @@ namespace MudEngine2012
                 loadDepth += 1;
                 var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
                 var scriptContext = new MISP.ScriptContext();
+                scriptContext.limitExecutionTime = timeOut;
                 var mudObject = namedObjects[path];
                 mudObject.ClearProperties();
 

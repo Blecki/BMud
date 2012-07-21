@@ -9,6 +9,8 @@ namespace MudEngine2012.MISP
     {
         private List<Dictionary<String, ScriptList>> variables = new List<Dictionary<String, ScriptList>>();
         public DateTime executionStart;
+        public bool limitExecutionTime = true;
+        public TimeSpan allowedExecutionTime = TimeSpan.FromSeconds(10);
 
         public Action<String> trace = null;
         public int traceDepth = 0;

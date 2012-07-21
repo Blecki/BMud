@@ -106,7 +106,7 @@ namespace MudEngine2012
             scriptEngine = new MISP.ScriptEvaluater(this);
                 SetupScript();
                 database = new Database(basePath, this);
-                database.LoadObject("system");
+                database.LoadObject("system", false);
 
                 ActionExecutionThread = new Thread(CommandProcessingThread);
                 ActionExecutionThread.Start();
@@ -119,7 +119,6 @@ namespace MudEngine2012
                 Console.WriteLine(e.Message);
                 Console.WriteLine(e.StackTrace);
                 throw e;
-                return false;
             }
             return true;
         }

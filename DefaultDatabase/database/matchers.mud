@@ -1,17 +1,17 @@
 ﻿/* Matchers for building command parsers */
 
-(defun "m-or" ^("A" "B") ^() 
-	*(defun "" ^("matches") ^("A" "B") 
+(defun "m-or" ["function A" "function B"] [] 
+	*(defun "" ["list matches"] [A B] 
 		*(cat (A matches) (B matches))))
 
-(defun "m-keyword" ^("word") ^() 
-	*(lambda "lkeyword" ^("matches") ^("word") 
+(defun "m-keyword" ["string word"] [] 
+	*(lambda "lkeyword" ["list matches"] [word] 
 		*(map "match"
 			(where "match" (where "match" matches *(not (equal null match.token))) *(equal word match.token.word))
 			*(clone match ^("token" match.token.next)))))
 			
 (defun "m-nothing" ^() ^() 
-	*(lambda "lnone" ^("matches") ^() 
+	*(lambda "lnone" ^("list matches") ^() 
 		*(where "match" matches *(equal null match.token))))
 
 (defun "m-rest" ^("into") ^() 
@@ -23,14 +23,14 @@
 	)
 )
 
-(defun "m-sequence" ^("matcher_list") ^()
-	*(lambda "lsequence" ^("matches") ^("matcher_list")
-		*(for "matcher" matcher_list *(var "matches" (matcher matches)))
+(defun "m-sequence" ^("list matcher-list") ^()
+	*(lambda "lsequence" ^("list matches") ^("matcher-list")
+		*(for "matcher" matcher-list *(var "matches" (matcher matches)))
 	)
 )
 
-(defun "m-optional" ^("matcher") ^()
-	*(lambda "loptional" ^("matches") ^("matcher")
+(defun "m-optional" ^("function matcher") ^()
+	*(lambda "loptional" ^("list matches") ^("matcher")
 		*(cat (matcher matches) matches)))
 
 (defun "m-anyof" ^("word_list" "into") ^()
@@ -40,6 +40,17 @@
 				*(map "match" ((m-keyword word) matches)
 					*(clone match ^(into word))
 				)
+			)
+		)
+	)
+)
+
+(defun "m-?-adjectives" ^("list word-list") ^()
+	*(lambda "lm-?-adjectives" ^("list matches") ^("word-list")
+		*(let ^(^("anyof" (m-anyof word-list "-")) ^("temp" null))
+			*(lastarg
+				(while *(notequal (length (var "temp" (anyof matches))) 0) *(var "matches" temp))
+				matches
 			)
 		)
 	)
@@ -280,5 +291,16 @@
 	"m-switch list tail: Implements a chain of m-if-exclusive. Each item in the list is the else clause of the item before it. Tail is the final else."
 )
 
+(defun "m-definer-held-by" [relative] [] 
+	(lambda "lm-definer-held-by" [matches] [relative] 
+		(where "match" matches 
+			(and 
+				(equal match.verb.defined-on.location.object match.(relative))
+				(equal match.verb.defined-on.location.list "held")
+			)
+		)
+	)
+	"Usefull for creating objects that enable a verb only when they are held."
+)
 			
 			

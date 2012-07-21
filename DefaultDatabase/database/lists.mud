@@ -31,7 +31,7 @@
 (defun "short_list_with_on" ^("list") ^()
 	*(if 
 		(equal (length list) 1)
-		*("is ((first list):a)(on_list (first list)).")
+		*("is ((first list):a)(on-list (first list)).")
 		*("(isare list) (strcat
 			$(mapi "i" list
 				*(if 

@@ -19,12 +19,12 @@ namespace MudEngine2012
                         }));
                 });
 
-            scriptEngine.specialVariables.Add("system", (s, t) => { return database.LoadObject("system"); });
-
             #region Object Declaration Functions
 
 
-            scriptEngine.functions.Add("load", new MISP.ScriptFunction("load", "name : Loads an object from the database.",
+            scriptEngine.functions.Add("load", new MISP.ScriptFunction("load",
+                MISP.ArgumentInfo.ParseArguments("string name"),
+                "name : Loads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
                     MISP.ScriptEvaluater.ArgumentCount(1, arguments);
@@ -40,7 +40,9 @@ namespace MudEngine2012
                     }
                 }));
 
-            scriptEngine.functions.Add("reload", new MISP.ScriptFunction("reload", "name : Reoads an object from the database.",
+            scriptEngine.functions.Add("reload", new MISP.ScriptFunction("reload",
+                MISP.ArgumentInfo.ParseArguments("string name"),
+                "name : Reoads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
                     MISP.ScriptEvaluater.ArgumentCount(1, arguments);
@@ -59,7 +61,9 @@ namespace MudEngine2012
             #endregion
 
             #region Debug
-            scriptEngine.functions.Add("print", new MISP.ScriptFunction("print", "object : Print to the console.", (context, thisObject, arguments) =>
+            scriptEngine.functions.Add("print", new MISP.ScriptFunction("print",
+                MISP.ArgumentInfo.ParseArguments("value"),
+                "object : Print to the console.", (context, thisObject, arguments) =>
                 {
                     Console.WriteLine(String.Join(" ", arguments.Select((o, i) => { return MISP.ScriptObject.AsString(o); })));
                     return null;
@@ -67,7 +71,9 @@ namespace MudEngine2012
             #endregion
 
             #region Basic Mudding
-            scriptEngine.functions.Add("echo", new MISP.ScriptFunction("echo", "player<s> message : Send text to players", (context, thisObject, arguments) =>
+            scriptEngine.functions.Add("echo", new MISP.ScriptFunction("echo",
+                MISP.ArgumentInfo.ParseArguments("to", "message"),
+                "player<s> message : Send text to players", (context, thisObject, arguments) =>
             {
                 MISP.ScriptEvaluater.ArgumentCount(2, arguments);
                 MISP.ScriptList to = null;
@@ -90,6 +96,7 @@ namespace MudEngine2012
             }));
 
             scriptEngine.functions.Add("command", new MISP.ScriptFunction("command",
+                MISP.ArgumentInfo.ParseArguments("object player", "string command"),
                 "player command : Send a command as if it came from player",
                 (context, thisObject, arguments) =>
                 {

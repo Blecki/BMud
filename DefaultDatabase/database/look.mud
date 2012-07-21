@@ -1,7 +1,7 @@
 ﻿(add-global-verb "look"
 
 	(m-filter-failures
-		(m-sequence ^(
+		(m-sequence [
 			(m-optional (m-keyword "at"))
 			(m-switch ^(
 				^((m-nothing) (m-set-object-here))
@@ -27,26 +27,26 @@
 				))
 				(m-fail "I don't see that here.")
 			)
-		))
+		])
 	)
 	
-	(defun "" ^("matches" "actor") ^()
-		*(if (notequal (first matches).fail null)
-			*(echo actor (first matches):fail)
-			*(nop
+	(defun "" [matches actor] []
+		(if (notequal (first matches).fail null)
+			(echo actor (first matches):fail)
+			(nop
 				(if (greaterthan (length matches) 1) *(echo actor "[Multiple possible matches. Accepting first match.]\n"))
-				(let ^(^("match" (first matches)))
-					*(if (match.look-preposition)
-						*(nop
+				(let ^([match (first matches)])
+					(if (match.look-preposition)
+						(nop
 							(echo actor "[Looking (match.preposition) (match.object:the).]\n")
 							(echo actor "^(match.preposition) (match.object:the) (short_list match.object.(match.preposition))\n")
 						)
-						*(if (and (notequal match.object actor.location.object) (notequal match.object.location.object actor.location.object))
-							*(nop
+						(if (and (notequal match.object actor.location.object) (notequal match.object.location.object actor.location.object))
+							(nop
 								(echo actor "[Looking at (match.object:a) from (match.object.location.list) (match.object.location.object:the).]\n")
 								(echo actor "(match.object:description)\n")
 							)
-							*(nop
+							(nop
 								(echo actor "[Looking at (match.object:a).]\n")
 								(echo actor "(match.object:description)\n")
 							)

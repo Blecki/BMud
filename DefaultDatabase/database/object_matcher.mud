@@ -29,18 +29,20 @@
 	)
 )
 
-(defun "os-visible" ^("relative") ^() /*Everything that 'relative' can see*/
-	*(defun "" ^("match") ^("relative")
-		*(cat
-			(where "object" (coalesce match.(relative).location.object.contents ^()) *(notequal object match.(relative)))
-			(coalesce match.(relative).held ^())
-			(coalesce match.(relative).worn ^())
-			$(map "object" (coalesce match.(relative).location.object.contents ^())
-				*(cat (coalesce object.on ^()) (coalesce object.in ^())))
-			$(map "object" (cat (coalesce match.(relative).held ^()) (coalesce match.(relative).worn ^()))
-				*(cat (coalesce object.on ^()) (coalesce object.in ^())))
-		)
+(defun "get-all-visible-objects" [actor] []
+	(cat
+		(where "object" (coalesce actor.location.object.contents ^()) *(notequal object actor))
+		(coalesce actor.held ^())
+		(coalesce actor.worn ^())
+		$(map "object" (coalesce actor.location.object.contents ^())
+			(cat (coalesce object.on ^()) (coalesce object.in ^())))
+		$(map "object" (cat (coalesce actor.held ^()) (coalesce actor.worn ^()))
+			(cat (coalesce object.on ^()) (coalesce object.in ^())))
 	)
+)
+
+(defun "os-visible" ^("relative") ^() /*Everything that 'relative' can see*/
+	(lambda "los-visible" [match] [relative] (get-all-visible-objects match.(relative)))
 )
 
 (defun "os-mine" ^("relative") ^() /*Everything relative can see and also has*/

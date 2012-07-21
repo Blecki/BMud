@@ -16,7 +16,17 @@
 
 (defun "add-detail" ^("to" "name" "text") ^()
 	*(add-verb to "look"
-		(m-complete (m-sequence ^((m-optional "at") (m-keyword name))))
+		(m-complete (m-sequence ^((m-optional (m-keyword "at")) (m-keyword name))))
+		(lambda "ldetail" ^("matches" "actor") ^("text" "name")
+			*(echo actor "[Looking at the (name)]\n(text)\n")
+		)
+		"Detail"
+	)
+)
+
+(defun "add-adjective-detail" ^("to" "name" "adjectives" "text") ^()
+	*(add-verb to "look"
+		(m-complete (m-sequence ^((m-optional (m-keyword "at")) (m-?-adjectives adjectives) (m-keyword name))))
 		(lambda "ldetail" ^("matches" "actor") ^("text" "name")
 			*(echo actor "[Looking at the (name)]\n(text)\n")
 		)
