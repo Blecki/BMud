@@ -1,9 +1,9 @@
 ﻿(defun "depend" ^("on") ^() *(load on))
-(reload "move_object")
+(reload "move-object")
 (reload "lists")
 
 (defun "add-verb" ^("to" "name" "matcher" "action" "help") ^()
-	*(prop_add to "verbs" (record ^("name" name) ^("matcher" matcher) ^("action" action) ^("help" help) ^("defined-on" to)))
+	*(prop-add to "verbs" (record ^("name" name) ^("matcher" matcher) ^("action" action) ^("help" help) ^("defined-on" to)))
 )
 
 (defun "add-global-verb" ^("name" "matcher" "action" "help") ^()
@@ -21,18 +21,18 @@
 	)
 )
 
-(prop "handle_client_command" (defun "" ^("client" "words") ^()
+(prop "handle-client-command" (defun "" ^("client" "words") ^()
 	*(if (equal (index words 0) "login")
-		*(let ^(^("player_object" (load "players/(index words 1)")))
-			*(if player_object
-				*(if (greaterthan (count "player" players *(equal player player_object)) 0)
+		*(let ^(^("player-object" (load "players/(index words 1)")))
+			*(if player-object
+				*(if (greaterthan (count "player" players *(equal player player-object)) 0)
 					*(echo client "You are already logged in.\n")
-					*(if (equal (index words 2) player_object.password)
+					*(if (equal (index words 2) player-object.password)
 						*(nop
-							(set client "player" player_object)
+							(set client "player" player-object)
 							(set client "logged_on" true)
-							(move_object player_object (load "demo-area/start-room") "contents")
-							(command player_object "look")
+							(move-object player-object (load "demo-area/start-room") "contents")
+							(command player-object "look")
 						)
 						*(echo client "Wrong password.\n")
 					)
@@ -41,14 +41,14 @@
 			)
 		)
 		*(if (equal (index words 0) "register")
-			*(let ^(^("player_object" (create_named "players/(index words 1)")))
-				*(if player_object
+			*(let ^(^("player-object" (create_named "players/(index words 1)")))
+				*(if player-object
 					*(nop
-						(set client "player" player_object)
+						(set client "player" player-object)
 						(set client "logged_on" true)
-						(set player_object "password" (index words 2))
-						(move_object player_object (load "demo-area/start-room") "contents")
-						(command player_object "look")
+						(set player-object "password" (index words 2))
+						(move-object player-object (load "demo-area/start-room") "contents")
+						(command player-object "look")
 					)
 					*(echo client "Couldn't create that player.\n")
 				)
@@ -81,65 +81,74 @@
 	)
 )
 
-(prop "handle_command" (lambda "lhandle_command" ^("actor" "verb" "command" "token" "display-matches") ^()
-	*(let ^(^("verb-records" (find-verb-list actor verb)))
-		(if (equal (length verb-records) 0)
-			(echo actor "Huh?\n")
-			(while (notequal (length verb-records) 0)
-				(let [["matches" ((first verb-records).matcher 
-						[(record ^("token" token) ^("actor" actor) ^("command" command) ^("verb" (first verb-records)))]
-					)]]
-					(if (notequal (length matches) 0)
-						(nop
-							(if display-matches
-								(nop
-									(echo actor "(length matches) successful matches.\n")
-									(for "match" matches *(echo actor "(match)\n"))
+(prop "handle-command" (lambda "lhandle_command" ^("actor" "verb" "command" "token" "display-matches") ^()
+	(nop
+		(let ^(^("verb-records" (find-verb-list actor verb)))
+			(if (equal (length verb-records) 0)
+				(echo actor "Huh?\n")
+				(while (notequal (length verb-records) 0)
+					(let [["matches" ((first verb-records).matcher 
+							[(record ^("token" token) ^("actor" actor) ^("command" command) ^("verb" (first verb-records)))]
+						)]]
+						(if (notequal (length matches) 0)
+							(nop
+								(if display-matches
+									(nop
+										(echo actor "(length matches) successful matches.\n")
+										(for "match" matches *(echo actor "(match)\n"))
+									)
+									((first verb-records).action matches actor)
 								)
-								((first verb-records).action matches actor)
+								(var "verb-records" null)
 							)
-							(var "verb-records" null)
-						)
-						(nop
-							(if (equal (length verb-records) 1) *(echo actor "Huh?\n"))
-							(var "verb-records" (sub-list verb-records 1))
+							(nop
+								(if (equal (length verb-records) 1) *(echo actor "Huh?\n"))
+								(var "verb-records" (sub-list verb-records 1))
+							)
 						)
 					)
 				)
 			)
 		)
+		(echo actor actor:prompt)
 	)
 ))
 
-(prop "handle_lost_client" (defun "" ^("client") ^()
-	*(if (client.logged_on)
-		*(move_object client.player null null)
+(prop "handle-lost-client" (defun "" ^("client") ^()
+	(if (client.logged_on)
+		(move-object client.player null null)
 	)
 ))
 
 (defun "contains" ^("list" "what") ^()
 	*(atleast (count "item" list *(equal item what)) 1))
 
-(defun "contents" ^("mudobject") ^() *(coalesce mudobject.contents ^()))
+(defun "contents" ^("mudobject") ^() (coalesce mudobject.contents ^()))
 
 (reload "matchers")
-(reload "object_matcher")
+(reload "object-matcher")
 (reload "look")
 (reload "say")
 (reload "get")
 (reload "drop")
 (reload "go")
 
-(add-global-verb "functions" (m-nothing)
+(defun "m-rank" [rank] [] 
+	(lambda "lm-rank" [matches] [rank]
+		(where "match" matches (atleast match.actor.rank rank))
+	)
+)
+
+(add-global-verb "functions" (m-rank 100)
 	(defun "" ^("matches" "actor") ^()
-		*(for "function" functions
-			*(echo actor "(function.name) - (function.shortHelp)\n")
+		(for "function" functions
+			(echo actor "(function.name) - (function.shortHelp)\n")
 		)
 	)
 	"List all declared functions."
 )
 			
-(add-global-verb "verbs" (m-nothing)
+(add-global-verb "verbs" (m-rank 100)
 	(lambda "" [matches actor] []
 		*(for "verb" (find-all-visible-verbs actor)
 			*(echo actor "(verb)\n")
@@ -148,7 +157,7 @@
 	"List all defined verbs."
 )
 			
-(add-global-verb "examine" (m-complete (m-any-visible-object "object"))
+(add-global-verb "examine" (m-sequence ^((m-rank 100) (m-complete (m-any-visible-object "object"))))
 	(defun "" ^("matches" "actor") ^()
 		*(nop
 			(if (greaterthan (length matches) 1) *(echo actor "[More than one possible match. Accepting first.]\n"))
@@ -195,19 +204,19 @@
 	)
 )
 
-(add-global-verb "enumerate" (m-nothing)
+(add-global-verb "enumerate" (m-rank 100)
 	(lambda "lenumerate" ^("matches" "actor") ^()
 		*(enumerate-imple actor actor.location.object ^() 0)
 	)
 	"Enumerate every object in your location."
 )
 
-(add-global-verb "teleport" (m-rest "text") 
+(add-global-verb "teleport" (m-sequence ^((m-rank 100) (m-rest "text")))
 	(defun "" ^("matches" "actor") ^()
 		*(let ^(^("destination" (load (first matches).text)))
 			*(if (notequal destination null)
 				*(nop
-					(move_object actor destination "contents")
+					(move-object actor destination "contents")
 					(@command actor "look")
 				)
 			)
@@ -228,3 +237,12 @@
 	"View help on a topic"
 )
 
+(add-global-verb "prompt" (m-if-exclusive (m-rest "text") (m-nop) (m-fail "Set your prompt to what?"))
+	(lambda "" [matches actor] []
+		(nop
+			(set actor "prompt" (first matches).text)
+			(echo actor "Prompt set.\n")
+		)
+	)
+	"Set your prompt."
+)

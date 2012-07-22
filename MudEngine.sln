@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MudServer", "MudServer\MudS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DefaultDatabase", "DefaultDatabase\DefaultDatabase.csproj", "{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MISPConsole", "MISPConsole\MISPConsole.csproj", "{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,16 @@ Global
 		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{0E40083D-1E6E-48B8-902D-BEB8703AD3A9}.Release|x86.ActiveCfg = Release|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,18 +1,18 @@
-﻿(depend "move_object")
+﻿(depend "move-object")
 (add-global-alias "put" "drop")
 
 (prop "put" (lambda "lput" ^("actor" "object" "into" "list") ^()
 	*(if (equal object.on-put null)
 		*(if into
 			*(nop
-				(move_object object into list)
+				(move-object object into list)
 				(echo actor "You put (object:a) (list) (into:the).\n")
 				(echo (where "player" actor.location.object.contents *(notequal player actor))
 					"^(actor:short) puts (object:a) (list) (into:the).\n"
 				)
 			)
 			*(nop
-				(move_object object actor.location.object "contents")
+				(move-object object actor.location.object "contents")
 				(echo actor "You drop (object:a).\n")
 				(echo (where "player" actor.location.object.contents *(notequal player actor))
 					"^(actor:short) drops (object:a).\n"
@@ -28,7 +28,7 @@
 		(m-sequence ^(
 			(m-?-all)
 			(m-if-exclusive (m-preposition)
-				(m-if-exclusive (m-supporter ^"You can't put things (this.preposition) that.\n")
+				(m-if-exclusive (m-supporter *"You can't put things (this.preposition) that.\n")
 					(m-expand-held-objects)
 					(m-nop)
 				)
@@ -36,7 +36,7 @@
 					(m-if-exclusive (m-complete (m-nop))
 						(m-nop)
 						(m-if-exclusive (m-preposition)
-							(m-supporter ^"You can't put things (this.preposition) that.\n")
+							(m-supporter *"You can't put things (this.preposition) that.\n")
 							(m-fail "You don't seem to be holding that.\n")
 						)
 					)

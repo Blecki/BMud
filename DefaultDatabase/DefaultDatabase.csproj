@@ -67,10 +67,10 @@
     <None Include="database\drop.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\object_matcher.mud">
+    <None Include="database\object-matcher.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\move_object.mud">
+    <None Include="database\move-object.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="database\object.mud">

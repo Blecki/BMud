@@ -24,9 +24,9 @@ namespace MudEngine2012
                 var words = new MISP.ScriptList(tokens);
                 if (!core.InvokeSystem(
                     client,
-                    "handle_client_command", 
+                    "handle-client-command", 
                     new MISP.ScriptList(new object[] { client, words }), 
-                    new MISP.ScriptContext()))
+                    new MISP.Context()))
                     core.SendMessage(client, "No command handler registered.\n", true);
                 if (client.logged_on) core.ConnectedClients.Add(client.player.GetProperty("@path").ToString(), client);
             }
@@ -53,7 +53,7 @@ namespace MudEngine2012
 
         public override void Execute(MudCore core)
         {
-            core.InvokeSystem(client, invoke, new MISP.ScriptList(new object[] { client }), new MISP.ScriptContext());
+            core.InvokeSystem(client, invoke, new MISP.ScriptList(new object[] { client }), new MISP.Context());
         }
     }
 
@@ -96,14 +96,14 @@ namespace MudEngine2012
                 ConnectedClients.Remove(client.player.GetProperty("@path").ToString());
                 _databaseLock.ReleaseMutex();
             }
-            EnqueuAction(new InvokeAction(client, "handle_lost_client"));
+            EnqueuAction(new InvokeAction(client, "handle-lost-client"));
         }
 
         public bool Start(String basePath)
         {
             try
             {
-            scriptEngine = new MISP.ScriptEvaluater(this);
+                scriptEngine = new MISP.ScriptEvaluater();
                 SetupScript();
                 database = new Database(basePath, this);
                 database.LoadObject("system", false);
@@ -221,15 +221,15 @@ namespace MudEngine2012
             MISP.ScriptObject executor, 
             String property, 
             MISP.ScriptList arguments, 
-            MISP.ScriptContext context)
+            MISP.Context context)
         {
             var system = database.LoadObject("system") as MISP.ScriptObject;
             var prop = system.GetProperty(property);
-            if (prop is MISP.ScriptFunction)
+            if (prop is MISP.Function)
             {
                 try
                 {
-                    (prop as MISP.ScriptFunction).Invoke(context, system, arguments);
+                    (prop as MISP.Function).Invoke(context, system, arguments);
                     return true;
                 }
                 catch (Exception e)

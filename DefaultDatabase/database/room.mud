@@ -2,7 +2,7 @@
 (prop "long" "Set the 'long' property to change this.")
 
 (prop "description" 
-^"(this:short)
+*"(this:short)
 (this:long)
 (if	(equal (length this.contents) 0)
 	*("There doesn't appear to be anything here.")

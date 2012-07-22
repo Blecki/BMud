@@ -14,10 +14,9 @@ namespace MudEngine2012.MISP
 
     public class ScriptEvaluater
     {
-        public Dictionary<String, ScriptFunction> functions = new Dictionary<String, ScriptFunction>();
-        public Dictionary<String, Func<ScriptContext, ScriptObject, Object>> specialVariables
-            = new Dictionary<string, Func<ScriptContext, ScriptObject, object>>();
-        public MudCore core { get; private set; }
+        public Dictionary<String, Function> functions = new Dictionary<String, Function>();
+        public Dictionary<String, Func<Context, ScriptObject, Object>> specialVariables
+            = new Dictionary<string, Func<Context, ScriptObject, object>>();
         private Random random = new Random();
 
         public static T ArgumentType<T>(Object obj) where T : class
@@ -49,19 +48,19 @@ namespace MudEngine2012.MISP
                 arguments.Count + ".");
         }
 
-        public ScriptEvaluater(MudCore core)
+        public ScriptEvaluater()
         {
-            this.core = core;
+            this.SetupStandardLibrary();
         }
 
-        public Object EvaluateString(ScriptContext context, ScriptObject thisObject, String str, bool discardResults = false)
+        public Object EvaluateString(Context context, ScriptObject thisObject, String str, bool discardResults = false)
         {
-            var root = ScriptParser.ParseRoot(str);
+            var root = Parser.ParseRoot(str);
             return Evaluate(context, root, thisObject, false, discardResults);
         }
 
         public Object Evaluate(
-            ScriptContext context,
+            Context context,
             ParseNode node,
             ScriptObject thisObject,
             bool ignoreStar = false,
@@ -70,163 +69,156 @@ namespace MudEngine2012.MISP
             if (context.limitExecutionTime && (DateTime.Now - context.executionStart > context.allowedExecutionTime))
                 throw new TimeoutError();
 
-            if (node.type == "string")
+            switch (node.type)
             {
-                return node.token;
-            }
-            else if (node.type == "string expression")
-            {
-                if (discardResults)
-                {
-                    foreach (var piece in node.childNodes)
+                case NodeType.String:
+                    return node.token;
+                case NodeType.StringExpression:
+                    if (discardResults)
                     {
-                        if (piece.type == "string")
-                            continue;
-                        else
-                            Evaluate(context, piece, thisObject);
+                        foreach (var piece in node.childNodes)
+                        {
+                            if (piece.type == NodeType.String)
+                                continue;
+                            else
+                                Evaluate(context, piece, thisObject);
+                        }
+                        return null;
                     }
-                    return null;
-                }
-                else
-                {
-                    if (node.childNodes.Count == 1)
-                        return Evaluate(context, node.childNodes[0], thisObject);
                     else
                     {
-                        var resultString = String.Empty;
-                        foreach (var piece in node.childNodes)
-                            resultString += ScriptObject.AsString(Evaluate(context, piece, thisObject));
-                        return resultString;
-                    }
-                }
-            }
-            else if (node.type == "token")
-            {
-                return LookupToken(context, node.token, thisObject);
-            }
-            else if (node.type == "member access")
-            {
-                var lhs = Evaluate(context, node.childNodes[0], thisObject);
-                String rhs = "";
-                if (node.childNodes[1].type == "token")
-                    rhs = node.childNodes[1].token;
-                else
-                    rhs = ScriptObject.AsString(Evaluate(context, node.childNodes[1], thisObject, false));
-
-                if (lhs == null) return null;// throw new ScriptError("Left hand side is null.");
-
-                if (lhs is ScriptObject)
-                {
-                    var result = (lhs as ScriptObject).GetProperty(ScriptObject.AsString(rhs));
-                    if (result is String && node.token == ":")
-                        result = EvaluateString(context, lhs as ScriptObject, result as String);
-                    else if (result is ParseNode && node.token == ":")
-                        result = Evaluate(context, result as ParseNode, lhs as ScriptObject, true, false);
-                    return result;
-                }
-
-                return null;
-                //throw new ScriptError("Left hand side [" + ScriptObject.AsString(lhs) + "] is not a script object.");
-            }
-            else if (node.type == "node")
-            {
-                if (!ignoreStar && node.token == "*")
-                    return node;
-
-                bool eval = node.token != "^";
-
-                var arguments = new ScriptList();
-                
-                try
-                {
-                    foreach (var child in node.childNodes)
-                    {
-                        bool argumentProcessed = false;
-                        bool expectList = false;
-
-                        if (eval && arguments.Count > 0 && (arguments[0] is ScriptFunction))
+                        if (node.childNodes.Count == 1)
+                            return Evaluate(context, node.childNodes[0], thisObject);
+                        else
                         {
-                            var func = arguments[0] as ScriptFunction;
-                            int argIndex = arguments.Count - 1;
-                            if (argIndex > func.argumentInfo.Count && func.argumentInfo.Count > 0
-                                && func.argumentInfo[func.argumentInfo.Count - 1].repeat)
-                                argIndex = func.argumentInfo.Count - 1;
-
-                            if (argIndex < func.argumentInfo.Count)
-                            {
-                                if (func.argumentInfo[argIndex].type == MISP.ArgumentType.AT_CODE)
-                                {
-                                    if (child.type == "node" && child.token == "")
-                                    {
-                                        arguments.Add(child);
-                                        argumentProcessed = true;
-                                    }
-                                }
-                                else if (func.argumentInfo[argIndex].type == MISP.ArgumentType.AT_LIST)
-                                    expectList = true;
-                            }                            
-                        }
-
-                        if (!argumentProcessed)
-                        {
-                            var argument = Evaluate(context, child, thisObject);
-                            if (argument == null && expectList)  //transform 'null' to an empty list for functions that expect lists
-                                argument = new ScriptList();
-                            if (child.type == "node" && child.token == "$" && argument is ScriptList)
-                                arguments.AddRange(argument as ScriptList);
-                            else
-                                arguments.Add(argument);
+                            var resultString = String.Empty;
+                            foreach (var piece in node.childNodes)
+                                resultString += ScriptObject.AsString(Evaluate(context, piece, thisObject));
+                            return resultString;
                         }
                     }
-                }
-                catch (Exception e)
-                {
-                    if (arguments.Count > 0 && arguments[0] is ScriptFunction)
-                        throw new ScriptError("[Arg for " + (arguments[0] as ScriptFunction).name + "] " + e.Message);
-                    throw e;
-                }
-
-                if (node.token == "^") return arguments;
-
-                if (node.token != "*" || ignoreStar)
-                {
-                    Object result = null;
-                    if (arguments[0] is ScriptFunction)
+                case NodeType.Token:
+                    return LookupToken(context, node.token, thisObject);
+                case NodeType.MemberAccess:
                     {
+                        var lhs = Evaluate(context, node.childNodes[0], thisObject);
+                        String rhs = "";
+                        if (node.childNodes[1].type == NodeType.Token)
+                            rhs = node.childNodes[1].token;
+                        else
+                            rhs = ScriptObject.AsString(Evaluate(context, node.childNodes[1], thisObject, false));
+
+                        if (lhs == null) return null;// throw new ScriptError("Left hand side is null.");
+
+                        if (lhs is ScriptObject)
+                        {
+                            var result = (lhs as ScriptObject).GetProperty(ScriptObject.AsString(rhs));
+                            if (result is String && node.token == ":")
+                                result = EvaluateString(context, lhs as ScriptObject, result as String);
+                            else if (result is ParseNode && node.token == ":")
+                                result = Evaluate(context, result as ParseNode, lhs as ScriptObject, true, false);
+                            return result;
+                        }
+
+                        return null;
+                    }
+                case NodeType.Node:
+                    {
+                        if (!ignoreStar && node.prefix == Prefix.Quote)
+                            return node;
+
+                        bool eval = node.prefix != Prefix.List;
+
+                        var arguments = new ScriptList();
+
                         try
                         {
-                            result = (arguments[0] as ScriptFunction).Invoke(context, thisObject,
-                                new ScriptList(arguments.GetRange(1, arguments.Count - 1)));
+                            foreach (var child in node.childNodes)
+                            {
+                                bool argumentProcessed = false;
+                                bool expectList = false;
+
+                                if (eval && arguments.Count > 0 && (arguments[0] is Function))
+                                {
+                                    var func = arguments[0] as Function;
+                                    int argIndex = arguments.Count - 1;
+                                    if (argIndex > func.argumentInfo.Count && func.argumentInfo.Count > 0
+                                        && func.argumentInfo[func.argumentInfo.Count - 1].repeat)
+                                        argIndex = func.argumentInfo.Count - 1;
+
+                                    if (argIndex < func.argumentInfo.Count)
+                                    {
+                                        if (func.argumentInfo[argIndex].type == MISP.ArgumentType.CODE)
+                                        {
+                                            if (child.type == NodeType.Node && child.prefix == Prefix.None)
+                                            {
+                                                arguments.Add(child);
+                                                argumentProcessed = true;
+                                            }
+                                        }
+                                        else if (func.argumentInfo[argIndex].type == MISP.ArgumentType.LIST)
+                                            expectList = true;
+                                    }
+                                }
+
+                                if (!argumentProcessed)
+                                {
+                                    var argument = Evaluate(context, child, thisObject);
+                                    if (argument == null && expectList)  //transform 'null' to an empty list for functions that expect lists
+                                        argument = new ScriptList();
+                                    if (child.type == NodeType.Node && child.prefix == Prefix.Expand && argument is ScriptList)
+                                        arguments.AddRange(argument as ScriptList);
+                                    else
+                                        arguments.Add(argument);
+                                }
+                            }
                         }
                         catch (Exception e)
                         {
-                            throw new ScriptError("[" + (arguments[0] as ScriptFunction).name + "] " + e.Message);
+                            if (arguments.Count > 0 && arguments[0] is Function)
+                                throw new ScriptError("[Arg for " + (arguments[0] as Function).name + "] " + e.Message);
+                            throw e;
                         }
+
+                        if (node.prefix == Prefix.List) return arguments;
+
+
+                        Object result = null;
+                        if (arguments[0] is Function)
+                        {
+                            try
+                            {
+                                result = (arguments[0] as Function).Invoke(context, thisObject,
+                                    new ScriptList(arguments.GetRange(1, arguments.Count - 1)));
+                            }
+                            catch (Exception e)
+                            {
+                                throw new ScriptError("[" + (arguments[0] as Function).name + "] " + e.Message);
+                            }
+                        }
+                        else
+                            result = arguments[0];
+
+                        if (node.prefix == Prefix.Lookup) return LookupToken(context, ScriptObject.AsString(result), thisObject);
+                        else return result;
                     }
-                    else
-                        result = arguments[0];
+                case NodeType.Integer:
+                    return Convert.ToInt32(node.token);
+                case NodeType.DictionaryEntry:
+                    {
+                        var r = new ScriptList();
+                        foreach (var child in node.childNodes)
+                            if (child.type == NodeType.Token) r.Add(child.token);
+                            else r.Add(Evaluate(context, child, thisObject));
+                        return r;
+                    }
+                default:
 
-                    if (node.token == "#") return LookupToken(context, ScriptObject.AsString(result), thisObject);
-                    else return result;
-                }
+                    throw new ScriptError("Internal evaluator error");
             }
-            else if (node.type == "integer")
-            {
-                return Convert.ToInt32(node.token);
-            }
-            else if (node.type == "dictionary-entry")
-            {
-                var r = new ScriptList();
-                foreach (var child in node.childNodes)
-                    if (child.type == "token") r.Add(child.token);
-                    else r.Add(Evaluate(context, child, thisObject));
-                return r;
-            }
-
-            throw new ScriptError("Internal evaluator error");
         }
 
-        private object LookupToken(ScriptContext context, String value, ScriptObject thisObject)
+        private object LookupToken(Context context, String value, ScriptObject thisObject)
         {
             if (specialVariables.ContainsKey(value)) return specialVariables[value](context, thisObject);
             if (context.HasVariable(value)) return context.GetVariable(value);
@@ -246,7 +238,7 @@ namespace MudEngine2012.MISP
 
             #region Foundational Functions
 
-            Func<ScriptContext, Object, ScriptList, Object> defunImple = (context, thisObject, arguments) =>
+            Func<Context, Object, ScriptList, Object> defunImple = (context, thisObject, arguments) =>
             {
                 ArgumentCountOrGreater(4, arguments);
                 var functionName = ArgumentType<String>(arguments[0]);
@@ -270,7 +262,7 @@ namespace MudEngine2012.MISP
                     closedValues.Add(context.GetVariable(closedVariableName));
                 }
 
-                var newFunction = new ScriptFunction(functionName, argumentInfo, "Script-defined function", (c, to, a) =>
+                var newFunction = new Function(functionName, argumentInfo, "Script-defined function", (c, to, a) =>
                     {
                         //try
                         //{
@@ -305,25 +297,25 @@ namespace MudEngine2012.MISP
                 return newFunction;
             };
 
-            functions.Add("defun", new ScriptFunction("defun", 
+            functions.Add("defun", new Function("defun", 
                 ArgumentInfo.ParseArguments("string name", "list arguments", "list closures", "code code", "?comment"),
                 "name arguments closures code", (context, thisObject, arguments) =>
             {
                 var r = defunImple(context, thisObject, arguments);
-                if (!String.IsNullOrEmpty((r as ScriptFunction).name)) functions.Upsert((r as ScriptFunction).name, r as ScriptFunction);
+                if (!String.IsNullOrEmpty((r as Function).name)) functions.Upsert((r as Function).name, r as Function);
                 return r;
             }));
 
-            functions.Add("lambda", new ScriptFunction("lambda",
+            functions.Add("lambda", new Function("lambda",
                 ArgumentInfo.ParseArguments("string name", "list arguments", "list closures", "code code", "?comment"),
                     "name arguments closures code : Same as defun with blank name.", (context, thisObject, arguments) =>
             {
                 var r = defunImple(context, thisObject, arguments);
-                (r as ScriptFunction).isLambda = true;
+                (r as Function).isLambda = true;
                 return r;
             }));
 
-            functions.Add("members", new ScriptFunction("members",
+            functions.Add("members", new Function("members",
                                    ArgumentInfo.ParseArguments("object object"),
                                    "object : List of names of object members.", (context, thisObject, arguments) =>
                 {
@@ -332,7 +324,7 @@ namespace MudEngine2012.MISP
                     return obj.ListProperties();
                 }));
 
-            functions.Add("record", new ScriptFunction("record", 
+            functions.Add("record", new Function("record", 
                 ArgumentInfo.ParseArguments("list +?pairs"),
                 "<List of key-value pairs> : Returns a new generic script object.",
                 (context, thisObject, arguments) =>
@@ -347,7 +339,7 @@ namespace MudEngine2012.MISP
                     return r;
                 }));
 
-            functions.Add("clone", new ScriptFunction("clone",
+            functions.Add("clone", new Function("clone",
                 ArgumentInfo.ParseArguments("object record", "list +?pairs"),
                 "record <List of key-value pairs> : Returns a new generic script object cloned from [record]",
                 (context, thisObject, arguments) =>
@@ -364,7 +356,7 @@ namespace MudEngine2012.MISP
                     return r;
                 }));
 
-            functions.Add("var", new ScriptFunction("var", 
+            functions.Add("var", new Function("var", 
                 ArgumentInfo.ParseArguments("string name", "value"),
                 "name value : Assign value to a variable named [name].", (context, thisObject, arguments) =>
                 {
@@ -375,7 +367,7 @@ namespace MudEngine2012.MISP
                     return arguments[1];
                 }));
 
-            functions.Add("let", new ScriptFunction("let",
+            functions.Add("let", new Function("let",
                 ArgumentInfo.ParseArguments("list pairs", "code code"),
                 "^( ^(\"name\" value) ^(...) ) code : Create temporary variables, run code.",
                 (context, thisObject, arguments) =>
@@ -403,7 +395,7 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("set", new ScriptFunction("set", 
+            functions.Add("set", new Function("set", 
                 ArgumentInfo.ParseArguments("object object", "string property", "value"),
                 "object property value : Set the member of an object.", (context, thisObject, arguments) =>
                 {
@@ -414,7 +406,7 @@ namespace MudEngine2012.MISP
                     return arguments[2];
                 }));
 
-            functions.Add("delete", new ScriptFunction("delete",
+            functions.Add("delete", new Function("delete",
                 ArgumentInfo.ParseArguments("object object", "string property"),
                 "object property : Deletes a property from an object.",
                 (context, thisObject, arguments) =>
@@ -429,7 +421,7 @@ namespace MudEngine2012.MISP
 
 
 
-            functions.Add("eval", new ScriptFunction("eval", 
+            functions.Add("eval", new Function("eval", 
                 ArgumentInfo.ParseArguments("object this", "code code"),
                 "thisobject code : Execute code.", (context, thisObject, arguments) =>
                 {
@@ -441,7 +433,7 @@ namespace MudEngine2012.MISP
                         return EvaluateString(context, _this, ScriptObject.AsString(arguments[1]));
                 }));
 
-            functions.Add("lastarg", new ScriptFunction("lastarg", 
+            functions.Add("lastarg", new Function("lastarg", 
                 ArgumentInfo.ParseArguments("+children"),
                 "<n> : Returns the last argument.",
                 (context, thisObject, arguments) =>
@@ -450,12 +442,12 @@ namespace MudEngine2012.MISP
                     return arguments[arguments.Count - 1];
                 }));
 
-            functions.Add("nop", new ScriptFunction("nop",
+            functions.Add("nop", new Function("nop",
                 ArgumentInfo.ParseArguments("?+value"),
                 "<n> : Returns null.",
                 (context, thisObject, arguments) => { return null; }));
 
-            Func<ScriptContext, ScriptObject, ScriptList, Object> equalBody =
+            Func<Context, ScriptObject, ScriptList, Object> equalBody =
                 (context, thisObject, arguments) =>
                 {
                     if (arguments.Count == 0) return null;
@@ -488,11 +480,11 @@ namespace MudEngine2012.MISP
                     return true;
                 };
 
-            functions.Add("equal", new ScriptFunction("equal",
+            functions.Add("equal", new Function("equal",
                 ArgumentInfo.ParseArguments("+value"),
                 "<n> : True if all arguments equal, null otherwise.", equalBody));
 
-            functions.Add("notequal", new ScriptFunction("notequal",
+            functions.Add("notequal", new Function("notequal",
                 ArgumentInfo.ParseArguments("+value"),
                 "<n> : Null if all arguments equal, true otherwise.",
                 (context, thisObject, arguments) =>
@@ -501,7 +493,7 @@ namespace MudEngine2012.MISP
                     return null;
                 }));
 
-            functions.Add("and", new ScriptFunction("and", 
+            functions.Add("and", new Function("and", 
                 ArgumentInfo.ParseArguments("+value"),
                 "<n> : True if all arguments true.",
                 (context, thisObject, arguments) =>
@@ -511,7 +503,7 @@ namespace MudEngine2012.MISP
                 }));
 
 
-            functions.Add("atleast", new ScriptFunction("atleast",
+            functions.Add("atleast", new Function("atleast",
                 ArgumentInfo.ParseArguments("integer A", "integer B"),
                 "A B : true if A >= B, null otherwise.",
                 (context, thisObject, arguments) =>
@@ -524,7 +516,7 @@ namespace MudEngine2012.MISP
                     return null;
                 }));
 
-            functions.Add("greaterthan", new ScriptFunction("greaterthan",
+            functions.Add("greaterthan", new Function("greaterthan",
                                 ArgumentInfo.ParseArguments("integer A", "integer B"),
 "A B : true if A > B, null otherwise.",
                 (context, thisObject, arguments) =>
@@ -537,7 +529,7 @@ namespace MudEngine2012.MISP
                     return null;
                 }));
 
-            functions.Add("nomorethan", new ScriptFunction("nomorethan",
+            functions.Add("nomorethan", new Function("nomorethan",
                                 ArgumentInfo.ParseArguments("integer A", "integer B"),
 "A B : true if A <= B, null otherwise.",
                 (context, thisObject, arguments) =>
@@ -550,7 +542,7 @@ namespace MudEngine2012.MISP
                     return null;
                 }));
 
-            functions.Add("lessthan", new ScriptFunction("lessthan",
+            functions.Add("lessthan", new Function("lessthan",
                                 ArgumentInfo.ParseArguments("integer A", "integer B"),
 "A B : true if A < B, null otherwise.",
                 (context, thisObject, arguments) =>
@@ -563,7 +555,7 @@ namespace MudEngine2012.MISP
                     return null;
                 }));
 
-            functions.Add("subtract", new ScriptFunction("subtract",
+            functions.Add("subtract", new Function("subtract",
                                 ArgumentInfo.ParseArguments("integer A", "integer B"),
 "A B : return A-B.",
                 (context, thisObject, arguments) =>
@@ -575,7 +567,7 @@ namespace MudEngine2012.MISP
                     return first.Value - second.Value;
                 }));
 
-            functions.Add("add", new ScriptFunction("add",
+            functions.Add("add", new Function("add",
                                 ArgumentInfo.ParseArguments("integer A", "integer B"),
 "A B : return A+B.",
                 (context, thisObject, arguments) =>
@@ -587,7 +579,7 @@ namespace MudEngine2012.MISP
                     return first.Value + second.Value;
                 }));
 
-            functions.Add("random", new ScriptFunction("random",
+            functions.Add("random", new Function("random",
                                 ArgumentInfo.ParseArguments("integer A", "integer B"),
                 "A B : return a random value in range (A,B).",
                 (context, thisObject, arguments) =>
@@ -599,7 +591,7 @@ namespace MudEngine2012.MISP
                     return random.Next(first.Value, second.Value);
                 }));
 
-            functions.Add("multiply", new ScriptFunction("multiply",
+            functions.Add("multiply", new Function("multiply",
                                 ArgumentInfo.ParseArguments("integer A", "integer B"),
                 "A B : return A*B.",
                 (context, thisObject, arguments) =>
@@ -611,7 +603,7 @@ namespace MudEngine2012.MISP
                     return first.Value * second.Value;
                 }));
 
-            functions.Add("not", new ScriptFunction("not",
+            functions.Add("not", new Function("not",
                                 ArgumentInfo.ParseArguments("value"),
                                 "A : true if A is null, null otherwise.",
                 (context, thisObject, arguments) =>
@@ -621,7 +613,7 @@ namespace MudEngine2012.MISP
                     else return null;
                 }));
 
-            functions.Add("coalesce", new ScriptFunction("coalesce",
+            functions.Add("coalesce", new Function("coalesce",
                 ArgumentInfo.ParseArguments("value", "default"),
                 "A B : B if A is null, A otherwise.",
                 (context, thisObject, arguments) =>
@@ -631,7 +623,7 @@ namespace MudEngine2012.MISP
                     return arguments[0];
                 }));
 
-            functions.Add("asstring", new ScriptFunction("asstring",
+            functions.Add("asstring", new Function("asstring",
                 ArgumentInfo.ParseArguments("value", "integer B"),
                 "A B : convert A to a string to depth B.",
                 (context, thisObject, arguments) =>
@@ -645,7 +637,7 @@ namespace MudEngine2012.MISP
 
             #region Branching
 
-            functions.Add("if", new ScriptFunction("if",
+            functions.Add("if", new Function("if",
                 ArgumentInfo.ParseArguments("condition", "code then", "code ?else"),
                 "condition then else : If condition evaluates to true, evaluate and return then. Otherwise, evaluate and return else.",
                 (context, thisObject, arguments) =>
@@ -662,7 +654,7 @@ namespace MudEngine2012.MISP
 
             #region List Manipulation Functions
             
-            functions.Add("length", new ScriptFunction("length", 
+            functions.Add("length", new Function("length", 
                 ArgumentInfo.ParseArguments("list"),
                 "list : Returns length of list.",
                 (context, thisObject, arguments) =>
@@ -672,7 +664,7 @@ namespace MudEngine2012.MISP
                     return list == null ? 0 : list.Count;
                 }));
 
-            functions.Add("count", new ScriptFunction("count", 
+            functions.Add("count", new Function("count", 
                 ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
                 "variable_name list code : Returns number of items in list for which code evaluated to true.",
                 (context, thisObject, arguments) =>
@@ -692,8 +684,8 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("cat", new ScriptFunction("cat",
-                ArgumentInfo.ParseArguments("+items"),
+            functions.Add("cat", new Function("cat",
+                ArgumentInfo.ParseArguments("?+items"),
                 "<n> : Combine N lists into one",
                 (context, thisObject, arguments) =>
                 {
@@ -706,7 +698,7 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("map", new ScriptFunction("map",
+            functions.Add("map", new Function("map",
                 ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"), 
                 "variable_name list code : Transform one list into another",
                 (context, thisObject, arguments) =>
@@ -726,7 +718,7 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("mapi", new ScriptFunction("mapi",
+            functions.Add("mapi", new Function("mapi",
                 ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
                 "variable_name list code : Like map, except variable_name will hold the index not the value.",
                 (context, thisObject, arguments) =>
@@ -746,7 +738,7 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("mapex", new ScriptFunction("mapex",
+            functions.Add("mapex", new Function("mapex",
                 ArgumentInfo.ParseArguments("string variable_name", "start", "code code", "code next"), 
                 "variable_name start code next : Like map, but the next element is the result of 'next'. Stops when next = null.",
                 (context, thisObject, arguments) =>
@@ -770,7 +762,7 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("for", new ScriptFunction("for",
+            functions.Add("for", new Function("for",
                 ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"), 
                 "variable_name list code : Execute code for each item in list. Returns result of last run of code.",
                 (context, thisObject, arguments) =>
@@ -792,7 +784,7 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("where", new ScriptFunction("where",
+            functions.Add("where", new Function("where",
                 ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
                 "variable_name list code : Returns new list containing only the items in list for which code evaluated to true.",
                 (context, thisObject, arguments) =>
@@ -812,7 +804,7 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("while", new ScriptFunction("while",
+            functions.Add("while", new Function("while",
                 ArgumentInfo.ParseArguments("code condition", "code code"),
                 "condition code : Repeat code while condition evaluates to true.",
                 (context, thisObject, arguments) =>
@@ -826,7 +818,7 @@ namespace MudEngine2012.MISP
                     return null;
                 }));
 
-            functions.Add("last", new ScriptFunction("last",
+            functions.Add("last", new Function("last",
                 ArgumentInfo.ParseArguments("list list"),
                 "list : Returns last item in list.",
                 (context, thisObject, arguments) =>
@@ -837,7 +829,7 @@ namespace MudEngine2012.MISP
                     return list[list.Count - 1];
                 }));
 
-            functions.Add("first", new ScriptFunction("first",
+            functions.Add("first", new Function("first",
                 ArgumentInfo.ParseArguments("list list"),
                 "list : Returns first item in list.",
                 (context, thisObject, arguments) =>
@@ -848,7 +840,7 @@ namespace MudEngine2012.MISP
                     return list[0];
                 }));
 
-            functions.Add("index", new ScriptFunction("index",
+            functions.Add("index", new Function("index",
                 ArgumentInfo.ParseArguments("list list", "integer n"),
                 "list n : Returns nth element in list.",
                 (context, thisObject, arguments) =>
@@ -861,7 +853,7 @@ namespace MudEngine2012.MISP
                     return list[index.Value];
                 }));
 
-            functions.Add("sub-list", new ScriptFunction("sub-list",
+            functions.Add("sub-list", new Function("sub-list",
                 ArgumentInfo.ParseArguments("list list", "integer start", "integer ?length"), "list start length: Returns a elements in list between start and start+length.",
                 (context, thisObject, arguments) =>
                 {
@@ -883,7 +875,7 @@ namespace MudEngine2012.MISP
                     return new ScriptList(list.GetRange(start.Value, length.Value));
                 }));
 
-            functions.Add("sort", new ScriptFunction("sort",
+            functions.Add("sort", new Function("sort",
                 ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"), 
                 "vname list sort_func: Sorts elements according to sort func; sort func returns integer used to order items.",
                 (context, thisObject, arguments) =>
@@ -898,7 +890,7 @@ namespace MudEngine2012.MISP
                     return list;
                 }));
 
-            functions.Add("reverse", new ScriptFunction("reverse",
+            functions.Add("reverse", new Function("reverse",
                 ArgumentInfo.ParseArguments("list list"),
                 "list: Reverse the list.",
                 (context, thisObject, arguments) =>
@@ -912,7 +904,7 @@ namespace MudEngine2012.MISP
             #endregion
 
             #region String Functions
-            functions.Add("substr", new ScriptFunction("substr",
+            functions.Add("substr", new Function("substr",
                 ArgumentInfo.ParseArguments("value", "integer start"),
                 "string start : returns sub-string of string starting at start.",
                 (context, thisObject, arguments) =>
@@ -925,7 +917,7 @@ namespace MudEngine2012.MISP
                     return str.Substring(index);
                 }));
 
-            functions.Add("strcat", new ScriptFunction("strcat",
+            functions.Add("strcat", new Function("strcat",
                 ArgumentInfo.ParseArguments("?+item"), "<n> : Concatenate many strings into one.",
                 (context, thisObject, arguments) =>
                 {
@@ -934,7 +926,7 @@ namespace MudEngine2012.MISP
                     return r;
                 }));
 
-            functions.Add("strrepeat", new ScriptFunction("strrepeat",
+            functions.Add("strrepeat", new Function("strrepeat",
                 ArgumentInfo.ParseArguments("integer n", "string part"),
                 "n part: Create a string consisting of part n times.",
                     (context, thisObject, arguments) =>
@@ -955,12 +947,12 @@ namespace MudEngine2012.MISP
         {
             ScriptEvaluater evaluater;
             ScriptObject thisObject;
-            ScriptContext context;
+            Context context;
             ParseNode func;
             String vName;
 
             internal ListSortComparer(ScriptEvaluater evaluater,
-                String vName, ParseNode func, ScriptContext context, ScriptObject thisObject)
+                String vName, ParseNode func, Context context, ScriptObject thisObject)
             {
                 this.evaluater = evaluater;
                 this.vName = vName;

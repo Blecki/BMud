@@ -7,13 +7,13 @@ namespace MudEngine2012.MISP
 {
     public enum ArgumentType
     {
-        AT_STRING,
-        AT_INTEGER,
-        AT_LIST,
-        AT_OBJECT,
-        AT_CODE,
-        AT_FUNCTION,
-        AT_ANYTHING,
+        STRING,
+        INTEGER,
+        LIST,
+        OBJECT,
+        CODE,
+        FUNCTION,
+        ANYTHING,
     }
 
     public class ArgumentInfo
@@ -55,9 +55,9 @@ namespace MudEngine2012.MISP
                 var argInfo = new ArgumentInfo();
 
                 if (!String.IsNullOrEmpty(typeDecl))
-                    argInfo.type = (Enum.Parse(typeof(ArgumentType), "AT_" + typeDecl.ToUpperInvariant()) as ArgumentType?).Value;
+                    argInfo.type = (Enum.Parse(typeof(ArgumentType), typeDecl.ToUpperInvariant()) as ArgumentType?).Value;
                 else
-                    argInfo.type = ArgumentType.AT_ANYTHING;
+                    argInfo.type = ArgumentType.ANYTHING;
 
                 while (semanticDecl.StartsWith("?") || semanticDecl.StartsWith("+"))
                 {
@@ -76,16 +76,16 @@ namespace MudEngine2012.MISP
 
     }
 
-    public class ScriptFunction : ReflectionScriptObject
+    public class Function : ReflectionScriptObject
     {
-        private Func<ScriptContext, ScriptObject, ScriptList, Object> implementation = null;
+        private Func<Context, ScriptObject, ScriptList, Object> implementation = null;
         public String name;
         public String shortHelp;
         public bool isLambda = false;
         public ScriptList closedValues = null;
         public List<ArgumentInfo> argumentInfo = null;
 
-        public ScriptFunction(String name, List<ArgumentInfo> arguments, String shortHelp, Func<ScriptContext, ScriptObject, ScriptList, Object> func)
+        public Function(String name, List<ArgumentInfo> arguments, String shortHelp, Func<Context, ScriptObject, ScriptList, Object> func)
         {
             implementation = func;
             this.name = name;
@@ -97,29 +97,31 @@ namespace MudEngine2012.MISP
         {
             switch (type)
             {
-                case ArgumentType.AT_STRING:
+                case ArgumentType.STRING:
                     ScriptEvaluater.ArgumentType<String>(argument);
                     break;
-                case ArgumentType.AT_OBJECT:
+                case ArgumentType.OBJECT:
                     ScriptEvaluater.ArgumentType<ScriptObject>(argument);
                     break;
-                case ArgumentType.AT_LIST:
+                case ArgumentType.LIST:
                     ScriptEvaluater.ArgumentType<ScriptList>(argument);
                     break;
-                case ArgumentType.AT_INTEGER:
+                case ArgumentType.INTEGER:
+                    if (argument == null) return;
                     if (!(argument is int)) throw new ScriptError("Argument is wrong type.");
                     break;
-                case ArgumentType.AT_CODE:
+                case ArgumentType.CODE:
                     ScriptEvaluater.ArgumentType<ParseNode>(argument);
                     break;
-                case ArgumentType.AT_FUNCTION:
-                    ScriptEvaluater.ArgumentType<ScriptFunction>(argument);
+                case ArgumentType.FUNCTION:
+                    ScriptEvaluater.ArgumentType<Function>(argument);
                     break;
                 default:
                     break;
             }
         }
-        public Object Invoke(ScriptContext context, ScriptObject thisObject, ScriptList arguments)
+
+        public Object Invoke(Context context, ScriptObject thisObject, ScriptList arguments)
         {
             if (context.trace != null)
             {

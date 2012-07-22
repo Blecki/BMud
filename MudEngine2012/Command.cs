@@ -23,7 +23,7 @@ namespace MudEngine2012
                 {
                     core.SendMessage(Executor,
                         MISP.ScriptObject.AsString(
-                            core.scriptEngine.EvaluateString(new MISP.ScriptContext(), Executor,
+                            core.scriptEngine.EvaluateString(new MISP.Context(), Executor,
                             _Command.Substring(6))), true);
                     core.SendPendingMessages();
                     return;
@@ -45,7 +45,7 @@ namespace MudEngine2012
                     tokens = tokens.next;
                 }
 
-                var matchContext = new MISP.ScriptContext();
+                var matchContext = new MISP.Context();
 
                 if (displayTrace)
                 {
@@ -53,7 +53,7 @@ namespace MudEngine2012
                     matchContext.traceDepth = 0;
                 }
 
-                core.InvokeSystem(Executor, "handle_command",
+                core.InvokeSystem(Executor, "handle-command",
                     new MISP.ScriptList(Executor, firstWord, _Command, tokens, displayMatches == true ? (object)true : null),
                     matchContext);
 

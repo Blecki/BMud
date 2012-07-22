@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MudEngine2012.MISP
 {
-    public class ScriptContext
+    public class Context
     {
         private List<Dictionary<String, ScriptList>> variables = new List<Dictionary<String, ScriptList>>();
         public DateTime executionStart;
@@ -19,10 +19,15 @@ namespace MudEngine2012.MISP
         {
             variables.Clear();
             PushScope();
+            ResetTimer();
+        }
+
+        public void ResetTimer()
+        {
             executionStart = DateTime.Now;
         }
 
-        public ScriptContext() { Reset(); }
+        public Context() { Reset(); }
 
         public Dictionary<String, ScriptList> Scope { get { return variables[variables.Count - 1]; } }
 

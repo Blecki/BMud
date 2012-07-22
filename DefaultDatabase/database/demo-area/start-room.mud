@@ -48,7 +48,7 @@
 						^("title" "(random-item titles-a) (random-item titles-b)(random-item volumes)")
 						^("nouns" ^("book"))
 						^("@base" (load "object"))
-						^("description" ^"(this.title)")
+						^("description" *"(this.title)")
 					)
 					" from the bookshelf"
 				)
@@ -69,7 +69,7 @@
 	(prop "short" "desk")
 	(prop "nouns" ^("desk"))
 	(prop "adjectives" ^("ancient" "wooden" "wood"))
-	(prop "description" ^"This desk is made of rough wooden planks crudely joined.\n(on-list this)\n")
+	(prop "description" *"This desk is made of rough wooden planks crudely joined.\n(on-list this)\n")
 	(prop "on-get" (lambda "" ^("actor") ^() *(echo actor "You couldn't possible carry that.\n")))
 	(prop "allow-on" true)
 	

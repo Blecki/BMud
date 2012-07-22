@@ -41,7 +41,7 @@ namespace MudEngine2012
                 Console.WriteLine(new String(' ', loadDepth) + "Loading object " + basePath + path + ".");
                 loadDepth += 1;
                 var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
-                var scriptContext = new MISP.ScriptContext();
+                var scriptContext = new MISP.Context();
                 scriptContext.limitExecutionTime = timeOut;
                 var mudObject = namedObjects[path];
                 mudObject.ClearProperties();

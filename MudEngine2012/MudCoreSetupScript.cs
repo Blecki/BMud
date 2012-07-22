@@ -9,7 +9,7 @@ namespace MudEngine2012
     {
         private void SetupScript()
         {
-            scriptEngine.SetupStandardLibrary();
+            //scriptEngine.SetupStandardLibrary();
 
             scriptEngine.specialVariables.Add("players", (s, t) =>
                 {
@@ -22,7 +22,7 @@ namespace MudEngine2012
             #region Object Declaration Functions
 
 
-            scriptEngine.functions.Add("load", new MISP.ScriptFunction("load",
+            scriptEngine.functions.Add("load", new MISP.Function("load",
                 MISP.ArgumentInfo.ParseArguments("string name"),
                 "name : Loads an object from the database.",
                 (context, thisObject, arguments) =>
@@ -40,7 +40,7 @@ namespace MudEngine2012
                     }
                 }));
 
-            scriptEngine.functions.Add("reload", new MISP.ScriptFunction("reload",
+            scriptEngine.functions.Add("reload", new MISP.Function("reload",
                 MISP.ArgumentInfo.ParseArguments("string name"),
                 "name : Reoads an object from the database.",
                 (context, thisObject, arguments) =>
@@ -60,18 +60,8 @@ namespace MudEngine2012
 
             #endregion
 
-            #region Debug
-            scriptEngine.functions.Add("print", new MISP.ScriptFunction("print",
-                MISP.ArgumentInfo.ParseArguments("value"),
-                "object : Print to the console.", (context, thisObject, arguments) =>
-                {
-                    Console.WriteLine(String.Join(" ", arguments.Select((o, i) => { return MISP.ScriptObject.AsString(o); })));
-                    return null;
-                }));
-            #endregion
-
             #region Basic Mudding
-            scriptEngine.functions.Add("echo", new MISP.ScriptFunction("echo",
+            scriptEngine.functions.Add("echo", new MISP.Function("echo",
                 MISP.ArgumentInfo.ParseArguments("to", "message"),
                 "player<s> message : Send text to players", (context, thisObject, arguments) =>
             {
@@ -95,7 +85,7 @@ namespace MudEngine2012
                 return null;
             }));
 
-            scriptEngine.functions.Add("command", new MISP.ScriptFunction("command",
+            scriptEngine.functions.Add("command", new MISP.Function("command",
                 MISP.ArgumentInfo.ParseArguments("object player", "string command"),
                 "player command : Send a command as if it came from player",
                 (context, thisObject, arguments) =>

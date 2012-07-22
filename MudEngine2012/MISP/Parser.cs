@@ -5,23 +5,6 @@ using System.Text;
 
 namespace MudEngine2012.MISP
 {
-    public class ParseNode
-    {
-        public String type = "";
-        public String token = "";
-        public List<ParseNode> childNodes = new List<ParseNode>();
-        public int start;
-        public int end;
-
-        public ParseNode(String type, int start) { this.type = type; this.start = start; }
-
-        public void DebugEmit(int depth)
-        {
-            Console.WriteLine(new String(' ', depth) + type + ": [" + token + "]");
-            foreach (var child in childNodes) child.DebugEmit(depth + 1);
-        }
-    }
-
     public class ParseError : ScriptError
     {
         public ParseError(String msg) : base(msg) {}
@@ -44,7 +27,7 @@ namespace MudEngine2012.MISP
         }
     }
 
-    public class ScriptParser
+    public class Parser
     {
         public static bool IsWhitespace(char c)
         {
@@ -58,16 +41,17 @@ namespace MudEngine2012.MISP
 
         public static ParseNode ParseToken(ParseState state)
         {
-            var result = new ParseNode("token", state.start);
+            var result = new ParseNode(NodeType.Token, state.start);
             while (!state.AtEnd() && !(" \t\r\n:.)]".Contains(state.Next()))) state.Advance();
             result.end = state.start;
             result.token = state.source.Substring(result.start, result.end - result.start);
+            if (String.IsNullOrEmpty(result.token)) throw new ParseError("Empty token");
             return result;
         }
 
         public static ParseNode ParseInteger(ParseState state)
         {
-            var result = new ParseNode("integer", state.start);
+            var result = new ParseNode(NodeType.Integer, state.start);
             while (!state.AtEnd() && ("0123456789".Contains(state.Next()))) state.Advance();
             result.end = state.start;
             result.token = state.source.Substring(result.start, result.end - result.start);
@@ -86,9 +70,9 @@ namespace MudEngine2012.MISP
 
             //Create an (A B C D) list.
             var nodeList = new LinkedList<AccessChainNode>();
-            for (var n = node; n != null; n = (n.type == "member access" ? n.childNodes[1] : null))
+            for (var n = node; n != null; n = (n.type == NodeType.MemberAccess ? n.childNodes[1] : null))
             {
-                if (n.type == "member access")
+                if (n.type == NodeType.MemberAccess)
                     nodeList.AddLast(new AccessChainNode { node = n.childNodes[0], token = n.token });
                 else
                     nodeList.AddLast(new AccessChainNode { node = n, token = "" });
@@ -103,7 +87,7 @@ namespace MudEngine2012.MISP
                 var rhs = nodeList.First();
                 nodeList.RemoveFirst();
 
-                var newNode = new ParseNode("member access", lhs.node.start);
+                var newNode = new ParseNode(NodeType.MemberAccess, lhs.node.start);
                 newNode.token = lhs.token;
                 newNode.childNodes.Add(lhs.node);
                 newNode.childNodes.Add(rhs.node);
@@ -118,32 +102,41 @@ namespace MudEngine2012.MISP
             return nodeList.First().node;
         }
 
+        public static Prefix ParsePrefix(ParseState state)
+        {
+            Prefix result = Prefix.None;
+            if (state.Next() == '*')
+                result = Prefix.Quote;
+            else if (state.Next() == '^')
+                result = Prefix.List;
+            else if (state.Next() == '$')
+                result = Prefix.Expand;
+            else if (state.Next() == '#')
+                result = Prefix.Lookup;
+            if (result != Prefix.None)
+                state.Advance();
+            return result;
+        }
+
         public static ParseNode ParseExpression(ParseState state)
         {
             ParseNode result = null;
+            var prefix = ParsePrefix(state);
             if (state.Next() == '[') //Dictionary Entry
             {
                 result = ParseNode(state, "[", "]");
-                result.type = "dictionary-entry";
+                result.type = NodeType.DictionaryEntry;
             }
-            else if (state.MatchNext("^\"")) //escaped string
-            {
-                state.Advance();
-                var stringNode = ParseStringExpression(state);
-                result = new ParseNode("string", stringNode.start)
-                {
-                    token = state.source.Substring(stringNode.start + 1, stringNode.end - stringNode.start - 2)
-                };
-            } 
             else if (state.Next() == '"')
             {
                 result = ParseStringExpression(state);
+                if (prefix == Prefix.Quote)
+                    result = new ParseNode(NodeType.String, result.start)
+                    {
+                        token = state.source.Substring(result.start + 1, result.end - result.start - 2)
+                    };
             }
-            else if (state.MatchNext("*(") 
-                | state.MatchNext("^(")
-                | state.MatchNext("$(") 
-                | state.MatchNext("#(") 
-                | state.MatchNext("("))
+            else if (state.Next() == '(')
             {
                 result = ParseNode(state);
             }
@@ -158,13 +151,16 @@ namespace MudEngine2012.MISP
              
             if (state.Next() == '.' || state.Next() == ':')
             {
-                var final_result = new ParseNode("member access", result.start);
+                var final_result = new ParseNode(NodeType.MemberAccess, result.start);
                 final_result.childNodes.Add(result);
                 final_result.token = new String(state.Next(), 1);
                 state.Advance();
                 final_result.childNodes.Add(ParseExpression(state));
-                return final_result;
+                result = final_result;
             }
+
+            result.prefix = prefix;
+            if (!PrefixCheck.CheckPrefix(result)) throw new ParseError("Illegal prefix on expression of type " + result.type);
             return result;
         }
                         
@@ -172,11 +168,7 @@ namespace MudEngine2012.MISP
 
         public static ParseNode ParseNode(ParseState state, String start = "(", String end = ")")
         {
-            var result = new ParseNode("node", state.start);
-            if (state.Next() == '*') { result.token = "*"; state.Advance(); }
-            else if (state.Next() == '$') { result.token = "$"; state.Advance(); }
-            else if (state.Next() == '^') { result.token = "^"; state.Advance(); }
-            else if (state.Next() == '#') { result.token = "#"; state.Advance(); }
+            var result = new ParseNode(NodeType.Node, state.start);
             if (!state.MatchNext(start)) throw new ParseError("Expected " + start);
             state.Advance(start.Length);
             while (!state.MatchNext(end))
@@ -185,7 +177,7 @@ namespace MudEngine2012.MISP
                 if (!state.MatchNext(end))
                 {
                     var expression = ParseExpression(state);
-                    if (expression.type == "member access") expression = ReorderMemberAccessNode(expression);
+                    if (expression.type == NodeType.MemberAccess) expression = ReorderMemberAccessNode(expression);
                     result.childNodes.Add(expression);
                 }
                 DevourWhitespace(state);
@@ -196,7 +188,7 @@ namespace MudEngine2012.MISP
 
         public static ParseNode ParseStringExpression(ParseState state, bool isRoot = false)
         {
-            var result = new ParseNode("string expression", state.start);
+            var result = new ParseNode(NodeType.StringExpression, state.start);
             if (!isRoot) state.Advance(); //Skip opening quote
             string piece = "";
             int piece_start = state.start;
@@ -204,7 +196,7 @@ namespace MudEngine2012.MISP
             {
                 if (state.Next() == '(') 
                 {
-                    if (piece.Length > 0) result.childNodes.Add(new ParseNode("string", piece_start) {
+                    if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start) {
                         token = state.source.Substring(piece_start, state.start - piece_start) });
                     result.childNodes.Add(ParseNode(state));
                     piece = "";
@@ -218,11 +210,11 @@ namespace MudEngine2012.MISP
                 }
                 else if (!isRoot && state.Next() == '"') 
                 {
-                    if (piece.Length > 0) result.childNodes.Add(new ParseNode("string", piece_start) {
+                    if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start) {
                         token = state.source.Substring(piece_start, state.start - piece_start) });
                     state.Advance();
                     result.end = state.start;
-                    if (result.childNodes.Count == 1 && result.childNodes[0].type == "string")
+                    if (result.childNodes.Count == 1 && result.childNodes[0].type == NodeType.String)
                         return result.childNodes[0];
                     return result;
                 }
@@ -237,7 +229,7 @@ namespace MudEngine2012.MISP
 
             if (isRoot)
             {
-                if (piece.Length > 0) result.childNodes.Add(new ParseNode("string", piece_start)
+                if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start)
                 {
                     token = state.source.Substring(piece_start, state.start - piece_start)
                 });

@@ -3,13 +3,13 @@
 (defun "list-remove" ^("what" "list") ^() *(where "item" (coalesce list ^()) *(notequal item what)))
 (defun "list-add" ^("what" "list") ^() *(cat (coalesce list ^()) ^(what)))
 
-(defun "prop_remove" ^("object" "property" "item") ^() 
+(defun "prop-remove" ^("object" "property" "item") ^() 
 	*(set object property 
 		(list-remove item (object.(property)))
 	)
 )
 
-(defun "prop_add" ^("object" "property" "item") ^() *(set object property (list-add item (coalesce (object.(property)) ^()))))
+(defun "prop-add" ^("object" "property" "item") ^() *(set object property (list-add item (coalesce (object.(property)) ^()))))
 
 
 (defun "short_list" ^("list") ^()
