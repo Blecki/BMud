@@ -9,8 +9,6 @@ namespace MudEngine2012
     {
         private void SetupScript()
         {
-            //scriptEngine.SetupStandardLibrary();
-
             scriptEngine.specialVariables.Add("players", (s, t) =>
                 {
                     return new MISP.ScriptList(ConnectedClients.Select((p) =>
@@ -20,14 +18,12 @@ namespace MudEngine2012
                 });
 
             #region Object Declaration Functions
-
-
             scriptEngine.functions.Add("load", new MISP.Function("load",
                 MISP.ArgumentInfo.ParseArguments("string name"),
                 "name : Loads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
-                    MISP.ScriptEvaluater.ArgumentCount(1, arguments);
+                    MISP.Engine.ArgumentCount(1, arguments);
                     var objectName = MISP.ScriptObject.AsString(arguments[0]);
                     try
                     {
@@ -45,7 +41,7 @@ namespace MudEngine2012
                 "name : Reoads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
-                    MISP.ScriptEvaluater.ArgumentCount(1, arguments);
+                    MISP.Engine.ArgumentCount(1, arguments);
                     var objectName = MISP.ScriptObject.AsString(arguments[0]);
                     try
                     {
@@ -58,6 +54,36 @@ namespace MudEngine2012
                     }
                 }));
 
+            scriptEngine.functions.Add("create", new MISP.Function("create",
+                MISP.ArgumentInfo.ParseArguments("string name"),
+                "name : Creates a new object in the database.",
+                (context, thisObject, arguments) =>
+                {
+                    var objectName = MISP.ScriptObject.AsString(arguments[0]);
+                    try
+                    {
+                        return database.CreateObject(objectName);
+                    }
+                    catch (Exception e)
+                    {
+                        return null;
+                    }
+                }));
+
+            scriptEngine.functions.Add("save", new MISP.Function("save",
+               MISP.ArgumentInfo.ParseArguments("string name"),
+               "name : Save a named object.",
+               (context, thisObject, arguments) =>
+               {
+                   var objectName = MISP.ScriptObject.AsString(arguments[0]);
+                   try
+                   {
+                       database.SerializeObject(objectName);
+                   }
+                   catch (Exception e) { }
+                   return null;
+               }));
+
             #endregion
 
             #region Basic Mudding
@@ -65,7 +91,7 @@ namespace MudEngine2012
                 MISP.ArgumentInfo.ParseArguments("to", "message"),
                 "player<s> message : Send text to players", (context, thisObject, arguments) =>
             {
-                MISP.ScriptEvaluater.ArgumentCount(2, arguments);
+                MISP.Engine.ArgumentCount(2, arguments);
                 MISP.ScriptList to = null;
 
                 if (arguments[0] is MISP.ScriptList) to = arguments[0] as MISP.ScriptList;
@@ -90,10 +116,10 @@ namespace MudEngine2012
                 "player command : Send a command as if it came from player",
                 (context, thisObject, arguments) =>
                 {
-                    MISP.ScriptEvaluater.ArgumentCount(2, arguments);
+                    MISP.Engine.ArgumentCount(2, arguments);
                     EnqueuAction(new Command
                     {
-                        Executor = MISP.ScriptEvaluater.ArgumentType<MISP.ScriptObject>(arguments[0]),
+                        Executor = MISP.Engine.ArgumentType<MISP.ScriptObject>(arguments[0]),
                         _Command = MISP.ScriptObject.AsString(arguments[1])
                     });
                     return null;

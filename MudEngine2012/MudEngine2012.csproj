@@ -42,19 +42,33 @@
   <ItemGroup>
     <Compile Include="CommandTokenizer.cs" />
     <Compile Include="Command.cs" />
+    <Compile Include="ObjectDeserializer.cs" />
+    <Compile Include="MISP\SLEncryption.cs" />
+    <Compile Include="MISP\SLVariables.cs" />
+    <Compile Include="MISP\SLObjects.cs" />
+    <Compile Include="MISP\SLMath.cs" />
+    <Compile Include="MISP\SLFunctions.cs" />
+    <Compile Include="MISP\SLBranching.cs" />
+    <Compile Include="MISP\SLLoops.cs" />
+    <Compile Include="MISP\SLLists.cs" />
+    <Compile Include="MISP\SLStrings.cs" />
+    <Compile Include="MISP\StandardLibrary.cs" />
     <Compile Include="MISP\ParseNode.cs" />
-    <Compile Include="MISP\ScriptFunction.cs" />
+    <Compile Include="MISP\Function.cs" />
     <Compile Include="MISP\ScriptList.cs" />
     <Compile Include="MISP\ScriptObject.cs" />
     <Compile Include="MudCoreSetupScript.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="MudCore.cs" />
-    <Compile Include="MISP\ScriptEvaluater.cs" />
+    <Compile Include="MISP\Engine.cs" />
     <Compile Include="MISP\Context.cs" />
+    <Compile Include="ObjectSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="MISP\Parser.cs" />
+    <Compile Include="ReadOnlyDatagram.cs" />
     <Compile Include="Upsert.cs" />
+    <Compile Include="WriteOnlyDatagram.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

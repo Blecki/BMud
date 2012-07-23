@@ -98,23 +98,23 @@ namespace MudEngine2012.MISP
             switch (type)
             {
                 case ArgumentType.STRING:
-                    ScriptEvaluater.ArgumentType<String>(argument);
+                    Engine.ArgumentType<String>(argument);
                     break;
                 case ArgumentType.OBJECT:
-                    ScriptEvaluater.ArgumentType<ScriptObject>(argument);
+                    Engine.ArgumentType<ScriptObject>(argument);
                     break;
                 case ArgumentType.LIST:
-                    ScriptEvaluater.ArgumentType<ScriptList>(argument);
+                    Engine.ArgumentType<ScriptList>(argument);
                     break;
                 case ArgumentType.INTEGER:
                     if (argument == null) return;
                     if (!(argument is int)) throw new ScriptError("Argument is wrong type.");
                     break;
                 case ArgumentType.CODE:
-                    ScriptEvaluater.ArgumentType<ParseNode>(argument);
+                    Engine.ArgumentType<ParseNode>(argument);
                     break;
                 case ArgumentType.FUNCTION:
-                    ScriptEvaluater.ArgumentType<Function>(argument);
+                    Engine.ArgumentType<Function>(argument);
                     break;
                 default:
                     break;

@@ -27,7 +27,7 @@
 			*(if player-object
 				*(if (greaterthan (count "player" players *(equal player player-object)) 0)
 					*(echo client "You are already logged in.\n")
-					*(if (equal (index words 2) player-object.password)
+					*(if (equal (hash (index words 2) "change this.") player-object.password)
 						*(nop
 							(set client "player" player-object)
 							(set client "logged_on" true)
@@ -41,12 +41,13 @@
 			)
 		)
 		*(if (equal (index words 0) "register")
-			*(let ^(^("player-object" (create_named "players/(index words 1)")))
+			*(let ^(^("player-object" (create "players/(index words 1)")))
 				*(if player-object
 					*(nop
 						(set client "player" player-object)
 						(set client "logged_on" true)
-						(set player-object "password" (index words 2))
+						(set player-object "password" (hash (index words 2) "change this."))
+						(set player-object "@base" (load "player"))
 						(move-object player-object (load "demo-area/start-room") "contents")
 						(command player-object "look")
 					)
@@ -245,4 +246,15 @@
 		)
 	)
 	"Set your prompt."
+)
+
+(add-global-verb "save" (m-nothing) 
+	(lambda "" [matches actor] []
+		(nop
+			(echo actor "Saving...")
+			(save actor.@path)
+			(echo actor "done.\n")
+		)
+	)
+	"Save your character."
 )

@@ -63,7 +63,7 @@ namespace MudEngine2012
         LinkedList<PendingAction> PendingActions = new LinkedList<PendingAction>();
         Thread ActionExecutionThread;
         public Database database { get; private set; }
-        public MISP.ScriptEvaluater scriptEngine { get; private set; }
+        public MISP.Engine scriptEngine { get; private set; }
         internal Dictionary<String, Client> ConnectedClients = new Dictionary<String, Client>();
 
         private Mutex _databaseLock = new Mutex();
@@ -103,7 +103,7 @@ namespace MudEngine2012
         {
             try
             {
-                scriptEngine = new MISP.ScriptEvaluater();
+                scriptEngine = new MISP.Engine();
                 SetupScript();
                 database = new Database(basePath, this);
                 database.LoadObject("system", false);

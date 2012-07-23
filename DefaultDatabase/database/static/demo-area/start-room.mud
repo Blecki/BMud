@@ -58,14 +58,14 @@
 	)
 )
 
-(add-object this "contents" (create *(nop
+(add-object this "contents" (make-object *(nop
 	(prop "short" "dusty rug")
 	(prop "nouns" ^("rug"))
 	(prop "adjectives" ^("dusty"))
 	(prop "description" "It looks like an ordinary rug. Could use some cleaning.")
 )))
 
-(add-object this "contents" (create *(nop
+(add-object this "contents" (make-object *(nop
 	(prop "short" "desk")
 	(prop "nouns" ^("desk"))
 	(prop "adjectives" ^("ancient" "wooden" "wood"))
@@ -73,13 +73,13 @@
 	(prop "on-get" (lambda "" ^("actor") ^() *(echo actor "You couldn't possible carry that.\n")))
 	(prop "allow-on" true)
 	
-	(add-object this "on" (create *(nop
+	(add-object this "on" (make-object *(nop
 		(prop "short" "small inkwell")
 		(prop "nouns" ^("inkwell"))
 		(prop "adjectives" ^("small"))
 	)))
 	
-	(add-object this "on" (create *(nop
+	(add-object this "on" (make-object *(nop
 		(prop "short" "quill")
 		(prop "nouns" ^("quill"))
 	)))

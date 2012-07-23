@@ -13,7 +13,7 @@ namespace MISPConsole
             if (depth == 2)
             {
                 Console.Write(what == null ? "null" : what.ToString());
-                }
+            }
             else
             {
                 if (what == null)
@@ -53,9 +53,19 @@ namespace MISPConsole
 
         static void Main(string[] args)
         {
-            ScriptEvaluater mispEngine = new ScriptEvaluater();
+            Engine mispEngine = new Engine();
             Context mispContext = new Context();
             GenericScriptObject mispObject = new GenericScriptObject();
+
+            mispEngine.functions.Add("serialize", new Function("serialize",
+                ArgumentInfo.ParseArguments("object obj"), 
+                "Test serialize functionality. Without a database attached, this just dumps raw data to the screen.",
+                (context, thisObject, arguments) =>
+                {
+                    var data = MudEngine2012.ObjectSerializer.Serialize(arguments[0] as ScriptObject);
+                    Console.Write(ASCIIEncoding.UTF8.GetString(data.BufferAsArray));
+                    return null;
+                }));
 
             Console.Write("MISP Console 1.0\n");
             while (true)

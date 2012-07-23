@@ -7,20 +7,22 @@ namespace MudEngine2012
 {
     public class Database
     {
-        public String basePath { get; private set; }
+        public String staticPath { get; private set; }
+        public String serializedPath { get; private set; }
         private Dictionary<String, MISP.ScriptObject> namedObjects = new Dictionary<string, MISP.ScriptObject>();
         private MudCore core = null;
 
         public Database(String basePath, MudCore core)
         {
-            this.basePath = basePath;
+            this.staticPath = basePath + "static/";
+            this.serializedPath = basePath + "serialized/";
             this.core = core;
         }
 
         public MISP.ScriptObject CreateObject(String path)
         {
             if (LoadObject(path) != null) return null;
-            namedObjects.Upsert(path, new MISP.GenericScriptObject("@path", path));
+            namedObjects.Upsert(path, new MISP.GenericScriptObject("@path", path, "@base", LoadObject("object")));
             return namedObjects[path];
         }
 
@@ -38,31 +40,74 @@ namespace MudEngine2012
                 namedObjects.Upsert(path, new MISP.GenericScriptObject("@path", path));
             try
             {
-                Console.WriteLine(new String(' ', loadDepth) + "Loading object " + basePath + path + ".");
+                Console.WriteLine(new String(' ', loadDepth) + "Loading object " + staticPath + path + ".");
                 loadDepth += 1;
-                var inFile = System.IO.File.ReadAllText(basePath + path + ".mud");
-                var scriptContext = new MISP.Context();
-                scriptContext.limitExecutionTime = timeOut;
+                bool hasData = false;
+
                 var mudObject = namedObjects[path];
                 mudObject.ClearProperties();
+
+                var serializedObjectPath = serializedPath + path + ".obj";
+                if (System.IO.File.Exists(serializedObjectPath))
+                {
+                    hasData = true;
+                    Console.WriteLine(new String(' ', loadDepth) + "-Has serialized data.");
+                    try
+                    {
+                        var bytes = System.IO.File.ReadAllBytes(serializedObjectPath);
+                        var datagram = new ReadOnlyDatagram(bytes);
+                        ObjectDeserializer.Deserialize(mudObject as MISP.GenericScriptObject, datagram, this);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Error: Serialized data will be discarded.\n" + e.Message);
+                        mudObject.ClearProperties();
+                    }
+                }
 
                 mudObject.SetProperty("@path", path);
                 if (path != "object") mudObject.SetProperty("@base", LoadObject("object"));
 
-                core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, true);
+                var staticObjectPath = staticPath + path + ".mud";
+                if (System.IO.File.Exists(staticObjectPath))
+                {
+                    hasData = true;
+                    Console.WriteLine(new String(' ', loadDepth) + "-Has static data.");
+                    var inFile = System.IO.File.ReadAllText(staticObjectPath);
+                    var scriptContext = new MISP.Context();
+                    scriptContext.limitExecutionTime = timeOut;
+                    core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, true);
+                }
+
+                if (!hasData)
+                {
+                    Console.WriteLine(new String(' ', loadDepth) + "-Has no data.");
+                    namedObjects.Remove(path);
+                    mudObject = null;
+                }
 
                 loadDepth -= 1;
-                Console.WriteLine(new String(' ', loadDepth) + "..Success.");
-                return namedObjects[path];
+                Console.WriteLine(new String(' ', loadDepth) + (hasData ? "..Success." : "..Failure."));
+                return mudObject;
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error loading object " + basePath + path + ".");
+                Console.WriteLine("Error loading object " + staticPath + path + ".");
                 Console.WriteLine(e.Message);
                 Console.WriteLine(e.StackTrace);
                 loadDepth -= 1;
                 return null;
             }
+        }
+
+        public void SerializeObject(String path)
+        {
+            if (!namedObjects.ContainsKey(path)) throw new MISP.ScriptError("Attempted to save unknown object.");
+            var datagram = ObjectSerializer.Serialize(namedObjects[path]);
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(serializedPath + path + ".obj"));
+            var file = System.IO.File.OpenWrite(serializedPath + path + ".obj");
+            file.Write(datagram.BufferAsArray, 0, datagram.LengthInBytes);
+            file.Close();
         }
     }
 }

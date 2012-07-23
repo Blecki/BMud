@@ -43,58 +43,58 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="database\demo-area\admin-ball.mud">
+    <None Include="database\static\demo-area\admin-ball.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\lists.mud">
+    <None Include="database\static\lists.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\player.mud">
+    <None Include="database\static\player.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\grammar.mud">
+    <None Include="database\static\grammar.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\demo-area\balcony.mud">
+    <None Include="database\static\demo-area\balcony.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\demo-area\start-room.mud">
+    <None Include="database\static\demo-area\start-room.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\go.mud">
+    <None Include="database\static\go.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\drop.mud">
+    <None Include="database\static\drop.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\object-matcher.mud">
+    <None Include="database\static\object-matcher.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\move-object.mud">
+    <None Include="database\static\move-object.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\object.mud">
+    <None Include="database\static\object.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\get.mud">
+    <None Include="database\static\get.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\say.mud">
+    <None Include="database\static\say.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\look.mud">
+    <None Include="database\static\look.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\matchers.mud">
+    <None Include="database\static\matchers.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\players\god.mud">
+    <None Include="database\static\players\god.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\room.mud">
+    <None Include="database\static\room.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\system.mud">
+    <None Include="database\static\system.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

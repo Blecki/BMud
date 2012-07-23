@@ -13,7 +13,7 @@
 		(prop-add to list object)
 		(set object "location" (record ^("object" to) ^("list" list)))))
 		
-(defun "create" ^("code") ^()
+(defun "make-object" ^("code") ^()
 	*(let ^(^("object" (record ^("@base" (load "object")))))
 		*(lastarg
 			(eval object code)

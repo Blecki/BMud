@@ -1,0 +1,1 @@
+﻿(prop "@base" (load "player"))
