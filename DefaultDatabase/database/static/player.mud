@@ -8,6 +8,6 @@
 (prop "description" *"(this:short)\n(this:long)\n(if
 	(equal (length this.held) 0)
 	*("")
-	*("(this:pronoun) is holding (short_list this.held)\n")
+	*("^(this:pronoun) is holding (short-list-no-isare this.held)\n")
 	)"
 )

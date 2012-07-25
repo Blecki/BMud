@@ -28,6 +28,21 @@
 	)
 )
 
+(defun "short-list-no-isare" ^("list") ^()
+	(if (equal (length list) 1)
+		("((index list 0):a).")
+		(strcat
+			$(mapi "i" list
+				(if	(equal i (subtract (length list) 1))
+					("and ((index list i):a).")
+					("((index list i):a), ")
+				)
+			)
+		)
+	)
+)
+
+
 (defun "short_list_with_on" ^("list") ^()
 	*(if 
 		(equal (length list) 1)

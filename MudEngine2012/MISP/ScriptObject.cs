@@ -52,7 +52,7 @@ namespace MudEngine2012.MISP
 
         override public void DeleteProperty(String name)
         {
-            throw new ScriptError("Properties cannot be removed from objects of type " + this.GetType().Name + ".");
+            throw new ScriptError("Properties cannot be removed from objects of type " + this.GetType().Name + ".", null);
         }
 
         override public void SetProperty(string name, object value)
@@ -65,7 +65,7 @@ namespace MudEngine2012.MISP
                 else
                     field.SetValue(this, value);
             }
-            else throw new ScriptError("Field does not exist on " + this.GetType().Name + ".");
+            else throw new ScriptError("Field does not exist on " + this.GetType().Name + ".", null);
         }
 
         override public ScriptList ListProperties()

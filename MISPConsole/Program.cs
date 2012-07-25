@@ -67,6 +67,23 @@ namespace MISPConsole
                     return null;
                 }));
 
+            mispEngine.functions.Add("run-file", new Function("run-file",
+                ArgumentInfo.ParseArguments("string name"),
+                "Load and run a file.",
+                (context, thisObject, arguments) =>
+                {
+                    try
+                    {
+                        var text = System.IO.File.ReadAllText(MudEngine2012.MISP.ScriptObject.AsString(arguments[0]));
+                        return mispEngine.EvaluateString(context, thisObject, text, MudEngine2012.MISP.ScriptObject.AsString(arguments[0]), false);
+                    }
+                    catch (MudEngine2012.MISP.ScriptError e)
+                    {
+                        Console.WriteLine("Error " + (e.generatedAt == null ? "" : "on line " + e.generatedAt.line) + ": " + e.Message);
+                        return null;
+                    }
+                }));
+
             Console.Write("MISP Console 1.0\n");
             while (true)
             {
@@ -83,7 +100,7 @@ namespace MISPConsole
                     try
                     {
                         mispContext.ResetTimer();
-                        var result = mispEngine.EvaluateString(mispContext, mispObject, command);
+                        var result = mispEngine.EvaluateString(mispContext, mispObject, command, "");
                         PrettyPrint(result, 0);
                         Console.Write("\n");
                     }

@@ -36,7 +36,7 @@ namespace MudEngine2012.MISP
             var r = new List<ArgumentInfo>();
             foreach (var arg in args)
             {
-                if (!(arg is String)) throw new ScriptError("Argument names must be strings.");
+                if (!(arg is String)) throw new ScriptError("Argument names must be strings.", null);
                 var parts = (arg as String).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 String typeDecl = "";
                 String semanticDecl = "";
@@ -50,7 +50,7 @@ namespace MudEngine2012.MISP
                     semanticDecl = parts[0];
                 }
                 else
-                    throw new ScriptError("Invalid argument declaration");
+                    throw new ScriptError("Invalid argument declaration", null);
 
                 var argInfo = new ArgumentInfo();
 
@@ -93,28 +93,39 @@ namespace MudEngine2012.MISP
             this.argumentInfo = arguments;
         }
 
-        private static void checkArgumentType(ArgumentType type, Object argument)
+        private static T CheckArgumentType<T>(Object obj, Context context) where T : class
+        {
+            if (obj == null)
+                throw new ScriptError("Expecting argument of type " + typeof(T) + ", got null. ", context.currentNode);
+            var r = obj as T;
+            if (r == null)
+                throw new ScriptError("Function argument is the wrong type. Expected type "
+                    + typeof(T) + ", got " + obj.GetType() + ". ", context.currentNode);
+            return r;
+        }
+
+        private static void checkArgumentType(ArgumentType type, Object argument, Context context)
         {
             switch (type)
             {
                 case ArgumentType.STRING:
-                    Engine.ArgumentType<String>(argument);
+                    CheckArgumentType<String>(argument, context);
                     break;
                 case ArgumentType.OBJECT:
-                    Engine.ArgumentType<ScriptObject>(argument);
+                    CheckArgumentType<ScriptObject>(argument, context);
                     break;
                 case ArgumentType.LIST:
-                    Engine.ArgumentType<ScriptList>(argument);
+                    CheckArgumentType<ScriptList>(argument, context);
                     break;
                 case ArgumentType.INTEGER:
                     if (argument == null) return;
-                    if (!(argument is int)) throw new ScriptError("Argument is wrong type.");
+                    if (!(argument is int)) throw new ScriptError("Argument is wrong type.", context.currentNode);
                     break;
                 case ArgumentType.CODE:
-                    Engine.ArgumentType<ParseNode>(argument);
+                    CheckArgumentType<ParseNode>(argument, context);
                     break;
                 case ArgumentType.FUNCTION:
-                    Engine.ArgumentType<Function>(argument);
+                    CheckArgumentType<Function>(argument, context);
                     break;
                 default:
                     break;
@@ -131,17 +142,17 @@ namespace MudEngine2012.MISP
             }
 
             //Check argument types
-            if (argumentInfo.Count == 0 && arguments.Count != 0) throw new ScriptError("Function expects no arguments.");
+            if (argumentInfo.Count == 0 && arguments.Count != 0) throw new ScriptError("Function expects no arguments.", context.currentNode);
 
             for (int i = 0; i < argumentInfo.Count; ++i)
             {
                 if (arguments.Count <= i)
                 {
-                    if (!argumentInfo[i].optional) throw new ScriptError("Not enough arguments to " + name);
+                    if (!argumentInfo[i].optional) throw new ScriptError("Not enough arguments to " + name, context.currentNode);
                 }
                 else
                 {
-                    checkArgumentType(argumentInfo[i].type, arguments[i]);
+                    checkArgumentType(argumentInfo[i].type, arguments[i], context);
                 }
             }
 
@@ -150,10 +161,10 @@ namespace MudEngine2012.MISP
                 if (argumentInfo[argumentInfo.Count - 1].repeat)
                 {
                     for (int i = argumentInfo.Count; i < arguments.Count; ++i)
-                        checkArgumentType(argumentInfo[argumentInfo.Count - 1].type, arguments[i]);
+                        checkArgumentType(argumentInfo[argumentInfo.Count - 1].type, arguments[i], context);
                 }
                 else
-                    throw new ScriptError("Too many arguments to function.");
+                    throw new ScriptError("Too many arguments to function.", context.currentNode);
             }
 
 

@@ -60,8 +60,16 @@ namespace MudEngine2012.MISP
         public List<ParseNode> childNodes = new List<ParseNode>();
         public int start;
         public int end;
+        public ParseState source;
+        public int line;
 
-        public ParseNode(NodeType type, int start) { this.type = type; this.start = start; }
+        public ParseNode(NodeType type, int start, ParseState source) 
+        { 
+            this.type = type; 
+            this.start = start;
+            this.source = source;
+            this.line = source.currentLine;
+        }
 
         public void DebugEmit(int depth)
         {

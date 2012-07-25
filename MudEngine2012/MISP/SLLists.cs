@@ -9,22 +9,20 @@ namespace MudEngine2012.MISP
     {
         private void SetupListFunctions()
         {
-            functions.Add("length", new Function("length", 
+            functions.Add("length", new Function("length",
                 ArgumentInfo.ParseArguments("list"),
                 "list : Returns length of list.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(1, arguments);
                     var list = arguments[0] as ScriptList;
                     return list == null ? 0 : list.Count;
                 }));
 
-            functions.Add("count", new Function("count", 
+            functions.Add("count", new Function("count",
                 ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
                 "variable_name list code : Returns number of items in list for which code evaluated to true.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(3, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
                     var func = ArgumentType<ParseNode>(arguments[2]);
@@ -38,6 +36,25 @@ namespace MudEngine2012.MISP
                     context.PopVariable(vName);
                     return result;
                 }));
+
+            functions.Add("where", new Function("where",
+    ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
+    "variable_name list code : Returns new list containing only the items in list for which code evaluated to true.",
+    (context, thisObject, arguments) =>
+    {
+        var vName = ArgumentType<String>(arguments[0]);
+        var list = ArgumentType<ScriptList>(arguments[1]);
+        var func = ArgumentType<ParseNode>(arguments[2]);
+
+        context.PushVariable(vName, null);
+        var result = new ScriptList(list.Where((o) =>
+        {
+            context.ChangeVariable(vName, o);
+            return Evaluate(context, func, thisObject, true) != null;
+        }));
+        context.PopVariable(vName);
+        return result;
+    }));
 
             functions.Add("cat", new Function("cat",
                 ArgumentInfo.ParseArguments("?+items"),
@@ -58,7 +75,6 @@ namespace MudEngine2012.MISP
                 "list : Returns last item in list.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(1, arguments);
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     if (list.Count == 0) return null;
                     return list[list.Count - 1];
@@ -69,7 +85,6 @@ namespace MudEngine2012.MISP
                 "list : Returns first item in list.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(1, arguments);
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     if (list.Count == 0) return null;
                     return list[0];
@@ -80,7 +95,6 @@ namespace MudEngine2012.MISP
                 "list n : Returns nth element in list.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     var index = arguments[1] as int?;
                     if (index == null || !index.HasValue) return null;
@@ -92,8 +106,6 @@ namespace MudEngine2012.MISP
                 ArgumentInfo.ParseArguments("list list", "integer start", "integer ?length"), "list start length: Returns a elements in list between start and start+length.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCountOrGreater(2, arguments);
-                    ArgumentCountNoMoreThan(3, arguments);
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     var start = arguments[1] as int?;
                     if (start == null || !start.HasValue) return new ScriptList();
@@ -111,11 +123,10 @@ namespace MudEngine2012.MISP
                 }));
 
             functions.Add("sort", new Function("sort",
-                ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"), 
+                ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
                 "vname list sort_func: Sorts elements according to sort func; sort func returns integer used to order items.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(3, arguments);
                     var vName = ScriptObject.AsString(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
                     var sortFunc = ArgumentType<ParseNode>(arguments[2]);
@@ -130,7 +141,6 @@ namespace MudEngine2012.MISP
                 "list: Reverse the list.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(1, arguments);
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     list.Reverse();
                     return list;

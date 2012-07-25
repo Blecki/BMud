@@ -76,7 +76,7 @@ namespace MudEngine2012
                     var inFile = System.IO.File.ReadAllText(staticObjectPath);
                     var scriptContext = new MISP.Context();
                     scriptContext.limitExecutionTime = timeOut;
-                    core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, true);
+                    core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, staticObjectPath, true);
                 }
 
                 if (!hasData)
@@ -102,7 +102,7 @@ namespace MudEngine2012
 
         public void SerializeObject(String path)
         {
-            if (!namedObjects.ContainsKey(path)) throw new MISP.ScriptError("Attempted to save unknown object.");
+            if (!namedObjects.ContainsKey(path)) throw new MISP.ScriptError("Attempted to save unknown object.", null);
             var datagram = ObjectSerializer.Serialize(namedObjects[path]);
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(serializedPath + path + ".obj"));
             var file = System.IO.File.OpenWrite(serializedPath + path + ".obj");

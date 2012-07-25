@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
+using System.Net.Sockets;
+using System.IO;
 
 namespace MudServer
 {
-    public class StandardClient : MudEngine2012.Client
+    public class WebsocketClient : MudEngine2012.Client
     {
         public System.Net.Sockets.Socket Socket = null;
         public String CommandQueue = "";
@@ -18,15 +21,13 @@ namespace MudServer
             int bytesSent = 0;
 
             if (!String.IsNullOrEmpty(CommandQueue)) message = "\r" + message + CommandQueue;
-
             
-
             while (bytesSent < message.Length)
             {
                 int thisChunk = 0;
                 for (int i = bytesSent; i < message.Length && thisChunk < 1024; ++i, ++thisChunk)
                     SendBuffer[thisChunk] = (byte)message[i];
-                if (Socket != null && Socket.Connected) Socket.Send(SendBuffer, thisChunk, System.Net.Sockets.SocketFlags.None);
+                if (Socket != null) Socket.Send(SendBuffer, thisChunk, System.Net.Sockets.SocketFlags.None);
                 bytesSent += thisChunk;
             }
         }
@@ -37,9 +38,9 @@ namespace MudServer
         }
     }
 
-    public class TelnetClientSource
+    public class WebsocketClientSource
     {
-        public int Port = 8669;
+        public int Port = 8670;
 
         MudEngine2012.MudCore MudCore;
         System.Net.Sockets.Socket ListenSocket = null;
@@ -69,9 +70,18 @@ namespace MudServer
             ListenSocket.BeginAccept(OnNewClient, null);
 
             var NewClient = new StandardClient { Socket = ClientSocket };
+            Console.WriteLine("Sending websocket handshake.");
+            NewClient.Send(
+                "HTTP/1.1 101 Web Socket Protocol Handshake\r\n" +
+                "Upgrade: WebSocket\r\n" +
+                "Connection: Upgrade\r\n" +
+                //"WebSocket-Origin: http://localhost:8080\r\n" +
+                "WebSocket-Location: ws://localhost:8181/websession\r\n" +
+                "\r\n");
+
             //MudCore.NewClientConnected(NewClient);            
             ClientSocket.BeginReceive(NewClient.Storage, 0, 1024, System.Net.Sockets.SocketFlags.Partial, OnData, NewClient);
-            Console.WriteLine("New standard client: " + ClientSocket.RemoteEndPoint.ToString());
+            Console.WriteLine("New websocket client: " + ClientSocket.RemoteEndPoint.ToString());
             MudCore.ClientConnected(NewClient);
         }
 
@@ -109,7 +119,14 @@ namespace MudServer
                         Client.CommandQueue += (char)Client.Storage[i];
                 }
 
-                Client.Socket.BeginReceive(Client.Storage, 0, 1024, System.Net.Sockets.SocketFlags.Partial, OnData, Client);
+                try
+                {
+                    Client.Socket.BeginReceive(Client.Storage, 0, 1024, System.Net.Sockets.SocketFlags.Partial, OnData, Client);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
         }
     }

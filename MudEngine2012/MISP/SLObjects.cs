@@ -13,7 +13,6 @@ namespace MudEngine2012.MISP
                 ArgumentInfo.ParseArguments("object object"),
                 "object : List of names of object members.", (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(1, arguments);
                     var obj = ArgumentType<ScriptObject>(arguments[0]);
                     return obj.ListProperties();
                 }));
@@ -27,7 +26,7 @@ namespace MudEngine2012.MISP
                     foreach (var item in arguments)
                     {
                         var list = item as ScriptList;
-                        if (list == null || list.Count != 2) throw new ScriptError("Record expects only pairs as arguments.");
+                        if (list == null || list.Count != 2) throw new ScriptError("Record expects only pairs as arguments.", context.currentNode);
                         r.SetProperty(ScriptObject.AsString(list[0]), list[1]);
                     }
                     return r;
@@ -38,13 +37,12 @@ namespace MudEngine2012.MISP
                 "record <List of key-value pairs> : Returns a new generic script object cloned from [record]",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCountOrGreater(1, arguments);
                     var from = ArgumentType<ScriptObject>(arguments[0]);
                     var r = new GenericScriptObject(from);
                     foreach (var item in arguments.GetRange(1, arguments.Count - 1))
                     {
                         var list = item as ScriptList;
-                        if (list == null || list.Count != 2) throw new ScriptError("Clone expects only pairs as arguments.");
+                        if (list == null || list.Count != 2) throw new ScriptError("Clone expects only pairs as arguments.", context.currentNode);
                         r.SetProperty(ScriptObject.AsString(list[0]), list[1]);
                     }
                     return r;
@@ -54,7 +52,6 @@ namespace MudEngine2012.MISP
                 ArgumentInfo.ParseArguments("object object", "string property", "value"),
                 "object property value : Set the member of an object.", (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(3, arguments);
                     var obj = ArgumentType<ScriptObject>(arguments[0]);
                     var vName = ScriptObject.AsString(arguments[1]);
                     obj.SetProperty(vName, arguments[2]);
@@ -66,7 +63,6 @@ namespace MudEngine2012.MISP
                 "object property : Deletes a property from an object.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var obj = ArgumentType<ScriptObject>(arguments[0]);
                     var vname = ScriptObject.AsString(arguments[1]);
                     var value = obj.GetProperty(vname);

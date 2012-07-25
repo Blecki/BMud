@@ -5,11 +5,9 @@ using System.Text;
 
 namespace MudEngine2012.MISP
 {
-    public class ScriptError : Exception { public ScriptError(String msg) : base(msg) { } }
-
     public class TimeoutError : ScriptError
     {
-        public TimeoutError() : base("Execution timed out.\nTreat this like a hard crash.\nSomething is wrong with your mud-lib!\nYour in-memory database may be corrupted.") { }
+        public TimeoutError(ParseNode generatedBy) : base("Execution timed out.", generatedBy) { }
     }
 
     public partial class Engine
@@ -20,41 +18,26 @@ namespace MudEngine2012.MISP
 
         public static T ArgumentType<T>(Object obj) where T : class
         {
+            return obj as T;
+            /*
             if (obj == null)
-                throw new ScriptError("Expecting argument of type " + typeof(T) + ", got null. ");
+                throw new ScriptError("Expecting argument of type " + typeof(T) + ", got null. ", context.currentNode);
             var r = obj as T;
             if (r == null)
                 throw new ScriptError("Function argument is the wrong type. Expected type "
-                    + typeof(T) + ", got " + obj.GetType() + ". ");
+                    + typeof(T) + ", got " + obj.GetType() + ". ", context.currentNode);
             return r;
+             */
         }
-
-        public static void ArgumentCount(int c, ScriptList arguments)
-        {
-            if (c != arguments.Count) throw new ScriptError("Function expects " + c + " arguments. It received " +
-                arguments.Count + ".");
-        }
-
-        public static void ArgumentCountOrGreater(int c, ScriptList arguments)
-        {
-            if (c > arguments.Count) throw new ScriptError("Function expects at least " + c + " arguments. It received " +
-                arguments.Count + ".");
-        }
-
-        public static void ArgumentCountNoMoreThan(int c, ScriptList arguments)
-        {
-            if (arguments.Count > c) throw new ScriptError("Function expects no more than " + c + " arguments. It received " +
-                arguments.Count + ".");
-        }
-
+        
         public Engine()
         {
             this.SetupStandardLibrary();
         }
 
-        public Object EvaluateString(Context context, ScriptObject thisObject, String str, bool discardResults = false)
+        public Object EvaluateString(Context context, ScriptObject thisObject, String str, String fileName, bool discardResults = false)
         {
-            var root = Parser.ParseRoot(str);
+            var root = Parser.ParseRoot(str, fileName);
             return Evaluate(context, root, thisObject, false, discardResults);
         }
 
@@ -66,7 +49,8 @@ namespace MudEngine2012.MISP
             bool discardResults = false)
         {
             if (context.limitExecutionTime && (DateTime.Now - context.executionStart > context.allowedExecutionTime))
-                throw new TimeoutError();
+                throw new TimeoutError(node);
+            context.currentNode = node;
 
             switch (node.type)
             {
@@ -113,7 +97,7 @@ namespace MudEngine2012.MISP
                         {
                             var result = (lhs as ScriptObject).GetProperty(ScriptObject.AsString(rhs));
                             if (result is String && node.token == ":")
-                                result = EvaluateString(context, lhs as ScriptObject, result as String);
+                                result = EvaluateString(context, lhs as ScriptObject, result as String, "");
                             else if (result is ParseNode && node.token == ":")
                                 result = Evaluate(context, result as ParseNode, lhs as ScriptObject, true, false);
                             return result;
@@ -172,10 +156,17 @@ namespace MudEngine2012.MISP
                                 }
                             }
                         }
+                        catch (ScriptError e)
+                        {
+                            if (arguments.Count > 0 && arguments[0] is Function)
+                                throw new ScriptError("[Arg for " + (arguments[0] as Function).name + "] " + e.Message,
+                                    e.generatedAt == null ? node : e.generatedAt);
+                            throw e;
+                        }
                         catch (Exception e)
                         {
                             if (arguments.Count > 0 && arguments[0] is Function)
-                                throw new ScriptError("[Arg for " + (arguments[0] as Function).name + "] " + e.Message);
+                                throw new ScriptError("[Arg for " + (arguments[0] as Function).name + "] " + e.Message, node);
                             throw e;
                         }
 
@@ -190,9 +181,14 @@ namespace MudEngine2012.MISP
                                 result = (arguments[0] as Function).Invoke(context, thisObject,
                                     new ScriptList(arguments.GetRange(1, arguments.Count - 1)));
                             }
+                            catch (ScriptError e)
+                            {
+                                throw new ScriptError("[" + (arguments[0] as Function).name + "] " + e.Message,
+                                    e.generatedAt == null ? node : e.generatedAt);
+                            }
                             catch (Exception e)
                             {
-                                throw new ScriptError("[" + (arguments[0] as Function).name + "] " + e.Message);
+                                throw new ScriptError("[" + (arguments[0] as Function).name + "] " + e.Message, node);
                             }
                         }
                         else
@@ -213,7 +209,7 @@ namespace MudEngine2012.MISP
                     }
                 default:
 
-                    throw new ScriptError("Internal evaluator error");
+                    throw new ScriptError("Internal evaluator error", node);
             }
         }
 
@@ -223,7 +219,7 @@ namespace MudEngine2012.MISP
             if (context.HasVariable(value)) return context.GetVariable(value);
             if (functions.ContainsKey(value)) return functions[value];
             if (value.StartsWith("@") && functions.ContainsKey(value.Substring(1))) return functions[value.Substring(1)];
-            throw new ScriptError("Could not find value with name " + value + ".");
+            throw new ScriptError("Could not find value with name " + value + ".", context.currentNode);
         }
     }
 }

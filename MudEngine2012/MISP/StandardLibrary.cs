@@ -18,12 +18,11 @@ namespace MudEngine2012.MISP
                 ArgumentInfo.ParseArguments("object this", "code code"),
                 "thisobject code : Execute code.", (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var _this = ArgumentType<ScriptObject>(arguments[0]);
                     if (arguments[1] is ParseNode)
                         return Evaluate(context, arguments[1] as ParseNode, _this, true);
                     else
-                        return EvaluateString(context, _this, ScriptObject.AsString(arguments[1]));
+                        return EvaluateString(context, _this, ScriptObject.AsString(arguments[1]), "");
                 }));
 
             functions.Add("lastarg", new Function("lastarg", 
@@ -31,7 +30,6 @@ namespace MudEngine2012.MISP
                 "<n> : Returns the last argument.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCountOrGreater(1, arguments);
                     return arguments[arguments.Count - 1];
                 }));
 
@@ -46,7 +44,6 @@ namespace MudEngine2012.MISP
                 "A B : B if A is null, A otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     if (arguments[0] == null) return arguments[1];
                     return arguments[0];
                 }));

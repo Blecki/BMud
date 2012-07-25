@@ -16,7 +16,6 @@ namespace MudEngine2012.MISP
                 "A B : return A-B.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
@@ -28,7 +27,6 @@ namespace MudEngine2012.MISP
                 "A B : return A+B.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
@@ -40,7 +38,6 @@ namespace MudEngine2012.MISP
                 "A B : return a random value in range (A,B).",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
@@ -52,7 +49,6 @@ namespace MudEngine2012.MISP
                 "A B : return A*B.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;

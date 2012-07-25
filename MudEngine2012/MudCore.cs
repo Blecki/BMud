@@ -99,6 +99,11 @@ namespace MudEngine2012
             EnqueuAction(new InvokeAction(client, "handle-lost-client"));
         }
 
+        public void ClientConnected(Client client)
+        {
+            EnqueuAction(new InvokeAction(client, "handle-new-client"));
+        }
+
         public bool Start(String basePath)
         {
             try
@@ -232,6 +237,11 @@ namespace MudEngine2012
                     (prop as MISP.Function).Invoke(context, system, arguments);
                     return true;
                 }
+                catch (MISP.ScriptError e)
+                {
+                    SendMessage(executor, (e.generatedAt == null ? "" : (e.generatedAt.source == null ? "" :
+                        e.generatedAt.source.filename + " " + e.generatedAt.line)) + " " + e.Message, true);
+                }
                 catch (Exception e)
                 {
                     SendMessage(executor, e.Message, true);
@@ -239,6 +249,29 @@ namespace MudEngine2012
                 }
             }
             return false;
+        }
+
+        internal Object InvokeSystemR(
+            MISP.ScriptObject executor,
+            String property,
+            MISP.ScriptList arguments,
+            MISP.Context context)
+        {
+            var system = database.LoadObject("system") as MISP.ScriptObject;
+            var prop = system.GetProperty(property);
+            if (prop is MISP.Function)
+            {
+                try
+                {
+                    return (prop as MISP.Function).Invoke(context, system, arguments);
+                }
+                catch (Exception e)
+                {
+                    SendMessage(executor, e.Message, true);
+                    return null;
+                }
+            }
+            return prop;
         }
 
         internal void SendPendingMessages()

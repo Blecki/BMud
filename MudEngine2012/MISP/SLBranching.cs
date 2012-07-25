@@ -70,7 +70,6 @@ namespace MudEngine2012.MISP
                 "A B : true if A >= B, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
@@ -83,7 +82,6 @@ namespace MudEngine2012.MISP
                 "A B : true if A > B, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
@@ -96,7 +94,6 @@ namespace MudEngine2012.MISP
                 "A B : true if A <= B, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
@@ -109,7 +106,6 @@ namespace MudEngine2012.MISP
                 "A B : true if A < B, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;
                     if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
@@ -122,7 +118,6 @@ namespace MudEngine2012.MISP
                 "A : true if A is null, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(1, arguments);
                     if (arguments[0] == null) return true;
                     else return null;
                 }));
@@ -132,7 +127,6 @@ namespace MudEngine2012.MISP
                 "condition then else : If condition evaluates to true, evaluate and return then. Otherwise, evaluate and return else.",
                 (context, thisObject, arguments) =>
                 {
-                    if (arguments.Count != 2 && arguments.Count != 3) throw new ScriptError("If expects two or three arguments");
                     if (arguments[0] != null)
                         return Evaluate(context, arguments[1] as ParseNode, thisObject, true);
                     else if (arguments.Count == 3)

@@ -3,18 +3,21 @@
 (reload "lists")
 
 (defun "add-verb" ^("to" "name" "matcher" "action" "help") ^()
-	*(prop-add to "verbs" (record ^("name" name) ^("matcher" matcher) ^("action" action) ^("help" help) ^("defined-on" to)))
+	(prop-add to "verbs" (record ^("name" name) ^("matcher" matcher) ^("action" action) ^("help" help) ^("defined-on" to)))
 )
 
 (defun "add-global-verb" ^("name" "matcher" "action" "help") ^()
 	(let ^([system (load "system")])
-		(add-verb system name matcher action help)
+		(nop
+			(set system "verbs" (where "verb" system.verbs (notequal name verb.name)))
+			(add-verb system name matcher action help)
+		)
 	)
 )
 
 (defun "add-global-alias" ^("name" "verb") ^()
-	*(let ^(^("system" (load "system")))
-		*(nop
+	(let ^(^("system" (load "system")))
+		(nop
 			(if (equal system.aliases null) *(set system "aliases" (record)))
 			(set system.aliases name verb)
 		)
@@ -48,6 +51,7 @@
 						(set client "logged_on" true)
 						(set player-object "password" (hash (index words 2) "change this."))
 						(set player-object "@base" (load "player"))
+						(set player-object "channels" ^("chat")) /* Subscribe new players to 'chat' channel */
 						(move-object player-object (load "demo-area/start-room") "contents")
 						(command player-object "look")
 					)
@@ -82,6 +86,8 @@
 	)
 )
 
+(prop "allow-switch" (lambda "lallow-switch" [actor switch] [] (atleast actor.rank 500)))
+
 (prop "handle-command" (lambda "lhandle_command" ^("actor" "verb" "command" "token" "display-matches") ^()
 	(nop
 		(let ^(^("verb-records" (find-verb-list actor verb)))
@@ -115,6 +121,10 @@
 	)
 ))
 
+(prop "handle-new-client" (lambda "" [client] []
+	(echo client "Welcome to BMud.\n")
+))
+
 (prop "handle-lost-client" (defun "" ^("client") ^()
 	(if (client.logged_on)
 		(move-object client.player null null)
@@ -133,6 +143,7 @@
 (reload "get")
 (reload "drop")
 (reload "go")
+(reload "chat")
 
 (defun "m-rank" [rank] [] 
 	(lambda "lm-rank" [matches] [rank]
@@ -254,6 +265,7 @@
 			(echo actor "Saving...")
 			(save actor.@path)
 			(echo actor "done.\n")
+			(purposefully generate an error)
 		)
 	)
 	"Save your character."

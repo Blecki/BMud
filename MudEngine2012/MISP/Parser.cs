@@ -7,24 +7,7 @@ namespace MudEngine2012.MISP
 {
     public class ParseError : ScriptError
     {
-        public ParseError(String msg) : base(msg) {}
-    }
-
-    public class ParseState
-    {
-        public int start;
-        public int end;
-        public String source;
-
-        public char Next() { return source[start]; }
-        public void Advance(int distance = 1) { start += distance; if (start > end) throw new ParseError("Unexpected end of script"); }
-        public bool AtEnd() { return start == end; }
-
-        public bool MatchNext(String str) 
-        {
-            if (str.Length + start > source.Length) return false;
-            return str == source.Substring(start, str.Length); 
-        }
+        public ParseError(String msg) : base(msg, null) {}
     }
 
     public class Parser
@@ -41,7 +24,7 @@ namespace MudEngine2012.MISP
 
         public static ParseNode ParseToken(ParseState state)
         {
-            var result = new ParseNode(NodeType.Token, state.start);
+            var result = new ParseNode(NodeType.Token, state.start, state);
             while (!state.AtEnd() && !(" \t\r\n:.)]".Contains(state.Next()))) state.Advance();
             result.end = state.start;
             result.token = state.source.Substring(result.start, result.end - result.start);
@@ -51,7 +34,7 @@ namespace MudEngine2012.MISP
 
         public static ParseNode ParseInteger(ParseState state)
         {
-            var result = new ParseNode(NodeType.Integer, state.start);
+            var result = new ParseNode(NodeType.Integer, state.start, state);
             while (!state.AtEnd() && ("0123456789".Contains(state.Next()))) state.Advance();
             result.end = state.start;
             result.token = state.source.Substring(result.start, result.end - result.start);
@@ -87,7 +70,7 @@ namespace MudEngine2012.MISP
                 var rhs = nodeList.First();
                 nodeList.RemoveFirst();
 
-                var newNode = new ParseNode(NodeType.MemberAccess, lhs.node.start);
+                var newNode = new ParseNode(NodeType.MemberAccess, lhs.node.start, lhs.node.source);
                 newNode.token = lhs.token;
                 newNode.childNodes.Add(lhs.node);
                 newNode.childNodes.Add(rhs.node);
@@ -131,7 +114,7 @@ namespace MudEngine2012.MISP
             {
                 result = ParseStringExpression(state);
                 if (prefix == Prefix.Quote)
-                    result = new ParseNode(NodeType.String, result.start)
+                    result = new ParseNode(NodeType.String, result.start, state)
                     {
                         token = state.source.Substring(result.start + 1, result.end - result.start - 2)
                     };
@@ -151,7 +134,7 @@ namespace MudEngine2012.MISP
              
             if (state.Next() == '.' || state.Next() == ':')
             {
-                var final_result = new ParseNode(NodeType.MemberAccess, result.start);
+                var final_result = new ParseNode(NodeType.MemberAccess, result.start, state);
                 final_result.childNodes.Add(result);
                 final_result.token = new String(state.Next(), 1);
                 state.Advance();
@@ -168,7 +151,7 @@ namespace MudEngine2012.MISP
 
         public static ParseNode ParseNode(ParseState state, String start = "(", String end = ")")
         {
-            var result = new ParseNode(NodeType.Node, state.start);
+            var result = new ParseNode(NodeType.Node, state.start, state);
             if (!state.MatchNext(start)) throw new ParseError("Expected " + start);
             state.Advance(start.Length);
             while (!state.MatchNext(end))
@@ -188,7 +171,7 @@ namespace MudEngine2012.MISP
 
         public static ParseNode ParseStringExpression(ParseState state, bool isRoot = false)
         {
-            var result = new ParseNode(NodeType.StringExpression, state.start);
+            var result = new ParseNode(NodeType.StringExpression, state.start, state);
             if (!isRoot) state.Advance(); //Skip opening quote
             string piece = "";
             int piece_start = state.start;
@@ -196,7 +179,7 @@ namespace MudEngine2012.MISP
             {
                 if (state.Next() == '(') 
                 {
-                    if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start) {
+                    if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start, state) {
                         token = state.source.Substring(piece_start, state.start - piece_start) });
                     result.childNodes.Add(ParseNode(state));
                     piece = "";
@@ -210,7 +193,7 @@ namespace MudEngine2012.MISP
                 }
                 else if (!isRoot && state.Next() == '"') 
                 {
-                    if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start) {
+                    if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start, state) {
                         token = state.source.Substring(piece_start, state.start - piece_start) });
                     state.Advance();
                     result.end = state.start;
@@ -229,7 +212,7 @@ namespace MudEngine2012.MISP
 
             if (isRoot)
             {
-                if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start)
+                if (piece.Length > 0) result.childNodes.Add(new ParseNode(NodeType.String, piece_start, state)
                 {
                     token = state.source.Substring(piece_start, state.start - piece_start)
                 });
@@ -241,21 +224,23 @@ namespace MudEngine2012.MISP
             throw new ParseError("Unexpected end of script inside string expression.");
         }
 
-        public static void ParseComment(ParseState state)
+        public static int ParseComment(ParseState state)
         {
+            var start = state.start;
             state.Advance(2);
             while (!state.AtEnd() && !state.MatchNext("*/")) state.Advance();
             state.Advance(2);
+            return state.start - start;
         }
 
-        public static ParseNode ParseRoot(String script)
+        public static ParseNode ParseRoot(String script, String filename)
         {
             var commentFree = "";
-            var state = new ParseState { start = 0, end = script.Length, source = script };
+            var state = new ParseState { start = 0, end = script.Length, source = script, filename = filename };
             while (!state.AtEnd())
             {
                 if (state.MatchNext("/*"))
-                    ParseComment(state);
+                    commentFree += (new String(' ',ParseComment(state)));
                 else
                 {
                     commentFree += state.Next();
@@ -263,7 +248,7 @@ namespace MudEngine2012.MISP
                 }
             }
 
-            return ParseStringExpression(new ParseState { start = 0, end = commentFree.Length, source = commentFree }, true);
+            return ParseStringExpression(new ParseState { start = 0, end = commentFree.Length, source = commentFree, filename = filename }, true);
         }
                 
     }

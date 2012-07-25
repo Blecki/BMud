@@ -7,7 +7,7 @@ namespace MudEngine2012
 {
     public class DeserializeError : MISP.ScriptError
     {
-        public DeserializeError() : base("Invalid serialized object") {}
+        public DeserializeError() : base("Invalid serialized object", null) {}
     }
 
     public class ObjectDeserializer

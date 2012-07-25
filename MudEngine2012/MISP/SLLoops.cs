@@ -14,7 +14,6 @@ namespace MudEngine2012.MISP
                 "variable_name list code : Transform one list into another",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(3, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
                     var code = ArgumentType<ParseNode>(arguments[2]);
@@ -34,7 +33,6 @@ namespace MudEngine2012.MISP
                 "variable_name list code : Like map, except variable_name will hold the index not the value.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(3, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
                     var code = ArgumentType<ParseNode>(arguments[2]);
@@ -54,7 +52,6 @@ namespace MudEngine2012.MISP
                 "variable_name start code next : Like map, but the next element is the result of 'next'. Stops when next = null.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(4, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
                     var code = ArgumentType<ParseNode>(arguments[2]);
                     var next = ArgumentType<ParseNode>(arguments[3]);
@@ -78,7 +75,6 @@ namespace MudEngine2012.MISP
                 "variable_name list code : Execute code for each item in list. Returns result of last run of code.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(3, arguments);
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
                     var func = ArgumentType<ParseNode>(arguments[2]);
@@ -95,32 +91,11 @@ namespace MudEngine2012.MISP
                     return result;
                 }));
 
-            functions.Add("where", new Function("where",
-                ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
-                "variable_name list code : Returns new list containing only the items in list for which code evaluated to true.",
-                (context, thisObject, arguments) =>
-                {
-                    ArgumentCount(3, arguments);
-                    var vName = ArgumentType<String>(arguments[0]);
-                    var list = ArgumentType<ScriptList>(arguments[1]);
-                    var func = ArgumentType<ParseNode>(arguments[2]);
-
-                    context.PushVariable(vName, null);
-                    var result = new ScriptList(list.Where((o) =>
-                        {
-                            context.ChangeVariable(vName, o);
-                            return Evaluate(context, func, thisObject, true) != null;
-                        }));
-                    context.PopVariable(vName);
-                    return result;
-                }));
-
             functions.Add("while", new Function("while",
                 ArgumentInfo.ParseArguments("code condition", "code code"),
                 "condition code : Repeat code while condition evaluates to true.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var cond = ArgumentType<ParseNode>(arguments[0]);
                     var code = ArgumentType<ParseNode>(arguments[1]);
 

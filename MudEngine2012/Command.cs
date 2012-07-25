@@ -18,34 +18,41 @@ namespace MudEngine2012
                 bool displayMatches = false;
                 bool displayTrace = false;
                 bool time = false;
-
-                if (_Command.StartsWith("/eval "))
-                {
-                    core.SendMessage(Executor,
-                        MISP.ScriptObject.AsString(
-                            core.scriptEngine.EvaluateString(new MISP.Context(), Executor,
-                            _Command.Substring(6))), true);
-                    core.SendPendingMessages();
-                    return;
-                }
-                else if (_Command.StartsWith("/match "))
-                    displayMatches = true;
-                else if (_Command.StartsWith("/trace "))
-                    displayTrace = true;
-                else if (_Command.StartsWith("/time "))
-                    time = true;
+                var matchContext = new MISP.Context();
 
                 var tokens = CommandTokenizer.FullyTokenizeCommand(_Command);
-                var firstWord = tokens.word;
-                tokens = tokens.next;
 
-                if (displayMatches || displayTrace || time)
+                if (_Command.StartsWith("/"))
                 {
-                    firstWord = tokens.word;
+                    var @switch = tokens.word;
+                    if (core.InvokeSystemR(Executor, "allow-switch", new MISP.ScriptList(Executor, @switch), matchContext)
+                        == null)
+                    {
+                        core.SendMessage(Executor, "You don't have permission to use that switch.\n", true);
+                        return;
+                    }
+
+                    if (_Command.StartsWith("/eval "))
+                    {
+                        core.SendMessage(Executor,
+                            MISP.ScriptObject.AsString(
+                                core.scriptEngine.EvaluateString(new MISP.Context(), Executor,
+                                _Command.Substring(6), "")), true);
+                        core.SendPendingMessages();
+                        return;
+                    }
+                    else if (_Command.StartsWith("/match "))
+                        displayMatches = true;
+                    else if (_Command.StartsWith("/trace "))
+                        displayTrace = true;
+                    else if (_Command.StartsWith("/time "))
+                        time = true;
+
                     tokens = tokens.next;
                 }
 
-                var matchContext = new MISP.Context();
+                var firstWord = tokens.word;
+                tokens = tokens.next;
 
                 if (displayTrace)
                 {

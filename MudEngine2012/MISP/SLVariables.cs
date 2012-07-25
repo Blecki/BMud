@@ -13,9 +13,8 @@ namespace MudEngine2012.MISP
                 ArgumentInfo.ParseArguments("string name", "value"),
                 "name value : Assign value to a variable named [name].", (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     if (specialVariables.ContainsKey(ScriptObject.AsString(arguments[0])))
-                        throw new ScriptError("Can't assign to protected variable name.");
+                        throw new ScriptError("Can't assign to protected variable name.", context.currentNode);
                     context.ChangeVariable(ScriptObject.AsString(arguments[0]), arguments[1]);
                     return arguments[1];
                 }));
@@ -25,14 +24,13 @@ namespace MudEngine2012.MISP
                 "^( ^(\"name\" value) ^(...) ) code : Create temporary variables, run code.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var variables = ArgumentType<ScriptList>(arguments[0]);
                     var code = ArgumentType<ParseNode>(arguments[1]);
 
                     foreach (var item in variables)
                     {
                         var def = ArgumentType<ScriptList>(item);
-                        ArgumentCount(2, def);
+                        if (def.Count != 2) throw new ScriptError("let expects only pairs.", context.currentNode);
                         var name = ArgumentType<String>(def[0]);
                         context.PushVariable(name, def[1]);
                     }

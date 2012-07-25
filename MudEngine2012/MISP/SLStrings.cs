@@ -43,9 +43,8 @@ namespace MudEngine2012.MISP
                 "n part: Create a string consisting of part n times.",
                     (context, thisObject, arguments) =>
                     {
-                        ArgumentCount(2, arguments);
                         var count = arguments[0] as int?;
-                        if (count == null | !count.HasValue) throw new ScriptError("Expected int");
+                        if (count == null | !count.HasValue) throw new ScriptError("Expected int", context.currentNode);
                         var part = ScriptObject.AsString(arguments[1]);
                         var r = "";
                         for (int i = 0; i < count.Value; ++i) r += part;
@@ -58,7 +57,6 @@ namespace MudEngine2012.MISP
                 "A B : convert A to a string to depth B.",
                 (context, thisObject, arguments) =>
                 {
-                    ArgumentCount(2, arguments);
                     var depth = arguments[1] as int?;
                     if (depth == null || !depth.HasValue) return ScriptObject.AsString(arguments[0]);
                     else return ScriptObject.AsString(arguments[0], depth.Value);

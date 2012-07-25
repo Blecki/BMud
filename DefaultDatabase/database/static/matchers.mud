@@ -10,6 +10,15 @@
 			(where "match" (where "match" matches *(not (equal null match.token))) *(equal word match.token.word))
 			*(clone match ^("token" match.token.next)))))
 			
+(defun "m-single-word" ["string into"] []
+	(lambda "lm-single-word" ["list matches"] [into]
+		(map "match"
+			(where "match" matches (match.token))
+			(clone match ^("token" match.token.next) ^(into match.token.word))
+		)
+	)
+)
+			
 (defun "m-nothing" ^() ^() 
 	*(lambda "lnone" ^("list matches") ^() 
 		*(where "match" matches *(equal null match.token))))

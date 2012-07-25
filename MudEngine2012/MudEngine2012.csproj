@@ -42,6 +42,8 @@
   <ItemGroup>
     <Compile Include="CommandTokenizer.cs" />
     <Compile Include="Command.cs" />
+    <Compile Include="MISP\ScriptError.cs" />
+    <Compile Include="MISP\ParseState.cs" />
     <Compile Include="ObjectDeserializer.cs" />
     <Compile Include="MISP\SLEncryption.cs" />
     <Compile Include="MISP\SLVariables.cs" />

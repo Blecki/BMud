@@ -11,7 +11,6 @@ namespace MudEngine2012.MISP
         {
             Func<Context, Object, ScriptList, Object> defunImple = (context, thisObject, arguments) =>
             {
-                ArgumentCountOrGreater(4, arguments);
                 var functionName = ArgumentType<String>(arguments[0]);
 
                 var argumentInfo = ArgumentInfo.ParseArguments(ArgumentType<ScriptList>(arguments[1]));
@@ -19,7 +18,7 @@ namespace MudEngine2012.MISP
                 var cVN = ArgumentType<ScriptList>(arguments[2]);
                 var closedVariableNames = new List<String>(cVN.Select((o) =>
                 {
-                    if (!(o is String)) throw new ScriptError("Closed variable names MUST be strings.");
+                    if (!(o is String)) throw new ScriptError("Closed variable names MUST be strings.", context.currentNode);
                     return ScriptObject.AsString(o);
                 }));
 
@@ -29,7 +28,7 @@ namespace MudEngine2012.MISP
 
                 foreach (var closedVariableName in closedVariableNames)
                 {
-                    if (!context.HasVariable(closedVariableName)) throw new ScriptError("Closed variable not found in parent scope.");
+                    if (!context.HasVariable(closedVariableName)) throw new ScriptError("Closed variable not found in parent scope.", context.currentNode);
                     closedValues.Add(context.GetVariable(closedVariableName));
                 }
 
@@ -41,7 +40,7 @@ namespace MudEngine2012.MISP
                         for (int i = 0; i < closedValues.Count; ++i)
                             c.PushVariable(closedVariableNames[i], closedValues[i]);
                         for (int i = 0; i < argumentInfo.Count; ++i)
-                            c.PushVariable(argumentInfo[i].name, a[i]);
+                            c.PushVariable(argumentInfo[i].name, i >= a.Count ? null : a[i]);
 
                         var result = Evaluate(c, functionBody, to, true);
 
@@ -61,8 +60,7 @@ namespace MudEngine2012.MISP
 
                 if (arguments.Count == 5)
                     newFunction.shortHelp = ScriptObject.AsString(arguments[4]);
-                else if (arguments.Count > 5)
-                    throw new ScriptError("Too many arguments to defun/lambda.");
+                
                 //newFunction.source = sourceSpan(context.activeSource, (arguments[3] as Irony.Parsing.ParseTreeNode).Span);
                 newFunction.closedValues = closedValues;
                 return newFunction;

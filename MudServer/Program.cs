@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net.Sockets;
+using System.IO;
+using System.Net;
 
 namespace MudServer
 {
@@ -9,6 +12,7 @@ namespace MudServer
     {
         static void Main(string[] args)
         {
+          
             //try
             //{
                 //var code = "(defun \"string expression   (stuff stuff)\" \"remove\" ^(\"what\" \"list\") ^() *(where \"item\" (coalesce list ^()) *(not (equal item what))))";
@@ -18,6 +22,8 @@ namespace MudServer
                 {
                     var telnetListener = new TelnetClientSource();
                     telnetListener.Listen(mudCore);
+                    //var websocketListener = new WebsocketClientSource();
+                    //websocketListener.Listen(mudCore);
                 }
                 
                 //tree.DebugEmit(0);

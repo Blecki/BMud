@@ -23,7 +23,6 @@ namespace MudEngine2012
                 "name : Loads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
-                    MISP.Engine.ArgumentCount(1, arguments);
                     var objectName = MISP.ScriptObject.AsString(arguments[0]);
                     try
                     {
@@ -41,7 +40,6 @@ namespace MudEngine2012
                 "name : Reoads an object from the database.",
                 (context, thisObject, arguments) =>
                 {
-                    MISP.Engine.ArgumentCount(1, arguments);
                     var objectName = MISP.ScriptObject.AsString(arguments[0]);
                     try
                     {
@@ -91,7 +89,6 @@ namespace MudEngine2012
                 MISP.ArgumentInfo.ParseArguments("to", "message"),
                 "player<s> message : Send text to players", (context, thisObject, arguments) =>
             {
-                MISP.Engine.ArgumentCount(2, arguments);
                 MISP.ScriptList to = null;
 
                 if (arguments[0] is MISP.ScriptList) to = arguments[0] as MISP.ScriptList;
@@ -116,7 +113,6 @@ namespace MudEngine2012
                 "player command : Send a command as if it came from player",
                 (context, thisObject, arguments) =>
                 {
-                    MISP.Engine.ArgumentCount(2, arguments);
                     EnqueuAction(new Command
                     {
                         Executor = MISP.Engine.ArgumentType<MISP.ScriptObject>(arguments[0]),

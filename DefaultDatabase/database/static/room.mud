@@ -2,13 +2,12 @@
 (prop "long" "Set the 'long' property to change this.")
 
 (prop "description" 
-*"(this:short)
-(this:long)
-(if	(equal (length this.contents) 0)
-	*("There doesn't appear to be anything here.")
-	*("Also here (short_list_with_on (where "object" this.contents *(notequal actor object)))")
-)
-(if (equal (length (coalesce this.links ^())) 0)
+*"(this:short)\n(this:long)\n(let ^(^("contents" (where "object" this.contents (notequal actor object))))
+	(if	(equal (length contents) 0)
+		("There doesn't appear to be anything here.")
+		("Also here (short_list_with_on contents)")
+	)
+)\n(if (equal (length (coalesce this.links ^())) 0)
 		*("There are no obvious exits.")
 		*("Obvious exits: (strcat $(this.links)).")
 )"

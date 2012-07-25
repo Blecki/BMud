@@ -8,6 +8,8 @@ namespace MudEngine2012.MISP
     public class Context
     {
         private List<Dictionary<String, ScriptList>> variables = new List<Dictionary<String, ScriptList>>();
+        public ParseNode currentNode = null;
+
         public DateTime executionStart;
         public bool limitExecutionTime = true;
         public TimeSpan allowedExecutionTime = TimeSpan.FromSeconds(10);
@@ -62,7 +64,7 @@ namespace MudEngine2012.MISP
         public void ChangeVariable(String name, Object newValue)
         {
             if (!Scope.ContainsKey(name)) 
-                throw new ScriptError("Variable does not exist.");
+                throw new ScriptError("Variable does not exist.", null);
             var list = Scope[name];
             list.RemoveAt(list.Count - 1);
             list.Add(newValue);
