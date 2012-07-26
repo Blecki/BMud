@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012.MISP
+namespace MISP
 {
     public interface ScriptAsString
     {
@@ -110,24 +110,26 @@ namespace MudEngine2012.MISP
 
         override public object GetProperty(string name)
         {
+            name = name.ToLowerInvariant();
             if (properties.ContainsKey(name)) return properties[name];
             else return GetInheritedProperty(name, new List<ScriptObject>());
         }
 
         public override object GetLocalProperty(string name)
         {
+            name = name.ToLowerInvariant();
             if (properties.ContainsKey(name)) return properties[name];
             else return null;
         }
 
         override public void SetProperty(string Name, Object Value)
         {
-            //if (Name.StartsWith("$")) throw new ScriptError("& properties are read-only.");
-            properties.Upsert(Name, Value);
+            properties.Upsert(Name.ToLowerInvariant(), Value);
         }
 
         override public void DeleteProperty(String Name)
         {
+            Name = Name.ToLowerInvariant();
             if (properties.ContainsKey(Name)) properties.Remove(Name);
         }
 

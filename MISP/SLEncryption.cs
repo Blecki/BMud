@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace MudEngine2012.MISP
+namespace MISP
 {
     public partial class Engine
     {

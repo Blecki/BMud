@@ -73,6 +73,10 @@
     <Compile Include="TelnetClientSource.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MISP\MISP.csproj">
+      <Project>{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}</Project>
+      <Name>MISP</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MudEngine2012\MudEngine2012.csproj">
       <Project>{1EE3FB21-B2D8-430A-B84C-61F0DF1E9066}</Project>
       <Name>MudEngine2012</Name>

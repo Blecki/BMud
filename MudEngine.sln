@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DefaultDatabase", "DefaultD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MISPConsole", "MISPConsole\MISPConsole.csproj", "{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MISP", "MISP\MISP.csproj", "{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,16 @@ Global
 		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{7F4D0A9D-4737-4D52-A6D7-1D5074C575A1}.Release|x86.ActiveCfg = Release|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

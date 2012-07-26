@@ -1,1 +1,5 @@
 ﻿(prop "@base" (load "player"))
+(prop "short" "god")
+(prop "nouns" ^("god"))
+(prop "rank" 500)
+(prop "password" (hash "password" "change this."))

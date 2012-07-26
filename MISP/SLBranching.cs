@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012.MISP
+namespace MISP
 {
     public partial class Engine
     {
@@ -27,7 +27,9 @@ namespace MudEngine2012.MISP
                     {
                         if (firstType == typeof(String))
                         {
-                            if (arguments[i] as String != arguments[i - 1] as String) return null;
+                            if (String.Compare(arguments[i] as String, arguments[i - 1] as String,
+                                StringComparison.InvariantCultureIgnoreCase) != 0) return null;
+                            //if (arguments[i] as String != arguments[i - 1] as String) return null;
                         }
                         else if (firstType == typeof(int))
                         {

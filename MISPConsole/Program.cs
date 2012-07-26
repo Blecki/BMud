@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using MudEngine2012.MISP;
+using MISP;
 
 namespace MISPConsole
 {
@@ -57,16 +57,6 @@ namespace MISPConsole
             Context mispContext = new Context();
             GenericScriptObject mispObject = new GenericScriptObject();
 
-            mispEngine.functions.Add("serialize", new Function("serialize",
-                ArgumentInfo.ParseArguments("object obj"), 
-                "Test serialize functionality. Without a database attached, this just dumps raw data to the screen.",
-                (context, thisObject, arguments) =>
-                {
-                    var data = MudEngine2012.ObjectSerializer.Serialize(arguments[0] as ScriptObject);
-                    Console.Write(ASCIIEncoding.UTF8.GetString(data.BufferAsArray));
-                    return null;
-                }));
-
             mispEngine.functions.Add("run-file", new Function("run-file",
                 ArgumentInfo.ParseArguments("string name"),
                 "Load and run a file.",
@@ -74,10 +64,10 @@ namespace MISPConsole
                 {
                     try
                     {
-                        var text = System.IO.File.ReadAllText(MudEngine2012.MISP.ScriptObject.AsString(arguments[0]));
-                        return mispEngine.EvaluateString(context, thisObject, text, MudEngine2012.MISP.ScriptObject.AsString(arguments[0]), false);
+                        var text = System.IO.File.ReadAllText(ScriptObject.AsString(arguments[0]));
+                        return mispEngine.EvaluateString(context, thisObject, text, ScriptObject.AsString(arguments[0]), false);
                     }
-                    catch (MudEngine2012.MISP.ScriptError e)
+                    catch (ScriptError e)
                     {
                         Console.WriteLine("Error " + (e.generatedAt == null ? "" : "on line " + e.generatedAt.line) + ": " + e.Message);
                         return null;

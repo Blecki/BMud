@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012.MISP
+namespace MISP
 {
     public class TimeoutError : ScriptError
     {
@@ -19,15 +19,6 @@ namespace MudEngine2012.MISP
         public static T ArgumentType<T>(Object obj) where T : class
         {
             return obj as T;
-            /*
-            if (obj == null)
-                throw new ScriptError("Expecting argument of type " + typeof(T) + ", got null. ", context.currentNode);
-            var r = obj as T;
-            if (r == null)
-                throw new ScriptError("Function argument is the wrong type. Expected type "
-                    + typeof(T) + ", got " + obj.GetType() + ". ", context.currentNode);
-            return r;
-             */
         }
         
         public Engine()
@@ -215,6 +206,7 @@ namespace MudEngine2012.MISP
 
         private object LookupToken(Context context, String value, ScriptObject thisObject)
         {
+            value = value.ToLowerInvariant();
             if (specialVariables.ContainsKey(value)) return specialVariables[value](context, thisObject);
             if (context.HasVariable(value)) return context.GetVariable(value);
             if (functions.ContainsKey(value)) return functions[value];

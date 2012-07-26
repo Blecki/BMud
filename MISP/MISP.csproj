@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{1EE3FB21-B2D8-430A-B84C-61F0DF1E9066}</ProjectGuid>
+    <ProjectGuid>{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MudEngine2012</RootNamespace>
-    <AssemblyName>MudEngine2012</AssemblyName>
+    <RootNamespace>MISP</RootNamespace>
+    <AssemblyName>MISP</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,24 +40,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandTokenizer.cs" />
-    <Compile Include="Command.cs" />
-    <Compile Include="ObjectDeserializer.cs" />
-    <Compile Include="MudCoreSetupScript.cs" />
-    <Compile Include="Client.cs" />
-    <Compile Include="Database.cs" />
-    <Compile Include="MudCore.cs" />
-    <Compile Include="ObjectSerializer.cs" />
+    <Compile Include="Context.cs" />
+    <Compile Include="Engine.cs" />
+    <Compile Include="Function.cs" />
+    <Compile Include="ParseNode.cs" />
+    <Compile Include="Parser.cs" />
+    <Compile Include="ParseState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReadOnlyDatagram.cs" />
+    <Compile Include="ScriptError.cs" />
+    <Compile Include="ScriptList.cs" />
+    <Compile Include="ScriptObject.cs" />
+    <Compile Include="SLBranching.cs" />
+    <Compile Include="SLEncryption.cs" />
+    <Compile Include="SLFunctions.cs" />
+    <Compile Include="SLLists.cs" />
+    <Compile Include="SLLoops.cs" />
+    <Compile Include="SLMath.cs" />
+    <Compile Include="SLObjects.cs" />
+    <Compile Include="SLStrings.cs" />
+    <Compile Include="SLVariables.cs" />
+    <Compile Include="StandardLibrary.cs" />
     <Compile Include="Upsert.cs" />
-    <Compile Include="WriteOnlyDatagram.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\MISP\MISP.csproj">
-      <Project>{BA7D4BAE-B4B5-40BC-8E73-6743E260F7BC}</Project>
-      <Name>MISP</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

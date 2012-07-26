@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012.MISP
+namespace MISP
 {
     public class ParseState
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012.MISP
+namespace MISP
 {
     public class Context
     {
@@ -38,18 +38,20 @@ namespace MudEngine2012.MISP
 
         public bool HasVariable(String name)
         {
-            return Scope.ContainsKey(name);
+            return Scope.ContainsKey(name.ToLowerInvariant());
         }
 
         public void PushVariable(String name, Object value)
         {
+            name = name.ToLowerInvariant();
             if (!HasVariable(name)) Scope.Add(name, new ScriptList());
             Scope[name].Add(value);
         }
 
         public void PopVariable(String name)
         {
-            var list = Scope[name];
+            name = name.ToLowerInvariant();
+            var list = Scope[name.ToLowerInvariant()];
             list.RemoveAt(list.Count - 1);
             if (list.Count == 0)
                 Scope.Remove(name);
@@ -57,12 +59,13 @@ namespace MudEngine2012.MISP
 
         public Object GetVariable(String name)
         {
-            var list = Scope[name];
+            var list = Scope[name.ToLowerInvariant()];
             return list[list.Count - 1];
         }
 
         public void ChangeVariable(String name, Object newValue)
         {
+            name = name.ToLowerInvariant();
             if (!Scope.ContainsKey(name)) 
                 throw new ScriptError("Variable does not exist.", null);
             var list = Scope[name];

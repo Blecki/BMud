@@ -47,11 +47,14 @@
 			*(let ^(^("player-object" (create "players/(index words 1)")))
 				*(if player-object
 					*(nop
-						(set client "player" player-object)
-						(set client "logged_on" true)
-						(set player-object "password" (hash (index words 2) "change this."))
-						(set player-object "@base" (load "player"))
-						(set player-object "channels" ^("chat")) /* Subscribe new players to 'chat' channel */
+						(multi-set client ^(^("player" player-object) ^("logged_on" true)))
+						(multi-set player-object ^(
+							^("password" (hash (index words 2) "change this."))
+							^("@base" (load "player"))
+							^("channels" ^("chat")) /* Subscribe new players to 'chat' channel */
+							^("short" (index words 1))
+							^("nouns" ^((index words 1)))
+						))
 						(move-object player-object (load "demo-area/start-room") "contents")
 						(command player-object "look")
 					)
@@ -269,4 +272,14 @@
 		)
 	)
 	"Save your character."
+)
+
+(add-global-verb "who" (m-nothing)
+	(lambda "" [matches actor] []
+		(nop
+			(echo actor "These players are currently playing:\n")
+			(for "player" players (echo actor "(player:short)\n"))
+		)
+	)
+	"See who's connected."
 )

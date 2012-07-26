@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MudEngine2012.MISP
+namespace MISP
 {
     public partial class Engine
     {
@@ -56,6 +56,22 @@ namespace MudEngine2012.MISP
                     var vName = ScriptObject.AsString(arguments[1]);
                     obj.SetProperty(vName, arguments[2]);
                     return arguments[2];
+                }));
+
+            functions.Add("multi-set", new Function("multi-set",
+                ArgumentInfo.ParseArguments("object object", "list properties"),
+                "object properties: Set multiple members of an object.",
+                (context, thisObject, arguments) =>
+                {
+                    var obj = ArgumentType<ScriptObject>(arguments[0]);
+                    var vars = ArgumentType<ScriptList>(arguments[1]);
+                    foreach (var item in vars)
+                    {
+                        var l = ArgumentType<ScriptList>(item);
+                        if (l == null || l.Count != 2) throw new ScriptError("Multi-set expects a list of pairs.", null);
+                        obj.SetProperty(ScriptObject.AsString(l[0]), l[1]);
+                    }
+                    return obj;
                 }));
 
             functions.Add("delete", new Function("delete",
