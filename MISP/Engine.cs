@@ -26,6 +26,15 @@ namespace MISP
             this.SetupStandardLibrary();
         }
 
+        public void AddFunction(String name, String comment, Func<Context, ScriptObject, ScriptList, Object> func,
+            params String[] arguments)
+        {
+            functions.Add(name, new Function(name,
+                ArgumentInfo.ParseArguments(arguments),
+                comment,
+                func));
+        }
+
         public Object EvaluateString(Context context, ScriptObject thisObject, String str, String fileName, bool discardResults = false)
         {
             var root = Parser.ParseRoot(str, fileName);

@@ -113,16 +113,66 @@ namespace MudEngine2012
                 "player command : Send a command as if it came from player",
                 (context, thisObject, arguments) =>
                 {
-                    EnqueuAction(new Command
-                    {
-                        Executor = MISP.Engine.ArgumentType<MISP.ScriptObject>(arguments[0]),
-                        _Command = MISP.ScriptObject.AsString(arguments[1])
-                    });
+                    EnqueuAction(new Command(
+                        MISP.Engine.ArgumentType<MISP.ScriptObject>(arguments[0]),
+                        MISP.ScriptObject.AsString(arguments[1])));
                     return null;
                 }));
+
+            scriptEngine.AddFunction("invoke", "seconds function arguments: Invoke a function in N seconds.",
+                (context, thisObject, arguments) =>
+                {
+                    var seconds = arguments[0] as int?;
+                    if (seconds == null || !seconds.HasValue) seconds = 0;
+                    EnqueuAction(new InvokeFunctionAction(
+                        MISP.Engine.ArgumentType<MISP.Function>(arguments[1]),
+                        thisObject,
+                        MISP.Engine.ArgumentType<MISP.ScriptList>(arguments[2]),
+                        seconds.Value));
+                    return null;
+                },
+                "integer seconds",
+                "function function",
+                "list arguments");
+
+            scriptEngine.AddFunction("disconnect", "player : Disconnect a player.",
+                (context, thisObject, arguments) =>
+                {
+                    EnqueuAction(new DisconnectAction(MISP.Engine.ArgumentType<MISP.ScriptObject>(arguments[0])));
+                    return null;
+                }, "object player");
             #endregion
 
 
+        }
+    }
+
+    internal class DisconnectAction : PendingAction
+    {
+        private MISP.ScriptObject player;
+        internal DisconnectAction(MISP.ScriptObject player)
+            : base(0)
+        {
+            this.player = player;
+        }
+
+        public override void Execute(MudCore core)
+        {
+            core._databaseLock.WaitOne();
+            Client client = null;
+
+            if (player is Client) client = player as Client;
+            else
+            {
+                var path = player.GetLocalProperty("@path") as String;
+                if (path != null && core.ConnectedClients.ContainsKey(path))
+                    client = core.ConnectedClients[path];
+            }
+
+            if (client != null)
+                client.Disconnect();
+
+            core._databaseLock.ReleaseMutex();
         }
     }
 }

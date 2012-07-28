@@ -1,0 +1,111 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <script type="text/javascript">
+        var socket = null;
+		
+		function connect()
+		{
+			socket = new WebSocket('ws://' + server.value + '/');
+			socket.onmessage = function(evt) { onMessage(evt) };
+			
+			socket.onopen = function() 
+			{
+				writeToScreen('<span class="system-message">Connection established.</span><br>');
+			};
+        
+			socket.onclose = function()
+			{
+				writeToScreen('<span class="system-message">Connection closed.</span><br>');
+			};
+		}
+		
+		function send()
+		{
+			var text = input.value;
+			writeToScreen('<span class="own-action">' + text + '</span><br>');
+			socket.send(text);
+			input.value = "";
+	    }
+		
+		function doaction(action)
+		{
+			writeToScreen('<span class="icon-action">' + action + '</span><br>');
+			socket.send(action);
+		}
+		
+		function onMessage(evt)
+		{
+			//writeToScreen(evt.data);
+			var rest = evt.data;
+			rest = rest.replace(/\n/g, "<br>");
+			var message = "";
+			
+			var actionDirectiveStart = rest.indexOf("{:");
+			while (actionDirectiveStart != -1)
+			{
+				var actionDirectiveEnd = rest.indexOf("}", actionDirectiveStart);
+				if (actionDirectiveEnd == -1) 
+				{
+					message = message.concat(rest);
+					rest = "";
+				}
+				else
+				{
+					var front = rest.substring(0, actionDirectiveStart);
+					var directive = rest.substring(actionDirectiveStart + 2, actionDirectiveEnd)
+					var back = rest.substring(actionDirectiveEnd + 1);
+					message = message + front;
+					
+					var space = directive.indexOf(' ');
+					var firstword = "";
+					if (space == -1) firstword = directive;
+					else firstword = directive.substring(0, space);
+					
+					message = message + ' <img class="action-button" height="16px" src="' + firstword + '.gif" onclick="doaction(\'' + directive + '\')" alt="' + directive + '">';
+					rest = back;
+				}
+				actionDirectiveStart = rest.indexOf("{:");
+			}
+			message = message + rest;
+			writeToScreen('<span class="server-message">' + message +'</span><br>');
+		}
+		
+		function writeToScreen(message)
+		{
+			var pre = document.createElement("span");
+			pre.style.wordWrap = "break-word";
+			pre.innerHTML = message;
+			output.appendChild(pre);
+			output.scrollTop = output.scrollHeight;
+		}
+		
+		
+    </script>
+	
+	<style type="text/css">
+		.own-action { color: red; }
+		.icon-action { color: blue; }
+		.server-message { color: green; }
+		.system-message { color: gray; }
+		
+		body 
+		{
+			background-color: black;
+		}
+	</style>
+</head>
+<body>
+
+<div stule="position: fixed; left: 10px; top: 10px; right: 10px;">
+	<input name="connect" type="submit" value="Connect" onclick="connect()">
+	<input name="server" id="server" type="text" style="width: 400px" value="72.209.212.88:8670">
+</div>
+<div style="position: fixed; left: 10px; bottom: 10px; width: 100%; right: 10px;">
+	<input width="25px" name="submit" type="submit" value="Send" onclick="send()">
+	<input type="text" style="width: 600px; right: 10px;" id="input" onkeydown="if (event.which == 13) { send(); return false; } else return true;">
+</div>
+ <div id="output" style="position: absolute; left: 10px; top: 40px; right: 10px; bottom: 40px; padding: 4px; border-style: solid; overflow-x: hidden; overflow-y: scroll; border-color: gray;">
+</div> 
+
+</body>
+</html>

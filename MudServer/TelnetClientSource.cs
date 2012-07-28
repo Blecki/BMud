@@ -80,36 +80,44 @@ namespace MudServer
         void OnData(IAsyncResult _asyncResult)
         {
             var Client = _asyncResult.AsyncState as StandardClient;
-            System.Net.Sockets.SocketError Error;
-            int DataSize = Client.Socket.EndReceive(_asyncResult, out Error);
 
-            if (DataSize == 0 || Error != System.Net.Sockets.SocketError.Success)
+            try
+            {
+                System.Net.Sockets.SocketError Error;
+                int DataSize = Client.Socket.EndReceive(_asyncResult, out Error);
+
+                if (DataSize == 0 || Error != System.Net.Sockets.SocketError.Success)
+                {
+                    MudCore.ClientDisconnected(Client);
+                }
+                else
+                {
+                    for (int i = 0; i < DataSize; ++i)
+                    {
+                        if (Client.Storage[i] == '\n' || Client.Storage[i] == '\r')
+                        {
+                            if (!String.IsNullOrEmpty(Client.CommandQueue))
+                            {
+                                String Command = Client.CommandQueue;
+                                Client.CommandQueue = "";
+                                MudCore.ClientCommand(Client, Command);
+                            }
+                        }
+                        else if (Client.Storage[i] == '\b')
+                        {
+                            if (Client.CommandQueue.Length > 0)
+                                Client.CommandQueue = Client.CommandQueue.Remove(Client.CommandQueue.Length - 1);
+                        }
+                        else if (ValidCharacters.Contains((char)Client.Storage[i]))
+                            Client.CommandQueue += (char)Client.Storage[i];
+                    }
+
+                    Client.Socket.BeginReceive(Client.Storage, 0, 1024, System.Net.Sockets.SocketFlags.Partial, OnData, Client);
+                }
+            }
+            catch (Exception e)
             {
                 MudCore.ClientDisconnected(Client);
-            }
-            else
-            {
-                for (int i = 0; i < DataSize; ++i)
-                {
-                    if (Client.Storage[i] == '\n' || Client.Storage[i] == '\r')
-                    {
-                        if (!String.IsNullOrEmpty(Client.CommandQueue))
-                        {
-                            String Command = Client.CommandQueue;
-                            Client.CommandQueue = "";
-                            MudCore.ClientCommand(Client, Command);
-                        }
-                    }
-                    else if (Client.Storage[i] == '\b')
-                    {
-                        if (Client.CommandQueue.Length > 0)
-                            Client.CommandQueue = Client.CommandQueue.Remove(Client.CommandQueue.Length - 1);
-                    }
-                    else if (ValidCharacters.Contains((char)Client.Storage[i]))
-                        Client.CommandQueue += (char)Client.Storage[i];
-                }
-
-                Client.Socket.BeginReceive(Client.Storage, 0, 1024, System.Net.Sockets.SocketFlags.Partial, OnData, Client);
             }
         }
     }

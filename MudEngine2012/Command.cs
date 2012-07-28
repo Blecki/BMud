@@ -11,6 +11,13 @@ namespace MudEngine2012
         internal MISP.ScriptObject Executor;
         internal String _Command;
 
+        internal Command(MISP.ScriptObject Executor, String _Command)
+            : base(0.1f)
+        {
+            this.Executor = Executor;
+            this._Command = _Command;
+        }
+
         public override void Execute(MudEngine2012.MudCore core)
         {
             try

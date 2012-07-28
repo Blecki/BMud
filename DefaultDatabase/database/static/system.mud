@@ -36,6 +36,7 @@
 							(set client "logged_on" true)
 							(move-object player-object (load "demo-area/start-room") "contents")
 							(command player-object "look")
+							(invoke 10 echo ^(player-object "Timer fired.\n"))
 						)
 						*(echo client "Wrong password.\n")
 					)

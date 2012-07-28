@@ -8,6 +8,12 @@ namespace MudEngine2012
 {
     internal class PendingAction
     {
+        public DateTime ScheduledTime = DateTime.MinValue;
+
+        internal PendingAction(float secondsDelay)
+        {
+            this.ScheduledTime = DateTime.Now + TimeSpan.FromSeconds(secondsDelay);
+        }
         public virtual void Execute(MudCore core) { }
     }
 
@@ -15,6 +21,15 @@ namespace MudEngine2012
     {
         internal Client client;
         internal String command;
+        private Client _client;
+        private string _rawCommand;
+
+        public ClientCommand(Client client, String command)
+            : base(0.1f)
+        {
+            this.client = client;
+            this.command = command;
+        }
 
         public override void Execute(MudCore core)
         {
@@ -40,12 +55,12 @@ namespace MudEngine2012
         }
     }
 
-    internal class InvokeAction : PendingAction
+    internal class InvokeSystemAction : PendingAction
     {
         internal Client client;
         internal String invoke;
 
-        internal InvokeAction(Client client, String invoke)
+        internal InvokeSystemAction(Client client, String invoke, float secondsDelay) : base(secondsDelay)
         {
             this.client = client;
             this.invoke = invoke;
@@ -54,6 +69,26 @@ namespace MudEngine2012
         public override void Execute(MudCore core)
         {
             core.InvokeSystem(client, invoke, new MISP.ScriptList(new object[] { client }), new MISP.Context());
+        }
+    }
+
+    internal class InvokeFunctionAction : PendingAction
+    {
+        internal MISP.Function function;
+        internal MISP.ScriptList arguments;
+        internal MISP.ScriptObject thisObject;
+
+        internal InvokeFunctionAction(MISP.Function function, MISP.ScriptObject thisObject, MISP.ScriptList arguments, float secondsDelay)
+            : base(secondsDelay)
+        {
+            this.function = function;
+            this.thisObject = thisObject;
+            this.arguments = arguments;
+        }
+
+        public override void Execute(MudCore core)
+        {
+            function.Invoke(new MISP.Context(), thisObject, arguments);    
         }
     }
 
@@ -66,7 +101,7 @@ namespace MudEngine2012
         public MISP.Engine scriptEngine { get; private set; }
         internal Dictionary<String, Client> ConnectedClients = new Dictionary<String, Client>();
 
-        private Mutex _databaseLock = new Mutex();
+        internal Mutex _databaseLock = new Mutex();
 
         public MudCore()
         {
@@ -75,16 +110,27 @@ namespace MudEngine2012
         internal void EnqueuAction(PendingAction action)
         {
             _commandLock.WaitOne();
-            PendingActions.AddLast(action);
+            if (PendingActions.Count == 0) PendingActions.AddLast(action);
+            else
+            {
+                for (var node = PendingActions.Last; node != null; node = node.Previous)
+                    if (node.Value.ScheduledTime < action.ScheduledTime)
+                    {
+                        PendingActions.AddAfter(node, action);
+                        _commandLock.ReleaseMutex();
+                        return;
+                    }
+                PendingActions.AddFirst(action);
+            }
             _commandLock.ReleaseMutex();
         }
 
         public void ClientCommand(Client _client, String _rawCommand)
         {
             if (_client.logged_on)
-                EnqueuAction(new Command { Executor = _client.player, _Command = _rawCommand });
+                EnqueuAction(new Command(_client.player, _rawCommand));
             else
-                EnqueuAction(new ClientCommand { client = _client, command = _rawCommand });
+                EnqueuAction(new ClientCommand(_client, _rawCommand));
         }
 
         public void ClientDisconnected(Client client)
@@ -96,12 +142,12 @@ namespace MudEngine2012
                 ConnectedClients.Remove(client.player.GetProperty("@path").ToString());
                 _databaseLock.ReleaseMutex();
             }
-            EnqueuAction(new InvokeAction(client, "handle-lost-client"));
+            EnqueuAction(new InvokeSystemAction(client, "handle-lost-client", 0.0f));
         }
 
         public void ClientConnected(Client client)
         {
-            EnqueuAction(new InvokeAction(client, "handle-new-client"));
+            EnqueuAction(new InvokeSystemAction(client, "handle-new-client", 0.0f));
         }
 
         public bool Start(String basePath)
@@ -208,7 +254,10 @@ namespace MudEngine2012
                 if (PendingActions.Count >= 1)
                 {
                     PendingCommand = PendingActions.First.Value;
-                    PendingActions.RemoveFirst();
+                    if (PendingCommand.ScheduledTime > DateTime.Now)
+                        PendingCommand = null;
+                    else
+                        PendingActions.RemoveFirst();
                 }
                 _commandLock.ReleaseMutex();
 

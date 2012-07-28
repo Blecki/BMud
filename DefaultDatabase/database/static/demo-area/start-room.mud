@@ -1,5 +1,5 @@
 ﻿(prop "@base" (load "room"))
-(prop "short" "poorly-ighted chamber")
+(prop "short" "poorly-lighted chamber")
 (prop "long" 
 	"A small chamber lined with bookshelves. A narrow window crouches in one wall, above an ancient wooden desk. Ill-fitting stones jut from the walls above the bookshelves. Dark wooden beams criss cross over head.")
 	
