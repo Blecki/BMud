@@ -12,7 +12,7 @@ namespace Alchemy.Classes
         /// <summary>
         /// AQ Link to the parent User Context
         /// </summary>
-        private readonly Context _context;
+        public readonly Context _context;
 
         /// <summary>
         /// The remote endpoint address.

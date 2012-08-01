@@ -96,6 +96,8 @@ namespace MISP
                 result = Prefix.Expand;
             else if (state.Next() == '#')
                 result = Prefix.Lookup;
+            else if (state.Next() == ':')
+                result = Prefix.Evaluate;
             if (result != Prefix.None)
                 state.Advance();
             return result;
@@ -113,11 +115,11 @@ namespace MISP
             else if (state.Next() == '"')
             {
                 result = ParseStringExpression(state);
-                if (prefix == Prefix.Quote)
-                    result = new ParseNode(NodeType.String, result.start, state)
-                    {
-                        token = state.source.Substring(result.start + 1, result.end - result.start - 2)
-                    };
+                //if (prefix == Prefix.Quote)
+                //    result = new ParseNode(NodeType.String, result.start, state)
+                //    {
+                //        token = state.source.Substring(result.start + 1, result.end - result.start - 2)
+                //    };
             }
             else if (state.Next() == '(')
             {
@@ -127,7 +129,16 @@ namespace MISP
             {
                 result = ParseInteger(state);
             }
-            else 
+            //else if (!state.AtEnd() && " \t\r\n".Contains(state.Next())) //prefix followed by space??
+            //{
+            //    if (prefix != Prefix.None) //rewind prefix
+            //    {
+            //        prefix = Prefix.None;
+            //        state.start -= 1;
+            //    }
+            //    result = ParseToken(state);
+            //}
+            else
             {
                 result = ParseToken(state);
             }

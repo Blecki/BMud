@@ -23,6 +23,7 @@ namespace MISP
         Quote,
         List,
         Lookup,
+        Evaluate,
         None,
         Count
     }
@@ -46,6 +47,13 @@ namespace MISP
 
                 allowed[(int)NodeType.StringExpression, (int)Prefix.Quote] = true;
                 allowed[(int)NodeType.String, (int)Prefix.Quote] = true;
+
+                allowed[(int)NodeType.String, (int)Prefix.Evaluate] = true;
+                allowed[(int)NodeType.StringExpression, (int)Prefix.Evaluate] = true;
+                allowed[(int)NodeType.Node, (int)Prefix.Evaluate] = true;
+                allowed[(int)NodeType.Token, (int)Prefix.Evaluate] = true;
+
+                allowed[(int)NodeType.Token, (int)Prefix.Lookup] = true;
             }
 
             return allowed[(int)node.type, (int)node.prefix];

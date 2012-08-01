@@ -149,6 +149,8 @@ namespace Alchemy
                         break;
                     }
                 }
+                context.Disconnect();
+                context.Connection.Close();
             }
         }
 

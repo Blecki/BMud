@@ -12,6 +12,7 @@ namespace MISP
             Func<Context, ScriptObject, ScriptList, Object> equalBody =
                 (context, thisObject, arguments) =>
                 {
+                    arguments = arguments[0] as ScriptList;
                     if (arguments.Count == 0) return null;
 
                     var nullCount = arguments.Count((o) => { return o == null; });
@@ -62,7 +63,7 @@ namespace MISP
                 "<n> : True if all arguments true.",
                 (context, thisObject, arguments) =>
                 {
-                    foreach (var arg in arguments) if (arg == null) return null;
+                    foreach (var arg in arguments[0] as ScriptList) if (arg == null) return null;
                     return true;
                 }));
 
@@ -130,10 +131,9 @@ namespace MISP
                 (context, thisObject, arguments) =>
                 {
                     if (arguments[0] != null)
-                        return Evaluate(context, arguments[1] as ParseNode, thisObject, true);
-                    else if (arguments.Count == 3)
-                        return Evaluate(context, arguments[2] as ParseNode, thisObject, true);
-                    return null;
+                        return Evaluate(context, arguments[1], thisObject, true);
+                    else
+                        return Evaluate(context, arguments[2], thisObject, true);
                 }));
 
         }

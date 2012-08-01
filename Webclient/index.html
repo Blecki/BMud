@@ -17,6 +17,11 @@
 			{
 				writeToScreen('<span class="system-message">Connection closed.</span><br>');
 			};
+			
+			socket.onerror = function(evt)
+			{
+				writeToScreen('<span class="system-message">' + evt + '</span><br>');
+			}
 		}
 		
 		function send()
@@ -104,7 +109,7 @@
 	<input width="25px" name="submit" type="submit" value="Send" onclick="send()">
 	<input type="text" style="width: 600px; right: 10px;" id="input" onkeydown="if (event.which == 13) { send(); return false; } else return true;">
 </div>
- <div id="output" style="position: absolute; left: 10px; top: 40px; right: 10px; bottom: 40px; padding: 4px; border-style: solid; overflow-x: hidden; overflow-y: scroll; border-color: gray;">
+ <div id="output" style="position: absolute; left: 10px; top: 40px; right: 10px; bottom: 40px; padding: 4px; border-style: solid; overflow-x: hidden; overflow-y: scroll; border-color: gray; border-radius: 16px;">
 </div> 
 
 </body>

@@ -25,12 +25,13 @@ namespace MISP
                         return EvaluateString(context, _this, ScriptObject.AsString(arguments[1]), "");
                 }));
 
-            functions.Add("lastarg", new Function("lastarg", 
+            functions.Add("lastarg", new Function("lastarg",
                 ArgumentInfo.ParseArguments("+children"),
                 "<n> : Returns the last argument.",
                 (context, thisObject, arguments) =>
                 {
-                    return arguments[arguments.Count - 1];
+                    var list = arguments[0] as ScriptList;
+                    return list[list.Count - 1];
                 }));
 
             functions.Add("nop", new Function("nop",
@@ -58,6 +59,7 @@ namespace MISP
             SetupListFunctions();
             SetupStringFunctions();
             SetupEncryptionFunctions();
+            SetupFileFunctions();
         }
 
     }

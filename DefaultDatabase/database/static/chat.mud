@@ -23,18 +23,16 @@
 
 (add-global-verb "subscribe" (m-if-exclusive (m-complete (m-single-word "channel")) (m-nop) (m-fail "Subscribe to what channel?"))
 	(lambda "lsubscribe" [matches actor] [] 
-		(if (first matches).fail (echo actor (first matches):fail)
-			(let ^(^("chat" (load "chat")))
-				(let ^(^("channels" (where "channel" chat.channels (equal (first matches).channel channel.name))))
-					(if (equal (length channels) 0) (echo actor "That channel does not exist.\n")
-						(if ((first channels).can-subscribe actor)
-							(nop
-								(prop-remove actor "channels" (first matches).channel) /*Prevent duplicate subscriptions*/
-								(prop-add actor "channels" (first matches).channel)
-								(echo actor "You subscribed to channel ((first matches).channel).\n")
-							)
-							(echo actor "You can't subscribe to that channel.\n")
+		(let ^(^("chat" (load "chat")))
+			(let ^(^("channels" (where "channel" chat.channels (equal (first matches).channel channel.name))))
+				(if (equal (length channels) 0) (echo actor "That channel does not exist.\n")
+					(if ((first channels).can-subscribe actor)
+						(nop
+							(prop-remove actor "channels" (first matches).channel) /*Prevent duplicate subscriptions*/
+							(prop-add actor "channels" (first matches).channel)
+							(echo actor "You subscribed to channel ((first matches).channel).\n")
 						)
+						(echo actor "You can't subscribe to that channel.\n")
 					)
 				)
 			)
@@ -45,14 +43,12 @@
 
 (add-global-verb "unsubscribe" (m-if-exclusive (m-complete (m-single-word "channel")) (m-nop) (m-fail "Unsubscribe from what channel?"))
 	(lambda "lunsubscribe" [matches actor] []
-		(if (first matches).fail (echo actor (first matches):fail)
-			(if (contains actor.channels (first matches).channel)
-				(nop
-					(prop-remove actor "channels" (first matches).channel)
-					(echo actor "Unsubscribed.\n")
-				)
-				(echo actor "You aren't subscribed to that channel.\n")
+		(if (contains actor.channels (first matches).channel)
+			(nop
+				(prop-remove actor "channels" (first matches).channel)
+				(echo actor "Unsubscribed.\n")
 			)
+			(echo actor "You aren't subscribed to that channel.\n")
 		)
 	)
 	"Unsubscribe from a channel."

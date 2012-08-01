@@ -108,7 +108,10 @@
 										(echo actor "(length matches) successful matches.\n")
 										(for "match" matches *(echo actor "(match)\n"))
 									)
-									((first verb-records).action matches actor)
+									(if (first matches).fail 
+										(echo actor (first matches):fail)
+										((first verb-records).action matches actor)
+									)
 								)
 								(var "verb-records" null)
 							)

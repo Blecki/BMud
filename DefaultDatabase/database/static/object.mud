@@ -8,15 +8,17 @@
 
 (prop "can-get" true)
 
-(defun "add-object" ^("to" "list" "object") ^() 
-	*(nop
+(defun "add-object" ^("object to" "string list" "object object") ^() 
+	(nop
 		(prop-add to list object)
-		(set object "location" (record ^("object" to) ^("list" list)))))
-		
-(defun "make-object" ^("code") ^()
-	*(let ^(^("object" (record ^("@base" (load "object")))))
-		*(lastarg
-			(eval object code)
+		(set object "location" (record ^("object" to) ^("list" list)))
+	)
+)
+
+(defun "make-object" ^("code code") ^()
+	(let ^(^("object" (record ^("@base" (load "object")))))
+		(lastarg
+			(eval object :code)
 			object
 		)
 	)

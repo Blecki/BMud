@@ -23,7 +23,7 @@ namespace MISP
                 (context, thisObject, arguments) =>
                 {
                     var r = (new GenericScriptObject()) as ScriptObject;
-                    foreach (var item in arguments)
+                    foreach (var item in arguments[0] as ScriptList)
                     {
                         var list = item as ScriptList;
                         if (list == null || list.Count != 2) throw new ScriptError("Record expects only pairs as arguments.", context.currentNode);
@@ -39,7 +39,7 @@ namespace MISP
                 {
                     var from = ArgumentType<ScriptObject>(arguments[0]);
                     var r = new GenericScriptObject(from);
-                    foreach (var item in arguments.GetRange(1, arguments.Count - 1))
+                    foreach (var item in arguments[1] as ScriptList)
                     {
                         var list = item as ScriptList;
                         if (list == null || list.Count != 2) throw new ScriptError("Clone expects only pairs as arguments.", context.currentNode);

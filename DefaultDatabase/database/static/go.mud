@@ -1,30 +1,31 @@
 ﻿(depend "move-object")
 
-(defun "make-link-lambda" ^("to" "name") ^()
-	*(lambda "lgo" ^("matches" "actor") ^("to" "name")
+(defun "make-link-lambda" ^("to" "name" "function ?on-follow") ^()
+	*(lambda "lgo" ^("matches" "actor") ^("to" "name" "on-follow")
 		*(let ^(^("previous" actor.location.object))
 			*(nop
 				(echo (load to).contents "^(actor:short) arrived.\n")
 				(move-object actor (load to) "contents")
 				(echo previous.contents "^(actor:short) went (name).\n")
 				(echo actor "You went (name).\n")
+				(if on-follow (on-follow actor))
 				(command actor "look")
 			)
 		)
 	)
 )
 
-(defun "open-link" ^("from" "to" "names") ^()
+(defun "open-link" ^("from" "to" "names" "function ?on-follow") ^()
 	*(nop
 		(prop-add from "links" (first names))
 		(for "name" names
 			*(nop
 				(add-verb from name (m-nothing)
-					(make-link-lambda to (first names))
+					(make-link-lambda to (first names) on-follow)
 					"Move (name)."
 				)
 				(add-verb from "go" (m-complete (m-keyword name))
-					(make-link-lambda to (first names))
+					(make-link-lambda to (first names) on-follow)
 					"Move (name)."
 				)
 				(add-verb from "look" (m-complete (m-keyword name))

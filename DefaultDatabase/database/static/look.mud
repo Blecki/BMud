@@ -39,7 +39,7 @@
 					(if (match.look-preposition)
 						(nop
 							(echo actor "[Looking (match.preposition) (match.object:the).]\n")
-							(echo actor "^(match.preposition) (match.object:the) (short_list match.object.(match.preposition))\n")
+							(echo actor "^(match.preposition) (match.object:the) (actor.formatter.list-objects-preposition match.object.(match.preposition) true true match.object)\n")
 						)
 						(if (and (notequal match.object actor.location.object) (notequal match.object.location.object actor.location.object))
 							(nop

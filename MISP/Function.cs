@@ -125,11 +125,25 @@ namespace MISP
                     CheckArgumentType<ParseNode>(argument, context);
                     break;
                 case ArgumentType.FUNCTION:
+                    if (argument == null) return;
                     CheckArgumentType<Function>(argument, context);
                     break;
                 default:
                     break;
             }
+        }
+
+        public ArgumentInfo GetArgumentInfo(int index)
+        {
+            if (index >= argumentInfo.Count)
+            {
+                if (argumentInfo.Count > 0 && argumentInfo[argumentInfo.Count - 1].repeat)
+                    return argumentInfo[argumentInfo.Count - 1];
+                else
+                    throw new ScriptError("Argument out of bounds", null);
+            }
+            else
+                return argumentInfo[index];
         }
 
         public Object Invoke(Context context, ScriptObject thisObject, ScriptList arguments)
@@ -141,34 +155,40 @@ namespace MISP
                 context.traceDepth += 1;
             }
 
+            var newArguments = new ScriptList();
             //Check argument types
             if (argumentInfo.Count == 0 && arguments.Count != 0) throw new ScriptError("Function expects no arguments.", context.currentNode);
 
+
+            int argumentIndex = 0;               
             for (int i = 0; i < argumentInfo.Count; ++i)
             {
-                if (arguments.Count <= i)
+                var info = argumentInfo[i];
+
+                if (info.repeat)
                 {
-                    if (!argumentInfo[i].optional) throw new ScriptError("Not enough arguments to " + name, context.currentNode);
+                    var list = new ScriptList();
+                    while (argumentIndex < arguments.Count) //Handy side effect: If no argument is passed for an optional repeat
+                    {                                       //argument, it will get an empty list.
+                        list.Add(ProcessArgument(info, arguments[argumentIndex], context));
+                        ++argumentIndex;
+                    }
+                    newArguments.Add(list);
                 }
                 else
                 {
-                    checkArgumentType(argumentInfo[i].type, arguments[i], context);
+                    if (argumentIndex < arguments.Count)
+                        newArguments.Add(ProcessArgument(info, arguments[argumentIndex], context));
+                    else if (info.optional)
+                        newArguments.Add(createDefaultArgument(info.type));
+                    else throw new ScriptError("Not enough arguments to " + name, context.currentNode);
+                    ++argumentIndex;
                 }
             }
+            if (argumentIndex < arguments.Count)
+                throw new ScriptError("Too many arguments to " + name, context.currentNode);
 
-            if (arguments.Count > argumentInfo.Count)
-            {
-                if (argumentInfo[argumentInfo.Count - 1].repeat)
-                {
-                    for (int i = argumentInfo.Count; i < arguments.Count; ++i)
-                        checkArgumentType(argumentInfo[argumentInfo.Count - 1].type, arguments[i], context);
-                }
-                else
-                    throw new ScriptError("Too many arguments to function.", context.currentNode);
-            }
-
-
-            var r = implementation(context, thisObject, arguments);
+            var r = implementation(context, thisObject, newArguments);
 
             if (context.trace != null)
             {
@@ -177,6 +197,40 @@ namespace MISP
             }
 
             return r;
+        }
+        
+        private Object ProcessArgument(ArgumentInfo info, Object argument, Context context)
+        {
+            if (argument == null) return createDefaultArgument(info.type);
+            if (info.type == ArgumentType.LIST && !(argument is ScriptList))
+                return new ScriptList(argument);
+            if (info.type == ArgumentType.STRING && !(argument is String))
+                return ScriptObject.AsString(argument);
+            else checkArgumentType(info.type, argument, context);
+            return argument;
+        }
+        
+        private object createDefaultArgument(ArgumentType argumentType)
+        {
+            switch (argumentType)
+            {
+                case ArgumentType.STRING:
+                    return "";
+                case ArgumentType.OBJECT:
+                    return null;
+                case ArgumentType.LIST:
+                    return new ScriptList();
+                case ArgumentType.INTEGER:
+                    return null;
+                case ArgumentType.CODE:
+                    return null;
+                case ArgumentType.FUNCTION:
+                    return null;
+                case ArgumentType.ANYTHING:
+                    return null;
+                default:
+                    return null;
+            }
         }
 
     }

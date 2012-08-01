@@ -1,4 +1,6 @@
-﻿(prop "@base" (load "room"))
+﻿(depend "door")
+
+(prop "@base" (load "room"))
 (prop "short" "poorly-lighted chamber")
 (prop "long" 
 	"A small chamber lined with bookshelves. A narrow window crouches in one wall, above an ancient wooden desk. Ill-fitting stones jut from the walls above the bookshelves. Dark wooden beams criss cross over head.")
@@ -6,7 +8,8 @@
 (add-detail this "window" "The window is tall and narrow with an arched top. It has small panes separated by thin leading. You could look through it.")
 (add-keyword-detail this ^("out" "through") "window" "You can see some mountains in the distance, poking up through the fog, but not much of anything else except fog.")
 
-(open-link this "demo-area/balcony" ^("west" "w"))
+(open-link this "demo-area/balcony" ^("west" "w") (lambda "" [actor] [] (echo actor "On-follow worked!\n")))
+(create-door this "demo-area/small-chamber" ^("east" "e"))
 
 (defun "random-item" ^("list") ^()
 	*(index list (random 0 (length list)))
@@ -59,7 +62,7 @@
 	)
 )
 
-(add-object this "contents" (make-object *(nop
+(add-object this "contents" (make-object (nop
 	(prop "short" "dusty rug")
 	(prop "nouns" ^("rug"))
 	(prop "adjectives" ^("dusty"))

@@ -20,7 +20,8 @@
 (add-global-verb "get"
 	(m-filter-failures
 		(m-if-exclusive (m-nothing) (m-fail "Get what?\n")
-			(m-if-exclusive (m-sequence ^((m-keyword "all") (m-nothing))) (m-sequence ^((m-expand-objects (os-location "actor")) (m-set "all" true)))
+			(m-if-exclusive (m-sequence ^((m-keyword "all") (m-nothing))) 
+				(m-sequence ^((m-expand-objects (os-location "actor")) (m-set "all" true)))
 				(m-if-exclusive (m-complete (m-sequence ^((m-?-all) (m-object (os-location "actor") "object")))) 
 					(m-nop)
 					(m-if-exclusive
@@ -57,18 +58,15 @@
 		)
 	)
 	(defun "" ^("matches" "actor") ^()
-		*(if (notequal (first matches).fail null)
-			*(echo actor (first matches):fail)
-			*(if (equal (first matches).all true)
-				*(for "match" matches
-					*(imple-get actor match)
-				)
-				*(nop
-					(if (greaterthan (length matches) 1) *(echo actor "[Multiple possible matches. Accepting first match.]\n"))
-					(imple-get actor (first matches))
-				)
-			)						
-		)
+		(if (equal (first matches).all true)
+			(for "match" matches
+				(imple-get actor match)
+			)
+			(nop
+				(if (greaterthan (length matches) 1) *(echo actor "[Multiple possible matches. Accepting first match.]\n"))
+				(imple-get actor (first matches))
+			)
+		)						
 	)
 	"GET [ALL] X \(\(FROM [IN/ON/UNDER]\) | IN/ON/UNDER\) [MY] Y"
 )

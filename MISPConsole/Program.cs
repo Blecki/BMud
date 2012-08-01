@@ -57,9 +57,7 @@ namespace MISPConsole
             Context mispContext = new Context();
             GenericScriptObject mispObject = new GenericScriptObject();
 
-            mispEngine.functions.Add("run-file", new Function("run-file",
-                ArgumentInfo.ParseArguments("string name"),
-                "Load and run a file.",
+            mispEngine.AddFunction("run-file", "Load and run a file.",
                 (context, thisObject, arguments) =>
                 {
                     try
@@ -72,7 +70,8 @@ namespace MISPConsole
                         Console.WriteLine("Error " + (e.generatedAt == null ? "" : "on line " + e.generatedAt.line) + ": " + e.Message);
                         return null;
                     }
-                }));
+                },
+                "string name");
 
             Console.Write("MISP Console 1.0\n");
             while (true)

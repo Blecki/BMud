@@ -21,7 +21,7 @@ namespace MISP
 
             functions.Add("let", new Function("let",
                 ArgumentInfo.ParseArguments("list pairs", "code code"),
-                "^( ^(\"name\" value) ^(...) ) code : Create temporary variables, run code.",
+                "^( ^(\"name\" value ?cleanup-code) ^(...) ) code : Create temporary variables, run code. Optional clean-up code for each variable.",
                 (context, thisObject, arguments) =>
                 {
                     var variables = ArgumentType<ScriptList>(arguments[0]);
@@ -30,7 +30,8 @@ namespace MISP
                     foreach (var item in variables)
                     {
                         var def = ArgumentType<ScriptList>(item);
-                        if (def.Count != 2) throw new ScriptError("let expects only pairs.", context.currentNode);
+                        if (def.Count != 2 && def.Count != 3) 
+                            throw new ScriptError("Variable defs to let should have only 2 or 3 items.", context.currentNode);
                         var name = ArgumentType<String>(def[0]);
                         context.PushVariable(name, def[1]);
                     }
@@ -40,12 +41,13 @@ namespace MISP
                     foreach (var item in variables)
                     {
                         var def = ArgumentType<ScriptList>(item);
+                        if (def.Count == 3)
+                            Evaluate(context, def[2], thisObject, true, true);
                         context.PopVariable(ArgumentType<String>(def[0]));
                     }
 
                     return result;
-                }));
-
+                }));           
         }
     }
 }

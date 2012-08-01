@@ -62,7 +62,7 @@ namespace MISP
                 (context, thisObject, arguments) =>
                 {
                     var result = new ScriptList();
-                    foreach (var arg in arguments)
+                    foreach (var arg in arguments[0] as ScriptList)
                     {
                         if (arg is ScriptList) result.AddRange(arg as ScriptList);
                         else result.Add(arg);
@@ -103,16 +103,15 @@ namespace MISP
                 }));
 
             functions.Add("sub-list", new Function("sub-list",
-                ArgumentInfo.ParseArguments("list list", "integer start", "integer ?length"), "list start length: Returns a elements in list between start and start+length.",
+                ArgumentInfo.ParseArguments("list list", "integer start", "integer ?length"),
+                "list start length: Returns a elements in list between start and start+length.",
                 (context, thisObject, arguments) =>
                 {
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     var start = arguments[1] as int?;
                     if (start == null || !start.HasValue) return new ScriptList();
-                    int? length = null;
-                    if (arguments.Count == 3) length = arguments[2] as int?;
-                    else length = list.Count;
-                    if (length == null || !length.HasValue) return new ScriptList();
+                    int? length = arguments[2] as int?;
+                    if (length == null || !length.HasValue) length = list.Count;
 
                     if (start.Value < 0) { length -= start; start = 0; }
                     if (start.Value >= list.Count) return new ScriptList();

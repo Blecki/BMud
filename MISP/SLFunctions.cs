@@ -58,8 +58,7 @@ namespace MISP
                         //}
                     });
 
-                if (arguments.Count == 5)
-                    newFunction.shortHelp = ScriptObject.AsString(arguments[4]);
+                newFunction.shortHelp = ScriptObject.AsString(arguments[4]);
                 
                 //newFunction.source = sourceSpan(context.activeSource, (arguments[3] as Irony.Parsing.ParseTreeNode).Span);
                 newFunction.closedValues = closedValues;

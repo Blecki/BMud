@@ -13,7 +13,7 @@ namespace MudServer
         internal Alchemy.Classes.UserContext context;
         public override void Send(string message)
         {
-            if (context.DataFrame != null) context.Send(message);
+            if (context != null && context.DataFrame != null) context.Send(message);
         }
 
         public override void Disconnect()
@@ -38,9 +38,10 @@ namespace MudServer
                     telnetListener.Listen(mudCore);
 
                     var websocketListener = new Alchemy.WebSocketServer(8670, IPAddress.Any);
+                    websocketListener.TimeOut = TimeSpan.FromMinutes(10);
 
 
-                    websocketListener.OnConnect = (context) =>
+                    websocketListener.OnConnected = (context) =>
                         {
                             var client = new WebsocketClient();
                             client.context = context;
@@ -52,14 +53,28 @@ namespace MudServer
                     websocketListener.OnReceive = (context) =>
                         {
                             Console.WriteLine("Data from websocket.");
-                            var data = context.DataFrame.AsRaw();
-                            var stringWriter = new StringWriter();
-                            foreach (var item in data)
-                                foreach (var letter in item.Array)
-                                    stringWriter.Write((char)letter);
-                            mudCore.ClientCommand((context.Data as MudEngine2012.Client), stringWriter.ToString());
+                            if (context._context.Connected)
+                            {
+                                var data = context.DataFrame.AsRaw();
+                                var stringWriter = new StringWriter();
+                                foreach (var item in data)
+                                    foreach (var letter in item.Array)
+                                        stringWriter.Write((char)letter);
+                                mudCore.ClientCommand((context.Data as MudEngine2012.Client), stringWriter.ToString());
+                            }
+                            else
+                                Console.WriteLine("..bad client!");
                             // mudCore.ClientCommand((context.Data as MudEngine2012.Client),
                             //   context.DataFrame.
+                        };
+
+                    websocketListener.OnDisconnect = (context) =>
+                        {
+                            var client = context.Data as WebsocketClient;
+                            client.context = null;
+                            context.Data = null;
+                            Console.WriteLine("Lost websocket client.");
+                            mudCore.ClientDisconnected(client);
                         };
                         
 
@@ -76,7 +91,7 @@ namespace MudServer
             //    Console.WriteLine(e.Message);
             //    throw e;
             //}
-            Console.ReadKey(true);
+            //Console.ReadKey(true);
         }
     }
 }

@@ -17,10 +17,8 @@ namespace MISP
                     var str = ScriptObject.AsString(arguments[0]);
                     var start = arguments[1] as int?;
                     if (start == null || !start.HasValue) return "";
-                    int? length = null;
-                    if (arguments.Count == 3) length = arguments[2] as int?;
-                    else length = str.Length;
-                    if (length == null || !length.HasValue) return new ScriptList();
+                    int? length = arguments[2] as int?;
+                    if (length == null || !length.HasValue) length = str.Length;
 
                     if (start.Value < 0) { length -= start; start = 0; }
                     if (start.Value >= str.Length) return new ScriptList();
@@ -34,7 +32,8 @@ namespace MISP
                 (context, thisObject, arguments) =>
                 {
                     var r = "";
-                    foreach (var obj in arguments) if (obj == null) r += "null"; else r += ScriptObject.AsString(obj);
+                    foreach (var obj in arguments[0] as ScriptList)
+                        if (obj == null) r += "null"; else r += ScriptObject.AsString(obj);
                     return r;
                 }));
 

@@ -46,6 +46,18 @@
     <None Include="database\static\chat.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="database\static\basic-formatter.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="database\static\door.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="database\static\demo-area\small-chamber.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="database\static\icon-formatter.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="database\static\demo-area\admin-ball.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
