@@ -1,6 +1,6 @@
 ﻿(depend "lists")
 
-(defun "move-object" ^("what" "to" "to_list") ^() /*Move an object. Maintains location property of object.*/
+(defun "move-object" ^("what" "to" "to_list") /*Move an object. Maintains location property of object.*/
 	*(nop
 		(if (notequal what.location null)
 			*(prop-remove what.location.object what.location.list what)
@@ -17,6 +17,6 @@
 	)
 )
 
-(defun "is-held-by" [object who] [] (and (equal object.location.object who) (equal object.location.list "held")) )
+(defun "is-held-by" [object who] (and (equal object.location.object who) (equal object.location.list "held")) )
 
 		

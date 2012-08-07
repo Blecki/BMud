@@ -2,7 +2,7 @@
 (depend "room")
 (prop "long" "Set the 'long' property to change this.")
 (prop "pronoun" "he")
-(prop "on-get" (defun "" ^("actor") ^() *(echo actor "(this:short) wouldn't appreciate that.\n")))
+(prop "on-get" (defun "" ^("actor") *(echo actor "(this:short) wouldn't appreciate that.\n")))
 (prop "prompt" ">")
 
 (prop "description" *"(this:short)\n(this:long)\n(if
@@ -15,7 +15,7 @@
 (prop "formatter" (load "basic-formatter"))
 
 (add-global-verb "format" (m-if-exclusive (m-rest "text") (m-nop) (m-fail "Which formatter? Your choices are basic and icon.\n"))
-	(lambda "" [matches actor] []
+	(lambda "" [matches actor]
 		(let ^(^("formatter" (load "((first matches).text)-formatter")))
 			(if (formatter.is-formatter)
 				(nop

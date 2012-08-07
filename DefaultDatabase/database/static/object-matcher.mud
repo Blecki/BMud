@@ -1,25 +1,25 @@
 ﻿/* Object sources for object matcher */
 
-(defun "os-contents" ^("relative" "list") ^() /*Search relative some object for the items*/
-	*(defun "" ^("match") ^("relative" "list") 
+(defun "os-contents" ^("relative" "list") /*Search relative some object for the items*/
+	*(defun "" ^("match")
 		*(coalesce match.(relative).(list) ^())
 	)
 )
 
-(defun "os-contents-v" ^("relative" "list") ^()
-	*(defun "" ^("match") ^("relative" "list")
+(defun "os-contents-v" ^("relative" "list")
+	*(defun "" ^("match")
 		*(coalesce match.(relative).(match.(list)) ^())
 	)
 )
 
-(defun "os-contents-l" ^("relative" "list") ^() /*Search relative some object for the items*/
-	*(lambda "lcontents_source_list" ^("match") ^("relative" "list") 
+(defun "os-contents-l" ^("relative" "list") /*Search relative some object for the items*/
+	*(lambda "lcontents_source_list" ^("match")
 		*(cat $(map "item" list *(coalesce match.(relative).(item) ^())))
 	)
 )
 
-(defun "os-location" ^("relative") ^() /*Search relative some object for the items*/
-	*(defun "" ^("match") ^("relative") 
+(defun "os-location" ^("relative") /*Search relative some object for the items*/
+	*(defun "" ^("match")
 		*(cat 
 			(where "object" (coalesce match.(relative).location.object.contents ^()) *(notequal object match.(relative)))
 			$(map "object" (where "object" (coalesce match.(relative).location.object.contents ^()) *(notequal object match.(relative)))
@@ -29,7 +29,7 @@
 	)
 )
 
-(defun "get-all-visible-objects" [actor] []
+(defun "get-all-visible-objects" [actor]
 	(cat
 		(where "object" (coalesce actor.location.object.contents ^()) *(notequal object actor))
 		(coalesce actor.held ^())
@@ -41,12 +41,12 @@
 	)
 )
 
-(defun "os-visible" ^("relative") ^() /*Everything that 'relative' can see*/
-	(lambda "los-visible" [match] [relative] (get-all-visible-objects match.(relative)))
+(defun "os-visible" ^("relative") /*Everything that 'relative' can see*/
+	(lambda "los-visible" [match] (get-all-visible-objects match.(relative)))
 )
 
-(defun "os-mine" ^("relative") ^() /*Everything relative can see and also has*/
-	*(defun "" ^("match") ^("relative")
+(defun "os-mine" ^("relative") /*Everything relative can see and also has*/
+	*(defun "" ^("match")
 		*(cat
 			(coalesce match.(relative).held ^())
 			(coalesce match.(relative).worn ^())
@@ -56,20 +56,20 @@
 	)
 )
 
-(defun "os-allow-preposition" ^("source") ^()
-	*(lambda "lallow_preposition" ^("match") ^("source")
+(defun "os-allow-preposition" ^("source")
+	*(lambda "lallow_preposition" ^("match")
 		*(where "object" (source match) *(object:("allow_(match.preposition)")))
 	)
 )
 
-(defun "os-cat" ^("A" "B") ^() /* Cat two sources together*/
-	*(defun "" ^("match") ^("A" "B") 
+(defun "os-cat" ^("A" "B") /* Cat two sources together*/
+	*(defun "" ^("match") 
 		*(cat (A match) (B match))
 	)
 )
 
-(defun "m-object" ^("source" "into") ^()
-	*(lambda "lm-object" ^("matches") ^("source" "into")
+(defun "m-object" ^("source" "into")
+	*(lambda "lm-object" ^("matches")
 		*(reverse (sort "match" 
 			(where "match" 
 				(cat 

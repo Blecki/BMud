@@ -16,30 +16,30 @@
 )"
 )
 
-(defun "add-detail" ^("to" "name" "text") ^()
+(defun "add-detail" ^("to" "name" "text")
 	*(add-verb to "look"
 		(m-complete (m-sequence ^((m-optional (m-keyword "at")) (m-keyword name))))
-		(lambda "ldetail" ^("matches" "actor") ^("text" "name")
+		(lambda "ldetail" ^("matches" "actor")
 			*(echo actor "[Looking at the (name)]\n(text)\n")
 		)
 		"Detail"
 	)
 )
 
-(defun "add-adjective-detail" ^("to" "name" "adjectives" "text") ^()
+(defun "add-adjective-detail" ^("to" "name" "adjectives" "text")
 	*(add-verb to "look"
 		(m-complete (m-sequence ^((m-optional (m-keyword "at")) (m-?-adjectives adjectives) (m-keyword name))))
-		(lambda "ldetail" ^("matches" "actor") ^("text" "name")
+		(lambda "ldetail" ^("matches" "actor")
 			*(echo actor "[Looking at the (name)]\n(text)\n")
 		)
 		"Detail"
 	)
 )
 
-(defun "add-keyword-detail" ^("to" "keywords" "name" "text") ^()
+(defun "add-keyword-detail" ^("to" "keywords" "name" "text")
 	*(add-verb to "look"
 		(m-complete (m-sequence ^((m-anyof keywords "keyword") (m-keyword name))))
-		(lambda "ldetail" ^("matches" "actor") ^("text" "name")
+		(lambda "ldetail" ^("matches" "actor")
 			*(echo actor "[Looking ((first matches).keyword) the (name)]\n(text)\n")
 		)
 		"Keyword detail"

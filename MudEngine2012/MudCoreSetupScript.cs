@@ -9,12 +9,9 @@ namespace MudEngine2012
     {
         private void SetupScript()
         {
-            scriptEngine.AddGlobalVariable("players", (s, t) =>
+            scriptEngine.AddGlobalVariable("clients", (s, t) =>
                 {
-                    return new MISP.ScriptList(ConnectedClients.Select((p) =>
-                        {
-                            return p.Value.player;
-                        }));
+                    return new MISP.ScriptList(ConnectedClients);
                 });
 
             scriptEngine.AddFunction("load", "name: Load an object from the database.",
@@ -77,6 +74,12 @@ namespace MudEngine2012
                },
                "string name");
 
+            scriptEngine.AddFunction("enumerate-database", "List all the database objects in a certain path.",
+                (context, thisObject, arguments) =>
+                {
+                    return database.EnumerateDirectory(arguments[0] as String);
+                }, "string path");
+
             scriptEngine.AddFunction("echo", "player<s> message: Send text to players.",
                 (context, thisObject, arguments) =>
                 {
@@ -103,8 +106,12 @@ namespace MudEngine2012
             scriptEngine.AddFunction("command", "player command: Send a command as if it came from player.",
                 (context, thisObject, arguments) =>
                 {
+                    Client client = null;
+                    foreach (var c in ConnectedClients)
+                        if (c.player == arguments[0]) client = c;
+                    if (client == null) client = new Client { player = arguments[0] as MISP.ScriptObject };
                     EnqueuAction(new Command(
-                        MISP.Engine.ArgumentType<MISP.ScriptObject>(arguments[0]),
+                        client,
                         MISP.ScriptObject.AsString(arguments[1])));
                     return null;
                 },
@@ -153,8 +160,10 @@ namespace MudEngine2012
             else
             {
                 var path = player.GetLocalProperty("@path") as String;
-                if (path != null && core.ConnectedClients.ContainsKey(path))
-                    client = core.ConnectedClients[path];
+                if (path != null)
+                    foreach (var c in core.ConnectedClients)
+                        if (c.player.GetLocalProperty("@path") == path)
+                            client = c;
             }
 
             if (client != null)

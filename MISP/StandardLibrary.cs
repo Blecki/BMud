@@ -9,13 +9,23 @@ namespace MISP
     {
         private void SetupStandardLibrary()
         {
+            types.Add("STRING", new TypeString());
+            types.Add("INTEGER", new TypeGeneric(typeof(int), true));
+            types.Add("LIST", new TypeList());
+            types.Add("OBJECT", new TypeGeneric(typeof(ScriptObject), false));
+            types.Add("CODE", ArgumentInfo.CodeType);
+            types.Add("FUNCTION", new TypeGeneric(typeof(Function), true));
+            types.Add("ANYTHING", Type.Anything);
+            types.Add("FLOAT", new TypeGeneric(typeof(float), true));
+
             specialVariables.Add("null", (c, s) => { return null; });
             specialVariables.Add("this", (c, s) => { return s; });
             specialVariables.Add("functions", (c, s) => { return new ScriptList(functions.Select((pair) => { return pair.Value; })); });
             specialVariables.Add("true", (c, s) => { return true; });
+            specialVariables.Add("@scope", (c, s) => { return c.Scope; });
 
             functions.Add("eval", new Function("eval", 
-                ArgumentInfo.ParseArguments("object this", "code code"),
+                ArgumentInfo.ParseArguments(this, "object this", "code code"),
                 "thisobject code : Execute code.", (context, thisObject, arguments) =>
                 {
                     var _this = ArgumentType<ScriptObject>(arguments[0]);
@@ -26,7 +36,7 @@ namespace MISP
                 }));
 
             functions.Add("lastarg", new Function("lastarg",
-                ArgumentInfo.ParseArguments("+children"),
+                ArgumentInfo.ParseArguments(this, "+children"),
                 "<n> : Returns the last argument.",
                 (context, thisObject, arguments) =>
                 {
@@ -35,13 +45,13 @@ namespace MISP
                 }));
 
             functions.Add("nop", new Function("nop",
-                ArgumentInfo.ParseArguments("?+value"),
+                ArgumentInfo.ParseArguments(this, "?+value"),
                 "<n> : Returns null.",
                 (context, thisObject, arguments) => { return null; }));
 
 
             functions.Add("coalesce", new Function("coalesce",
-                ArgumentInfo.ParseArguments("value", "default"),
+                ArgumentInfo.ParseArguments(this, "value", "default"),
                 "A B : B if A is null, A otherwise.",
                 (context, thisObject, arguments) =>
                 {

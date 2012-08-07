@@ -13,7 +13,12 @@ namespace MISP
         public int currentLine = 1;
         public String filename;
 
-        public char Next() { return source[start]; }
+        public char Next()
+        {
+            if (start >= source.Length)
+                throw new ScriptError("Parser error.", null);
+            return source[start]; 
+        }
 
         public void Advance(int distance = 1) 
         {

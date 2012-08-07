@@ -17,44 +17,6 @@ namespace MudEngine2012
         public virtual void Execute(MudCore core) { }
     }
 
-    internal class ClientCommand : PendingAction
-    {
-        internal Client client;
-        internal String command;
-        private Client _client;
-        private string _rawCommand;
-
-        public ClientCommand(Client client, String command)
-            : base(0.1f)
-        {
-            this.client = client;
-            this.command = command;
-        }
-
-        public override void Execute(MudCore core)
-        {
-            try
-            {
-                var tokens = command.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                var words = new MISP.ScriptList(tokens);
-                if (!core.InvokeSystem(
-                    client,
-                    "handle-client-command", 
-                    new MISP.ScriptList(new object[] { client, words }), 
-                    new MISP.Context()))
-                    core.SendMessage(client, "No command handler registered.\n", true);
-                if (client.logged_on) core.ConnectedClients.Add(client.player.GetProperty("@path").ToString(), client);
-            }
-            catch (Exception e)
-            {
-                core.PendingMessages.Clear();
-                core.SendMessage(client,
-                    e.Message + "\n" +
-                    e.StackTrace + "\n", true);
-            }
-        }
-    }
-
     internal class InvokeSystemAction : PendingAction
     {
         internal Client client;
@@ -88,7 +50,7 @@ namespace MudEngine2012
 
         public override void Execute(MudCore core)
         {
-            function.Invoke(new MISP.Context(), thisObject, arguments);    
+            function.Invoke(core.scriptEngine, new MISP.Context(), thisObject, arguments);    
         }
     }
 
@@ -99,7 +61,7 @@ namespace MudEngine2012
         Thread ActionExecutionThread;
         public Database database { get; private set; }
         public MISP.Engine scriptEngine { get; private set; }
-        internal Dictionary<String, Client> ConnectedClients = new Dictionary<String, Client>();
+        internal List<Client> ConnectedClients = new List<Client>();
 
         internal Mutex _databaseLock = new Mutex();
 
@@ -127,10 +89,7 @@ namespace MudEngine2012
 
         public void ClientCommand(Client _client, String _rawCommand)
         {
-            if (_client.logged_on)
-                EnqueuAction(new Command(_client.player, _rawCommand));
-            else
-                EnqueuAction(new ClientCommand(_client, _rawCommand));
+            EnqueuAction(new Command(_client, _rawCommand));
         }
 
         public void ClientDisconnected(Client client)
@@ -139,7 +98,7 @@ namespace MudEngine2012
             if (client.logged_on)
             {
                 _databaseLock.WaitOne();
-                ConnectedClients.Remove(client.player.GetProperty("@path").ToString());
+                ConnectedClients.Remove(client);
                 _databaseLock.ReleaseMutex();
             }
             EnqueuAction(new InvokeSystemAction(client, "handle-lost-client", 0.0f));
@@ -148,6 +107,7 @@ namespace MudEngine2012
         public void ClientConnected(Client client)
         {
             EnqueuAction(new InvokeSystemAction(client, "handle-new-client", 0.0f));
+            ConnectedClients.Add(client);
         }
 
         public bool Start(String basePath)
@@ -189,6 +149,7 @@ namespace MudEngine2012
 
         public void SendMessage(MISP.ScriptObject Object, String _message, bool Immediate)
         {
+            if (Object == null) return;
             _databaseLock.WaitOne();
             Client client = null;
 
@@ -196,40 +157,15 @@ namespace MudEngine2012
             else
             {
                 var path = Object.GetLocalProperty("@path") as String;
-                if (path != null && ConnectedClients.ContainsKey(path))
-                    client = ConnectedClients[path];
+                if (path != null)
+                    foreach (var c in ConnectedClients)
+                        if (c.player == Object) client = c;
             }
 
             if (client != null)
             {
-                //Process message formatting.
-                var realMessage = new StringBuilder();
-                int p = 0;
-                while (true)
-                {
-                    if (p >= _message.Length) break;
-                    if (_message[p] == '\\')
-                    {
-                        ++p;
-                        if (p >= _message.Length) break;
-                        if (_message[p] == 'n') realMessage.Append("\n\r");
-                        else if (_message[p] == 't') realMessage.Append("\t");
-                        else realMessage.Append(_message[p]);
-                    }
-                    else if (_message[p] == '^')
-                    {
-                        ++p;
-                        if (p >= _message.Length) break;
-                        realMessage.Append((new String(_message[p], 1)).ToUpperInvariant());
-                    }
-                    else
-                        realMessage.Append(_message[p]);
-
-                    ++p;
-                }
-
-                if (Immediate) client.Send(realMessage.ToString());
-                else PendingMessages.Add(new Message { _client = client, _message = realMessage.ToString() });
+                if (Immediate) client.Send(_message);
+                else PendingMessages.Add(new Message { _client = client, _message = _message });
             }
             _databaseLock.ReleaseMutex();
         }
@@ -237,7 +173,9 @@ namespace MudEngine2012
         public bool IsPlayerConnected(String path)
         {
             _databaseLock.WaitOne();
-            bool R = ConnectedClients.ContainsKey(path);
+            bool R = false;
+            foreach (var c in ConnectedClients)
+                if (c.player.GetLocalProperty("@path") == path) R = true;
             _databaseLock.ReleaseMutex();
             return R;
         }
@@ -283,7 +221,7 @@ namespace MudEngine2012
             {
                 try
                 {
-                    (prop as MISP.Function).Invoke(context, system, arguments);
+                    (prop as MISP.Function).Invoke(scriptEngine, context, system, arguments);
                     return true;
                 }
                 catch (MISP.ScriptError e)
@@ -312,7 +250,7 @@ namespace MudEngine2012
             {
                 try
                 {
-                    return (prop as MISP.Function).Invoke(context, system, arguments);
+                    return (prop as MISP.Function).Invoke(scriptEngine, context, system, arguments);
                 }
                 catch (Exception e)
                 {

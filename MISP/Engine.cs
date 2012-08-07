@@ -15,6 +15,7 @@ namespace MISP
         private Dictionary<String, Function> functions = new Dictionary<String, Function>();
         private Dictionary<String, Func<Context, ScriptObject, Object>> specialVariables
             = new Dictionary<string, Func<Context, ScriptObject, object>>();
+        internal Dictionary<String, Type> types = new Dictionary<string, Type>();
 
         public static T ArgumentType<T>(Object obj) where T : class
         {
@@ -30,7 +31,7 @@ namespace MISP
             params String[] arguments)
         {
             functions.Add(name, new Function(name,
-                ArgumentInfo.ParseArguments(arguments),
+                ArgumentInfo.ParseArguments(this, arguments),
                 comment,
                 func));
         }
@@ -107,13 +108,19 @@ namespace MISP
                         else
                             rhs = ScriptObject.AsString(Evaluate(context, node.childNodes[1], thisObject, false));
 
-                        if (lhs == null) result = null;// throw new ScriptError("Left hand side is null.");
+                        if (lhs == null) result = null;
                         else if (lhs is ScriptObject)
                         {
                             result = (lhs as ScriptObject).GetProperty(ScriptObject.AsString(rhs));
                             if (node.token == ":") 
                                 result = Evaluate(context, result, lhs as ScriptObject, true, false);
                         }
+                        //    else
+                        //{
+                        //    try {
+                        //        var member = lhs.GetType().GetMember(ScriptObject.AsString(rhs));
+                        //        if (member.Length == 0) result = null;
+                                
                         else
                             result = null;
                     }
@@ -140,7 +147,7 @@ namespace MISP
                                 {
                                     var func = arguments[0] as Function;
                                     var argumentInfo = func.GetArgumentInfo(arguments.Count - 1);
-                                    if (argumentInfo.type == MISP.ArgumentType.CODE)
+                                    if (argumentInfo.type == MISP.ArgumentInfo.CodeType)
                                     {
                                         if (child.prefix == Prefix.Evaluate || child.prefix == Prefix.Lookup)
                                         {
@@ -186,7 +193,7 @@ namespace MISP
                             {
                                 try
                                 {
-                                    result = (arguments[0] as Function).Invoke(context, thisObject,
+                                    result = (arguments[0] as Function).Invoke(this, context, thisObject,
                                         new ScriptList(arguments.GetRange(1, arguments.Count - 1)));
                                 }
                                 catch (ScriptError e)
@@ -206,8 +213,9 @@ namespace MISP
                         }
                     }
                     break;
-                case NodeType.Integer:
-                    result = Convert.ToInt32(node.token);
+                case NodeType.Number:
+                    if (node.token.Contains('.')) result = Convert.ToSingle(node.token);
+                    else result = Convert.ToInt32(node.token);
                     break;
                 case NodeType.DictionaryEntry:
                     {
@@ -234,7 +242,7 @@ namespace MISP
         {
             value = value.ToLowerInvariant();
             if (specialVariables.ContainsKey(value)) return specialVariables[value](context, thisObject);
-            if (context.HasVariable(value)) return context.GetVariable(value);
+            if (context.Scope.HasVariable(value)) return context.Scope.GetVariable(value);
             if (functions.ContainsKey(value)) return functions[value];
             if (value.StartsWith("@") && functions.ContainsKey(value.Substring(1))) return functions[value.Substring(1)];
             throw new ScriptError("Could not find value with name " + value + ".", context.currentNode);

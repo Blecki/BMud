@@ -11,7 +11,7 @@ namespace MudServer
     class WebsocketClient : MudEngine2012.Client
     {
         internal Alchemy.Classes.UserContext context;
-        public override void Send(string message)
+        public override void ImplementSend(string message)
         {
             if (context != null && context.DataFrame != null) context.Send(message);
         }

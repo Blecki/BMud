@@ -30,7 +30,7 @@
 		])
 	)
 	
-	(defun "" [matches actor] []
+	(defun "" [matches actor]
 		(if (notequal (first matches).fail null)
 			(echo actor (first matches):fail)
 			(nop

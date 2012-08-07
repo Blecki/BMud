@@ -49,6 +49,18 @@
     <None Include="database\static\basic-formatter.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="database\static\account.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="database\static\basic.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="database\static\verb.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="database\static\front-end.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="database\static\door.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -62,6 +74,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="database\static\lists.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="database\static\new-haven\start-room.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="database\static\player.mud">
@@ -94,6 +109,9 @@
     <None Include="database\static\get.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="database\static\players\god\account.mud">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="database\static\say.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -103,7 +121,7 @@
     <None Include="database\static\matchers.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\static\players\god.mud">
+    <None Include="database\static\players\god\god.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="database\static\room.mud">

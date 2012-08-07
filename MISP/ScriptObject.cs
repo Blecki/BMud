@@ -74,6 +74,52 @@ namespace MISP
         }
     }
 
+    public class ExtendableReflectionScriptObject : ScriptObject
+    {
+        private Dictionary<String, Object> properties = new Dictionary<string, object>();
+        override public object GetProperty(string name)
+        {
+            var field = this.GetType().GetField(name);
+            if (field != null) return field.GetValue(this);
+            if (properties.ContainsKey(name.ToLowerInvariant())) return properties[name.ToLowerInvariant()];
+            return null;
+        }
+
+        public override object GetLocalProperty(string name)
+        {
+            return GetProperty(name);
+        }
+
+        override public void DeleteProperty(String name)
+        {
+            if (properties.ContainsKey(name.ToLowerInvariant())) properties.Remove(name.ToLowerInvariant());
+            else if (this.GetType().GetField(name) != null)
+                throw new ScriptError("This property cannot be removed from objects of type " + this.GetType().Name + ".", null);
+        }
+
+        override public void SetProperty(string name, object value)
+        {
+            var field = this.GetType().GetField(name);
+            if (field != null)
+            {
+                if (field.FieldType == typeof(bool))
+                    field.SetValue(this, (value != null));
+                else
+                    field.SetValue(this, value);
+            }
+            else
+                properties.Upsert(name.ToLowerInvariant(), value);
+        }
+
+        override public ScriptList ListProperties()
+        {
+            var r = new ScriptList();
+            r.AddRange(this.GetType().GetFields().Select((info) => info.Name));
+            r.AddRange(properties.Select((p) => p.Key));
+            return r;
+        }
+    }
+
     public class GenericScriptObject : ScriptObject
     {
         public Dictionary<String, Object> properties = new Dictionary<string, object>();

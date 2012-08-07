@@ -1,7 +1,7 @@
 ﻿(depend "move-object")
 (add-global-alias "put" "drop")
 
-(prop "put" (lambda "lput" ^("actor" "object" "into" "list") ^()
+(prop "put" (lambda "lput" ^("actor" "object" "into" "list")
 	*(if (equal object.on-put null)
 		*(if into
 			*(nop
@@ -50,7 +50,7 @@
 	)
 	
 								
-	(lambda "ldrop" ^("matches" "actor") ^()
+	(lambda "ldrop" ^("matches" "actor")
 		(if (equal (first matches).all true)
 			(for "match" matches
 				(imple-drop actor match)
@@ -64,7 +64,7 @@
 	"DROP [ALL] X [\(IN/ON/UNDER\) [MY] Y]"
 )
 		
-(defun "imple-drop" ^("actor" "match") ^()
+(defun "imple-drop" ^("actor" "match")
 	*(nop
 		(if match.supporter
 			*(echo actor "[Putting (match.object:a) (match.preposition) (match.supporter:the).]\n")

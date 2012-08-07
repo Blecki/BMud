@@ -93,8 +93,16 @@ namespace MudEngine2012
             catch (Exception e)
             {
                 Console.WriteLine("Error loading object " + staticPath + path + ".");
+                if (e is MISP.ScriptError)
+                {
+                    var node = (e as MISP.ScriptError).generatedAt;
+                    if (node != null)
+                    {
+                        Console.Write(node.source.filename + " " + node.line + " ");
+                    }
+                }
                 Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
+                //Console.WriteLine(e.StackTrace);
                 loadDepth -= 1;
                 return null;
             }
@@ -108,6 +116,30 @@ namespace MudEngine2012
             var file = System.IO.File.OpenWrite(serializedPath + path + ".obj");
             file.Write(datagram.BufferAsArray, 0, datagram.LengthInBytes);
             file.Close();
+        }
+
+        public MISP.ScriptList EnumerateDirectory(String path)
+        {
+            var r = new List<String>();
+            foreach (var entry in namedObjects)
+                if (entry.Key.StartsWith(path)) r.Add(entry.Key);
+
+            try
+            {
+                foreach (var file in System.IO.Directory.EnumerateFiles(staticPath + path))
+                    r.Add(path + "/" + System.IO.Path.GetFileNameWithoutExtension(file));
+            }
+            catch (Exception e) { }
+
+                        try
+            {
+
+            foreach (var file in System.IO.Directory.EnumerateFiles(serializedPath + path))
+                r.Add(path + "/" + System.IO.Path.GetFileNameWithoutExtension(file));
+            }
+                        catch (Exception e) { }
+
+            return new MISP.ScriptList(r.Distinct());
         }
     }
 }

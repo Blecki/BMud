@@ -74,6 +74,29 @@ namespace MISPConsole
                 "string name");
 
             Console.Write("MISP Console 1.0\n");
+
+            Action<String> Execute = (command) =>
+            {
+                try
+                {
+                    mispContext.ResetTimer();
+                    var result = mispEngine.EvaluateString(mispContext, mispObject, command, "");
+                    PrettyPrint(result, 0);
+                    Console.Write("\n");
+                }
+                catch (Exception e)
+                {
+                    Console.Write(e.Message + "\n");
+                }
+            };
+
+            if (args.Length > 0)
+            {
+                var invoke = "(run-file \"" + args[0] + "\")";
+                Console.WriteLine(invoke);
+                Execute(invoke);
+            }
+
             while (true)
             {
                 Console.Write(":>");
@@ -86,17 +109,7 @@ namespace MISPConsole
                 }
                 else
                 {
-                    try
-                    {
-                        mispContext.ResetTimer();
-                        var result = mispEngine.EvaluateString(mispContext, mispObject, command, "");
-                        PrettyPrint(result, 0);
-                        Console.Write("\n");
-                    }
-                    catch (Exception e)
-                    {
-                        Console.Write(e.Message + "\n");
-                    }
+                    Execute(command);
                 }
             }
         }

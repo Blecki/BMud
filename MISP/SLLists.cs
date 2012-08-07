@@ -10,7 +10,7 @@ namespace MISP
         private void SetupListFunctions()
         {
             functions.Add("length", new Function("length",
-                ArgumentInfo.ParseArguments("list"),
+                ArgumentInfo.ParseArguments(this, "list"),
                 "list : Returns length of list.",
                 (context, thisObject, arguments) =>
                 {
@@ -19,7 +19,7 @@ namespace MISP
                 }));
 
             functions.Add("count", new Function("count",
-                ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
+                ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"),
                 "variable_name list code : Returns number of items in list for which code evaluated to true.",
                 (context, thisObject, arguments) =>
                 {
@@ -27,18 +27,18 @@ namespace MISP
                     var list = ArgumentType<ScriptList>(arguments[1]);
                     var func = ArgumentType<ParseNode>(arguments[2]);
 
-                    context.PushVariable(vName, null);
+                    context.Scope.PushVariable(vName, null);
                     var result = (int)list.Count((o) =>
                     {
-                        context.ChangeVariable(vName, o);
+                        context.Scope.ChangeVariable(vName, o);
                         return Evaluate(context, func, thisObject, true) != null;
                     });
-                    context.PopVariable(vName);
+                    context.Scope.PopVariable(vName);
                     return result;
                 }));
 
             functions.Add("where", new Function("where",
-    ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
+    ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"),
     "variable_name list code : Returns new list containing only the items in list for which code evaluated to true.",
     (context, thisObject, arguments) =>
     {
@@ -46,18 +46,18 @@ namespace MISP
         var list = ArgumentType<ScriptList>(arguments[1]);
         var func = ArgumentType<ParseNode>(arguments[2]);
 
-        context.PushVariable(vName, null);
+        context.Scope.PushVariable(vName, null);
         var result = new ScriptList(list.Where((o) =>
         {
-            context.ChangeVariable(vName, o);
+            context.Scope.ChangeVariable(vName, o);
             return Evaluate(context, func, thisObject, true) != null;
         }));
-        context.PopVariable(vName);
+        context.Scope.PopVariable(vName);
         return result;
     }));
 
             functions.Add("cat", new Function("cat",
-                ArgumentInfo.ParseArguments("?+items"),
+                ArgumentInfo.ParseArguments(this, "?+items"),
                 "<n> : Combine N lists into one",
                 (context, thisObject, arguments) =>
                 {
@@ -71,7 +71,7 @@ namespace MISP
                 }));
 
             functions.Add("last", new Function("last",
-                ArgumentInfo.ParseArguments("list list"),
+                ArgumentInfo.ParseArguments(this, "list list"),
                 "list : Returns last item in list.",
                 (context, thisObject, arguments) =>
                 {
@@ -81,7 +81,7 @@ namespace MISP
                 }));
 
             functions.Add("first", new Function("first",
-                ArgumentInfo.ParseArguments("list list"),
+                ArgumentInfo.ParseArguments(this, "list list"),
                 "list : Returns first item in list.",
                 (context, thisObject, arguments) =>
                 {
@@ -91,7 +91,7 @@ namespace MISP
                 }));
 
             functions.Add("index", new Function("index",
-                ArgumentInfo.ParseArguments("list list", "integer n"),
+                ArgumentInfo.ParseArguments(this, "list list", "integer n"),
                 "list n : Returns nth element in list.",
                 (context, thisObject, arguments) =>
                 {
@@ -103,7 +103,7 @@ namespace MISP
                 }));
 
             functions.Add("sub-list", new Function("sub-list",
-                ArgumentInfo.ParseArguments("list list", "integer start", "integer ?length"),
+                ArgumentInfo.ParseArguments(this, "list list", "integer start", "integer ?length"),
                 "list start length: Returns a elements in list between start and start+length.",
                 (context, thisObject, arguments) =>
                 {
@@ -122,7 +122,7 @@ namespace MISP
                 }));
 
             functions.Add("sort", new Function("sort",
-                ArgumentInfo.ParseArguments("string variable_name", "list in", "code code"),
+                ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"),
                 "vname list sort_func: Sorts elements according to sort func; sort func returns integer used to order items.",
                 (context, thisObject, arguments) =>
                 {
@@ -136,7 +136,7 @@ namespace MISP
                 }));
 
             functions.Add("reverse", new Function("reverse",
-                ArgumentInfo.ParseArguments("list list"),
+                ArgumentInfo.ParseArguments(this, "list list"),
                 "list: Reverse the list.",
                 (context, thisObject, arguments) =>
                 {
@@ -166,9 +166,9 @@ namespace MISP
 
             private int rank(Object o)
             {
-                context.PushVariable(vName, o);
+                context.Scope.PushVariable(vName, o);
                 var r = evaluater.Evaluate(context, func, thisObject, true) as int?;
-                context.PopVariable(vName);
+                context.Scope.PopVariable(vName);
                 if (r != null && r.HasValue) return r.Value;
                 return 0;
             }

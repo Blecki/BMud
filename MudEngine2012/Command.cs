@@ -28,16 +28,17 @@ namespace MudEngine2012
                 var matchContext = new MISP.Context();
 
                 var tokens = CommandTokenizer.FullyTokenizeCommand(_Command);
+                String @switch = "";
 
                 if (_Command.StartsWith("/"))
                 {
-                    var @switch = tokens.word;
-                    if (core.InvokeSystemR(Executor, "allow-switch", new MISP.ScriptList(Executor, @switch), matchContext)
-                        == null)
-                    {
-                        core.SendMessage(Executor, "You don't have permission to use that switch.\n", true);
-                        return;
-                    }
+                    @switch = tokens.word;
+                    //if (core.InvokeSystemR(Executor, "allow-switch", new MISP.ScriptList(Executor, @switch), matchContext)
+                    //    == null)
+                    //{
+                    //    core.SendMessage(Executor, "You don't have permission to use that switch.\n", true);
+                    //    return;
+                    //}
 
                     if (_Command.StartsWith("/eval "))
                     {
@@ -58,8 +59,6 @@ namespace MudEngine2012
                     tokens = tokens.next;
                 }
 
-                var firstWord = tokens.word;
-                tokens = tokens.next;
 
                 if (displayTrace)
                 {
@@ -67,8 +66,8 @@ namespace MudEngine2012
                     matchContext.traceDepth = 0;
                 }
 
-                core.InvokeSystem(Executor, "handle-command",
-                    new MISP.ScriptList(Executor, firstWord, _Command, tokens, displayMatches == true ? (object)true : null),
+                core.InvokeSystem(Executor, "handle-client-command",
+                    new MISP.ScriptList(Executor, _Command, tokens, @switch),
                     matchContext);
 
                 if (time)

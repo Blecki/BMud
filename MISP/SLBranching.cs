@@ -32,25 +32,27 @@ namespace MISP
                                 StringComparison.InvariantCultureIgnoreCase) != 0) return null;
                             //if (arguments[i] as String != arguments[i - 1] as String) return null;
                         }
-                        else if (firstType == typeof(int))
-                        {
-                            if ((arguments[i] as int?).Value != (arguments[i - 1] as int?).Value) return null;
-                        }
-                        else if (firstType == typeof(bool))
-                        {
-                            if ((arguments[i] as bool?).Value != (arguments[i - 1] as bool?).Value) return null;
-                        }
-                        else if (!Object.ReferenceEquals(arguments[i], arguments[i - 1])) return null;
+                        else
+                            if ((dynamic)arguments[i] != (dynamic)arguments[i - 1]) return null;
+                            //else if (firstType == typeof(int))
+                            //{
+                            //    if ((arguments[i] as int?).Value != (arguments[i - 1] as int?).Value) return null;
+                            //}
+                            //else if (firstType == typeof(bool))
+                            //{
+                            //    if ((arguments[i] as bool?).Value != (arguments[i - 1] as bool?).Value) return null;
+                            //}
+                            //else if (!Object.ReferenceEquals(arguments[i], arguments[i - 1])) return null;
                     }
                     return true;
                 };
 
             functions.Add("equal", new Function("equal",
-                ArgumentInfo.ParseArguments("+value"),
+                ArgumentInfo.ParseArguments(this, "+value"),
                 "<n> : True if all arguments equal, null otherwise.", equalBody));
 
             functions.Add("notequal", new Function("notequal",
-                ArgumentInfo.ParseArguments("+value"),
+                ArgumentInfo.ParseArguments(this, "+value"),
                 "<n> : Null if all arguments equal, true otherwise.",
                 (context, thisObject, arguments) =>
                 {
@@ -59,7 +61,7 @@ namespace MISP
                 }));
 
             functions.Add("and", new Function("and",
-                ArgumentInfo.ParseArguments("+value"),
+                ArgumentInfo.ParseArguments(this, "+value"),
                 "<n> : True if all arguments true.",
                 (context, thisObject, arguments) =>
                 {
@@ -69,55 +71,43 @@ namespace MISP
 
 
             functions.Add("atleast", new Function("atleast",
-                ArgumentInfo.ParseArguments("integer A", "integer B"),
+                ArgumentInfo.ParseArguments(this, "A", "B"),
                 "A B : true if A >= B, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    var first = arguments[0] as int?;
-                    var second = arguments[1] as int?;
-                    if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
-                    if (first.Value >= second.Value) return true;
+                    if ((dynamic)arguments[0] >= (dynamic)arguments[1]) return true;
                     return null;
                 }));
 
             functions.Add("greaterthan", new Function("greaterthan",
-                ArgumentInfo.ParseArguments("integer A", "integer B"),
+                ArgumentInfo.ParseArguments(this, "A", "B"),
                 "A B : true if A > B, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    var first = arguments[0] as int?;
-                    var second = arguments[1] as int?;
-                    if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
-                    if (first.Value > second.Value) return true;
+                    if ((dynamic)arguments[0] > (dynamic)arguments[1]) return true;
                     return null;
                 }));
 
             functions.Add("nomorethan", new Function("nomorethan",
-                ArgumentInfo.ParseArguments("integer A", "integer B"),
+                ArgumentInfo.ParseArguments(this, "A", "B"),
                 "A B : true if A <= B, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    var first = arguments[0] as int?;
-                    var second = arguments[1] as int?;
-                    if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
-                    if (first.Value <= second.Value) return true;
+                    if ((dynamic)arguments[0] <= (dynamic)arguments[1]) return true;
                     return null;
                 }));
 
             functions.Add("lessthan", new Function("lessthan",
-                ArgumentInfo.ParseArguments("integer A", "integer B"),
+                ArgumentInfo.ParseArguments(this, "A", "B"),
                 "A B : true if A < B, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
-                    var first = arguments[0] as int?;
-                    var second = arguments[1] as int?;
-                    if (first == null || second == null || !first.HasValue || !second.HasValue) return null;
-                    if (first.Value < second.Value) return true;
+                    if ((dynamic)arguments[0] < (dynamic)arguments[1]) return true;
                     return null;
                 }));
 
             functions.Add("not", new Function("not",
-                ArgumentInfo.ParseArguments("value"),
+                ArgumentInfo.ParseArguments(this, "value"),
                 "A : true if A is null, null otherwise.",
                 (context, thisObject, arguments) =>
                 {
@@ -126,7 +116,7 @@ namespace MISP
                 }));
 
             functions.Add("if", new Function("if",
-                ArgumentInfo.ParseArguments("condition", "code then", "code ?else"),
+                ArgumentInfo.ParseArguments(this, "condition", "code then", "code ?else"),
                 "condition then else : If condition evaluates to true, evaluate and return then. Otherwise, evaluate and return else.",
                 (context, thisObject, arguments) =>
                 {

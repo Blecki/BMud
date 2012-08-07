@@ -32,10 +32,28 @@ namespace MISP
             return result;
         }
 
-        public static ParseNode ParseInteger(ParseState state)
+        public static ParseNode ParseNumber(ParseState state)
         {
-            var result = new ParseNode(NodeType.Integer, state.start, state);
-            while (!state.AtEnd() && ("0123456789".Contains(state.Next()))) state.Advance();
+            var result = new ParseNode(NodeType.Number, state.start, state);
+            bool foundDot = false;
+
+            while (!state.AtEnd())
+            {
+                if (state.Next() >= '0' && state.Next() <= '9')
+                {
+                    state.Advance();
+                    continue;
+                }
+                else if (state.Next() == '.')
+                {
+                    if (foundDot) break;
+                    foundDot = true;
+                    state.Advance();
+                    continue;
+                }
+                break;
+            }
+            
             result.end = state.start;
             result.token = state.source.Substring(result.start, result.end - result.start);
             return result;
@@ -127,7 +145,7 @@ namespace MISP
             }
             else if ("0123456789".Contains(state.Next()))
             {
-                result = ParseInteger(state);
+                result = ParseNumber(state);
             }
             //else if (!state.AtEnd() && " \t\r\n".Contains(state.Next())) //prefix followed by space??
             //{

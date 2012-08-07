@@ -14,7 +14,7 @@ namespace MISP
         private void SetupEncryptionFunctions()
         {
             functions.Add("hash", new Function("hash",
-                ArgumentInfo.ParseArguments("string value", "string salt"),
+                ArgumentInfo.ParseArguments(this, "string value", "string salt"),
                 "string: Hashes the string.",
                 (context, thisObject, arguments) =>
                 {

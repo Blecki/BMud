@@ -17,7 +17,7 @@
 		(m-definer-held-by "actor")
 	])
 	
-	(lambda "ldivine" [matches actor] [] 
+	(lambda "ldivine" [matches actor]
 		(if (first matches).fail 
 			(echo actor (first matches):fail)
 			(echo actor "Diving the location of ((first matches).text)...\n(asstring (load (first matches).text).location 2)\n")

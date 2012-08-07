@@ -1,6 +1,6 @@
 ﻿(depend "move-object")
 
-(prop "take" (defun "" ^("actor" "object" "message_suffix") ^()
+(prop "take" (defun "" ^("actor" "object" "message_suffix")
 	*(if (equal object.on-get null) /* Invoke default get behavior. */
 		*(if (object.can-get actor)
 			*(nop
@@ -57,7 +57,7 @@
 			)
 		)
 	)
-	(defun "" ^("matches" "actor") ^()
+	(defun "" ^("matches" "actor")
 		(if (equal (first matches).all true)
 			(for "match" matches
 				(imple-get actor match)
@@ -71,7 +71,7 @@
 	"GET [ALL] X \(\(FROM [IN/ON/UNDER]\) | IN/ON/UNDER\) [MY] Y"
 )
 
-(defun "imple-get" ^("actor" "match") ^()
+(defun "imple-get" ^("actor" "match")
 	*(if (notequal match.object.location.object actor.location.object)
 		*(nop
 			(echo actor "[Taking (match.object:a) from (match.object.location.list) (match.object.location.object:the).]\n")

@@ -10,17 +10,17 @@ namespace MISP
         private void SetupVariableFunctions()
         {
             functions.Add("var", new Function("var",
-                ArgumentInfo.ParseArguments("string name", "value"),
+                ArgumentInfo.ParseArguments(this, "string name", "value"),
                 "name value : Assign value to a variable named [name].", (context, thisObject, arguments) =>
                 {
                     if (specialVariables.ContainsKey(ScriptObject.AsString(arguments[0])))
                         throw new ScriptError("Can't assign to protected variable name.", context.currentNode);
-                    context.ChangeVariable(ScriptObject.AsString(arguments[0]), arguments[1]);
+                    context.Scope.ChangeVariable(ScriptObject.AsString(arguments[0]), arguments[1]);
                     return arguments[1];
                 }));
 
             functions.Add("let", new Function("let",
-                ArgumentInfo.ParseArguments("list pairs", "code code"),
+                ArgumentInfo.ParseArguments(this, "list pairs", "code code"),
                 "^( ^(\"name\" value ?cleanup-code) ^(...) ) code : Create temporary variables, run code. Optional clean-up code for each variable.",
                 (context, thisObject, arguments) =>
                 {
@@ -33,7 +33,7 @@ namespace MISP
                         if (def.Count != 2 && def.Count != 3) 
                             throw new ScriptError("Variable defs to let should have only 2 or 3 items.", context.currentNode);
                         var name = ArgumentType<String>(def[0]);
-                        context.PushVariable(name, def[1]);
+                        context.Scope.PushVariable(name, def[1]);
                     }
 
                     var result = Evaluate(context, code, thisObject, true);
@@ -43,7 +43,7 @@ namespace MISP
                         var def = ArgumentType<ScriptList>(item);
                         if (def.Count == 3)
                             Evaluate(context, def[2], thisObject, true, true);
-                        context.PopVariable(ArgumentType<String>(def[0]));
+                        context.Scope.PopVariable(ArgumentType<String>(def[0]));
                     }
 
                     return result;

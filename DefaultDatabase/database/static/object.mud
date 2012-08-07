@@ -1,4 +1,4 @@
-﻿(defun "prop" ^("name" "value") ^() (set this name value))
+﻿(defun "prop" ^("name" "value") (set this name value))
 
 (prop "short" *"(this.@path)")
 (prop "nouns" ^("object"))
@@ -8,14 +8,14 @@
 
 (prop "can-get" true)
 
-(defun "add-object" ^("object to" "string list" "object object") ^() 
+(defun "add-object" ^("object to" "string list" "object object") 
 	(nop
 		(prop-add to list object)
 		(set object "location" (record ^("object" to) ^("list" list)))
 	)
 )
 
-(defun "make-object" ^("code code") ^()
+(defun "make-object" ^("code code")
 	(let ^(^("object" (record ^("@base" (load "object")))))
 		(lastarg
 			(eval object :code)

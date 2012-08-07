@@ -12,7 +12,7 @@ namespace MISP
         Token,
         MemberAccess,
         Node,
-        Integer,
+        Number,
         DictionaryEntry,
         Count
     }

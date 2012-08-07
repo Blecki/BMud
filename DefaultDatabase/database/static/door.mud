@@ -1,7 +1,7 @@
 ﻿(depend "move-object")
 
-(defun "make-door-link-lambda" ^("door" "name" "function ?on-follow") ^()
-	*(lambda "lgo" ^("matches" "actor") ^("door" "name" "on-follow")
+(defun "make-door-link-lambda" ^("door" "name" "function ?on-follow")
+	*(lambda "lgo" ^("matches" "actor")
 		*(let ^(^("previous" actor.location.object))
 			*(nop
 				(echo (load door.to).contents "^(actor:short) arrived.\n")
@@ -15,7 +15,7 @@
 	)
 )
 
-(defun "create-door" ^("from" "to" "names" "function ?on-follow") ^()
+(defun "create-door" ^("from" "to" "names" "function ?on-follow")
 	(let ^(^("door" (record
 		^("short" "door")
 		^("nouns" ^("door"))
@@ -35,7 +35,7 @@
 					"Move (name)."
 				)
 				(add-verb from "look" (m-complete (m-keyword name))
-					(lambda "llook-direction" ^("matches" "actor") ^("to" "names")
+					(lambda "llook-direction" ^("matches" "actor")
 						*(echo actor "To the (first names) you see...\n\n((load to):description)")
 					)
 					"Look (name)."

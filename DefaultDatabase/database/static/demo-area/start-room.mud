@@ -8,10 +8,10 @@
 (add-detail this "window" "The window is tall and narrow with an arched top. It has small panes separated by thin leading. You could look through it.")
 (add-keyword-detail this ^("out" "through") "window" "You can see some mountains in the distance, poking up through the fog, but not much of anything else except fog.")
 
-(open-link this "demo-area/balcony" ^("west" "w") (lambda "" [actor] [] (echo actor "On-follow worked!\n")))
+(open-link this "demo-area/balcony" ^("west" "w") (lambda "" [actor] (echo actor "On-follow worked!\n")))
 (create-door this "demo-area/small-chamber" ^("east" "e"))
 
-(defun "random-item" ^("list") ^()
+(defun "random-item" ^("list")
 	*(index list (random 0 (length list)))
 )
 
@@ -43,7 +43,7 @@
 		))
 	)
 	*(add-verb this "get" (m-keyword "book")
-		(lambda "lget-book" ^("matches" "actor") ^("titles-a" "titles-b" "volumes" "covers")
+		(lambda "lget-book" ^("matches" "actor")
 			*(let ^(^("cover" (random-item covers)))
 				*((load "get").take actor
 					(record 
@@ -74,7 +74,7 @@
 	(prop "nouns" ^("desk"))
 	(prop "adjectives" ^("ancient" "wooden" "wood"))
 	(prop "description" *"This desk is made of rough wooden planks crudely joined.\n(on-list this)\n")
-	(prop "on-get" (lambda "" ^("actor") ^() *(echo actor "You couldn't possible carry that.\n")))
+	(prop "on-get" (lambda "" ^("actor") *(echo actor "You couldn't possible carry that.\n")))
 	(prop "allow-on" true)
 	
 	(add-object this "on" (make-object *(nop

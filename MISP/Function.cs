@@ -5,33 +5,92 @@ using System.Text;
 
 namespace MISP
 {
-    public enum ArgumentType
+    public class Type
     {
-        STRING,
-        INTEGER,
-        LIST,
-        OBJECT,
-        CODE,
-        FUNCTION,
-        ANYTHING,
+        public virtual Object ProcessArgument(Object obj) { return obj; }
+        public virtual Object CreateDefault() { return null; }
+        public static Type Anything = new Type();
     }
 
+    public class TypeGeneric : Type
+    {
+        private System.Type type;
+        private bool allowNull;
+        public TypeGeneric(System.Type type, bool allowNull) { this.type = type; this.allowNull = allowNull; }
+        public override object ProcessArgument(object obj)
+        {
+            if (allowNull && obj == null) return obj;
+            try
+            {
+                Function.CheckArgumentType(obj, type);
+            }
+            catch (ScriptError e)
+            {
+                try
+                {
+                    return Convert.ChangeType(obj, type);
+                }
+                catch (Exception exp)
+                {
+                    throw e;
+                }
+            }
+            return obj;
+        }
+        public override object CreateDefault()
+        {
+            return null;
+        }
+    }
+
+    public class TypeString : Type
+    {
+        public override object ProcessArgument(object obj)
+        {
+            if (obj == null) return "";
+            else return ScriptObject.AsString(obj);
+        }
+
+        public override object CreateDefault()
+        {
+            return "";
+        }
+    }
+
+    public class TypeList : Type
+    {
+        public override object ProcessArgument(object obj)
+        {
+            if (obj == null) return new ScriptList();
+            else if (!(obj is ScriptList)) return new ScriptList(obj);
+            return obj;
+        }
+
+        public override object CreateDefault()
+        {
+            return new ScriptList();
+        }
+    }
+    
     public class ArgumentInfo
     {
         public String name;
-        public ArgumentType type;
+        //public ArgumentType type;
         public bool optional;
         public bool repeat;
         public bool notNull;
+        public Type type;
 
-        public static List<ArgumentInfo> ParseArguments(params String[] args)
+        public static TypeGeneric CodeType = new TypeGeneric(typeof(MISP.ParseNode), false);
+
+        public static List<ArgumentInfo> ParseArguments(Engine engine, params String[] args)
         {
             var list = new ScriptList();
             foreach (var arg in args) list.Add(arg);
-            return ParseArguments(list);
+            return ParseArguments(engine, list);
         }
 
-        public static List<ArgumentInfo> ParseArguments(ScriptList args)
+        public static List<ArgumentInfo> ParseArguments(Engine engine, ScriptList args)
         {
             var r = new List<ArgumentInfo>();
             foreach (var arg in args)
@@ -55,9 +114,14 @@ namespace MISP
                 var argInfo = new ArgumentInfo();
 
                 if (!String.IsNullOrEmpty(typeDecl))
-                    argInfo.type = (Enum.Parse(typeof(ArgumentType), typeDecl.ToUpperInvariant()) as ArgumentType?).Value;
+                {
+                    if (engine.types.ContainsKey(typeDecl.ToUpperInvariant()))
+                        argInfo.type = engine.types[typeDecl.ToUpperInvariant()];
+                    else
+                        throw new ScriptError("Unknown type " + typeDecl, null);
+                }
                 else
-                    argInfo.type = ArgumentType.ANYTHING;
+                    argInfo.type = Type.Anything;
 
                 while (semanticDecl.StartsWith("?") || semanticDecl.StartsWith("+"))
                 {
@@ -81,56 +145,50 @@ namespace MISP
         private Func<Context, ScriptObject, ScriptList, Object> implementation = null;
         public String name;
         public String shortHelp;
-        public bool isLambda = false;
         public ScriptList closedValues = null;
         public List<ArgumentInfo> argumentInfo = null;
+        public Scope declarationScope;
+        public bool isSystem = true;
+        public Object body = null;
 
-        public Function(String name, List<ArgumentInfo> arguments, String shortHelp, Func<Context, ScriptObject, ScriptList, Object> func)
+        public Function(
+            String name,
+            List<ArgumentInfo> arguments, 
+            String shortHelp, 
+            Func<Context, ScriptObject, ScriptList, Object> func)
         {
+            body = null;
+            isSystem = true;
             implementation = func;
             this.name = name;
             this.shortHelp = shortHelp;
             this.argumentInfo = arguments;
+            this.declarationScope = new Scope();
         }
 
-        private static T CheckArgumentType<T>(Object obj, Context context) where T : class
+        public Function(
+            String name,
+            List<ArgumentInfo> arguments,
+            String shortHelp,
+            Object body,
+            Scope declarationScope)
+        {
+            implementation = null;
+            isSystem = false;
+            this.body = body;
+            this.name = name;
+            this.shortHelp = shortHelp;
+            this.argumentInfo = arguments;
+            this.declarationScope = declarationScope ?? new Scope();
+        }
+
+        public static void CheckArgumentType(Object obj, System.Type type)
         {
             if (obj == null)
-                throw new ScriptError("Expecting argument of type " + typeof(T) + ", got null. ", context.currentNode);
-            var r = obj as T;
-            if (r == null)
-                throw new ScriptError("Function argument is the wrong type. Expected type "
-                    + typeof(T) + ", got " + obj.GetType() + ". ", context.currentNode);
-            return r;
-        }
-
-        private static void checkArgumentType(ArgumentType type, Object argument, Context context)
-        {
-            switch (type)
-            {
-                case ArgumentType.STRING:
-                    CheckArgumentType<String>(argument, context);
-                    break;
-                case ArgumentType.OBJECT:
-                    CheckArgumentType<ScriptObject>(argument, context);
-                    break;
-                case ArgumentType.LIST:
-                    CheckArgumentType<ScriptList>(argument, context);
-                    break;
-                case ArgumentType.INTEGER:
-                    if (argument == null) return;
-                    if (!(argument is int)) throw new ScriptError("Argument is wrong type.", context.currentNode);
-                    break;
-                case ArgumentType.CODE:
-                    CheckArgumentType<ParseNode>(argument, context);
-                    break;
-                case ArgumentType.FUNCTION:
-                    if (argument == null) return;
-                    CheckArgumentType<Function>(argument, context);
-                    break;
-                default:
-                    break;
-            }
+                throw new ScriptError("Expecting argument of type " + type + ", got null. ", null);
+            if (obj.GetType() == type || obj.GetType().IsSubclassOf(type)) return;
+            throw new ScriptError("Function argument is the wrong type. Expected type "
+                    + type + ", got " + obj.GetType() + ". ", null);
         }
 
         public ArgumentInfo GetArgumentInfo(int index)
@@ -146,7 +204,7 @@ namespace MISP
                 return argumentInfo[index];
         }
 
-        public Object Invoke(Context context, ScriptObject thisObject, ScriptList arguments)
+        public Object Invoke(Engine engine, Context context, ScriptObject thisObject, ScriptList arguments)
         {
             if (context.trace != null)
             {
@@ -170,7 +228,7 @@ namespace MISP
                     var list = new ScriptList();
                     while (argumentIndex < arguments.Count) //Handy side effect: If no argument is passed for an optional repeat
                     {                                       //argument, it will get an empty list.
-                        list.Add(ProcessArgument(info, arguments[argumentIndex], context));
+                        list.Add(info.type.ProcessArgument(arguments[argumentIndex]));
                         ++argumentIndex;
                     }
                     newArguments.Add(list);
@@ -178,9 +236,9 @@ namespace MISP
                 else
                 {
                     if (argumentIndex < arguments.Count)
-                        newArguments.Add(ProcessArgument(info, arguments[argumentIndex], context));
+                        newArguments.Add(info.type.ProcessArgument(arguments[argumentIndex]));
                     else if (info.optional)
-                        newArguments.Add(createDefaultArgument(info.type));
+                        newArguments.Add(info.type.CreateDefault());
                     else throw new ScriptError("Not enough arguments to " + name, context.currentNode);
                     ++argumentIndex;
                 }
@@ -188,7 +246,26 @@ namespace MISP
             if (argumentIndex < arguments.Count)
                 throw new ScriptError("Too many arguments to " + name, context.currentNode);
 
-            var r = implementation(context, thisObject, newArguments);
+            Object r = null;
+
+            if (isSystem)
+            {
+                r = implementation(context, thisObject, newArguments);
+            }
+            else
+            {
+                context.PushScope(declarationScope);
+                
+                for (int i = 0; i < argumentInfo.Count; ++i)
+                    context.Scope.PushVariable(argumentInfo[i].name, newArguments[i]);
+
+                r = engine.Evaluate(context, body, thisObject, true);
+
+                for (int i = 0; i < argumentInfo.Count; ++i)
+                    context.Scope.PopVariable(argumentInfo[i].name);
+
+                context.PopScope();
+            }
 
             if (context.trace != null)
             {
@@ -199,39 +276,7 @@ namespace MISP
             return r;
         }
         
-        private Object ProcessArgument(ArgumentInfo info, Object argument, Context context)
-        {
-            if (argument == null) return createDefaultArgument(info.type);
-            if (info.type == ArgumentType.LIST && !(argument is ScriptList))
-                return new ScriptList(argument);
-            if (info.type == ArgumentType.STRING && !(argument is String))
-                return ScriptObject.AsString(argument);
-            else checkArgumentType(info.type, argument, context);
-            return argument;
-        }
         
-        private object createDefaultArgument(ArgumentType argumentType)
-        {
-            switch (argumentType)
-            {
-                case ArgumentType.STRING:
-                    return "";
-                case ArgumentType.OBJECT:
-                    return null;
-                case ArgumentType.LIST:
-                    return new ScriptList();
-                case ArgumentType.INTEGER:
-                    return null;
-                case ArgumentType.CODE:
-                    return null;
-                case ArgumentType.FUNCTION:
-                    return null;
-                case ArgumentType.ANYTHING:
-                    return null;
-                default:
-                    return null;
-            }
-        }
 
     }
 }

@@ -10,7 +10,7 @@ namespace MISP
         private void SetupStringFunctions()
         {
             functions.Add("substr", new Function("substr",
-                ArgumentInfo.ParseArguments("value", "integer start", "integer ?count"),
+                ArgumentInfo.ParseArguments(this, "value", "integer start", "integer ?count"),
                 "string start ?count: returns sub-string of string starting at start.",
                 (context, thisObject, arguments) =>
                 {
@@ -28,7 +28,7 @@ namespace MISP
                 }));
 
             functions.Add("strcat", new Function("strcat",
-                ArgumentInfo.ParseArguments("?+item"), "<n> : Concatenate many strings into one.",
+                ArgumentInfo.ParseArguments(this, "?+item"), "<n> : Concatenate many strings into one.",
                 (context, thisObject, arguments) =>
                 {
                     var r = "";
@@ -38,7 +38,7 @@ namespace MISP
                 }));
 
             functions.Add("strrepeat", new Function("strrepeat",
-                ArgumentInfo.ParseArguments("integer n", "string part"),
+                ArgumentInfo.ParseArguments(this, "integer n", "string part"),
                 "n part: Create a string consisting of part n times.",
                     (context, thisObject, arguments) =>
                     {
@@ -52,7 +52,7 @@ namespace MISP
             ));
 
             functions.Add("asstring", new Function("asstring",
-                ArgumentInfo.ParseArguments("value", "integer B"),
+                ArgumentInfo.ParseArguments(this, "value", "integer B"),
                 "A B : convert A to a string to depth B.",
                 (context, thisObject, arguments) =>
                 {
@@ -60,6 +60,11 @@ namespace MISP
                     if (depth == null || !depth.HasValue) return ScriptObject.AsString(arguments[0]);
                     else return ScriptObject.AsString(arguments[0], depth.Value);
                 }));
+
+            AddFunction("path-leaf", "Get the leaf on a path", (context, thisObject, arguments) =>
+                {
+                    return System.IO.Path.GetFileName(arguments[0] as String);
+                }, "string path");
         }
     }
 }
