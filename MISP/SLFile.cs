@@ -10,7 +10,7 @@ namespace MISP
         private void SetupFileFunctions()
         {
             AddFunction("open-file", "Open a file.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var mode = ScriptObject.AsString(arguments[1]);
                     if (mode.ToUpperInvariant() == "READ")
@@ -25,7 +25,7 @@ namespace MISP
                 "string file-name", "string mode");
 
             AddFunction("close-file", "Close a file.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     if (arguments[0] is System.IO.StreamReader) (arguments[0] as System.IO.StreamReader).Close();
                     else if (arguments[0] is System.IO.StreamWriter) (arguments[0] as System.IO.StreamWriter).Close();
@@ -35,7 +35,7 @@ namespace MISP
                 "file");
 
             AddFunction("file-read-line", "Read a line from a file.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var file = arguments[0] as System.IO.StreamReader;
                     if (file == null) throw new ScriptError("Argument is not a read file.", null);
@@ -44,7 +44,7 @@ namespace MISP
                 "file");
 
             AddFunction("file-read-all", "Read all of a file.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var file = arguments[0] as System.IO.StreamReader;
                     if (file == null) throw new ScriptError("Argument is not a read file.", null);
@@ -53,7 +53,7 @@ namespace MISP
                 "file");
 
             AddFunction("file-write", "Write to a file.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var file = arguments[0] as System.IO.StreamWriter;
                     if (file == null) throw new ScriptError("Argument is not a write file.", null);
@@ -63,7 +63,7 @@ namespace MISP
                 "file", "string text");
 
             AddFunction("file-more", "Is there more to read in this file?",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var file = arguments[0] as System.IO.StreamReader;
                     if (file == null) throw new ScriptError("Argument is not a read file.", null);

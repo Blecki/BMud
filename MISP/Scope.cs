@@ -7,6 +7,7 @@ namespace MISP
 {
     public class Scope : ScriptObject
     {
+        internal Scope parentScope = null;
         internal Dictionary<String, ScriptList> variables = new Dictionary<String, ScriptList>();
 
         public override Object GetProperty(String name) { return GetVariable(name);  }
@@ -45,6 +46,7 @@ namespace MISP
         public Object GetVariable(String name)
         {
             name = name.ToLowerInvariant();
+            if (name == "@parent") return parentScope;
             if (!HasVariable(name)) return null;
             var list = variables[name];
             return list[list.Count - 1];

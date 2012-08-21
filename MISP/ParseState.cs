@@ -26,7 +26,7 @@ namespace MISP
             {
                 start += 1;
                 distance -= 1;
-                if (start > end) throw new ParseError("Unexpected end of script");
+                if (start > end) throw new ParseError("Unexpected end of script", currentLine);
                 if (!AtEnd() && Next() == '\n') currentLine += 1;
             }
         }

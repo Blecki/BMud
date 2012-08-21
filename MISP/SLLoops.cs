@@ -12,7 +12,7 @@ namespace MISP
             functions.Add("map", new Function("map",
                 ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"), 
                 "variable_name list code : Transform one list into another",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
@@ -22,7 +22,7 @@ namespace MISP
                     foreach (var item in list)
                     {
                         context.Scope.ChangeVariable(vName, item);
-                        result.Add(Evaluate(context, code, thisObject, true));
+                        result.Add(Evaluate(context, code, true));
                     }
                     context.Scope.PopVariable(vName);
                     return result;
@@ -31,7 +31,7 @@ namespace MISP
             functions.Add("mapi", new Function("mapi",
                 ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"),
                 "variable_name list code : Like map, except variable_name will hold the index not the value.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
@@ -41,7 +41,7 @@ namespace MISP
                     for (int i = 0; i < list.Count; ++i)
                     {
                         context.Scope.ChangeVariable(vName, i);
-                        result.Add(Evaluate(context, code, thisObject, true));
+                        result.Add(Evaluate(context, code, true));
                     }
                     context.Scope.PopVariable(vName);
                     return result;
@@ -50,7 +50,7 @@ namespace MISP
             functions.Add("mapex", new Function("mapex",
                 ArgumentInfo.ParseArguments(this, "string variable_name", "start", "code code", "code next"), 
                 "variable_name start code next : Like map, but the next element is the result of 'next'. Stops when next = null.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var vName = ArgumentType<String>(arguments[0]);
                     var code = ArgumentType<ParseNode>(arguments[2]);
@@ -62,8 +62,8 @@ namespace MISP
                     while (item != null)
                     {
                         context.Scope.ChangeVariable(vName, item);
-                        result.Add(Evaluate(context, code, thisObject, true));
-                        item = Evaluate(context, next, thisObject, true);
+                        result.Add(Evaluate(context, code, true));
+                        item = Evaluate(context, next, true);
                     }
 
                     context.Scope.PopVariable(vName);
@@ -73,7 +73,7 @@ namespace MISP
             functions.Add("for", new Function("for",
                 ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"), 
                 "variable_name list code : Execute code for each item in list. Returns result of last run of code.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
@@ -83,7 +83,7 @@ namespace MISP
                     foreach (var item in list)
                     {
                         context.Scope.ChangeVariable(vName, item);
-                        result = Evaluate(context, func, thisObject, true);
+                        result = Evaluate(context, func, true);
                     }
 
                     context.Scope.PopVariable(vName);
@@ -94,27 +94,27 @@ namespace MISP
             functions.Add("while", new Function("while",
                 ArgumentInfo.ParseArguments(this, "code condition", "code code"),
                 "condition code : Repeat code while condition evaluates to true.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var cond = ArgumentType<ParseNode>(arguments[0]);
                     var code = ArgumentType<ParseNode>(arguments[1]);
 
-                    while (Evaluate(context, cond, thisObject, true) != null)
-                        Evaluate(context, code, thisObject, true);
+                    while (Evaluate(context, cond, true) != null)
+                        Evaluate(context, code, true);
                     return null;
                 }));
 
             functions.Add("repeat", new Function("repeat",
                 ArgumentInfo.ParseArguments(this, "integer count", "code code"),
                 "count code: Repeat code count times. If you're looking for a indexed for loop, try mapex.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var count = arguments[0] as int?;
                     if (count == null || !count.HasValue) return null;
                     var _count = count.Value;
                     while (_count > 0)
                     {
-                        Evaluate(context, arguments[1] as ParseNode, thisObject, true, true);
+                        Evaluate(context, arguments[1] as ParseNode, true, true);
                         _count -= 1;
                     }
                     return null;

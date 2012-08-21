@@ -26,7 +26,7 @@
 (defun "basic-formatter-list-links" ^("list links")
 	(strcat 
 		$(map "link" links 
-			"(link) "
+			"(link.name) (if link.door "[through (link.door:a)] " "")"
 		)
 	)
 )

@@ -1,4 +1,16 @@
-﻿(add-global-verb "look"
+﻿
+(prop "choose-best-short" (lambda "" [actor object] 
+	(if (equal actor object) "yourself"
+		(if (equal actor object.location.object) "your (object:short)"
+			(if (notequal object.location.object actor.location.object) object:the
+				object:a
+			)
+		)
+	)
+))
+
+
+(add-global-verb "look"
 
 	(m-filter-failures
 		(m-sequence [
@@ -30,7 +42,7 @@
 		])
 	)
 	
-	(defun "" [matches actor]
+	(lambda "" [matches actor]
 		(if (notequal (first matches).fail null)
 			(echo actor (first matches):fail)
 			(nop
@@ -38,16 +50,19 @@
 				(let ^([match (first matches)])
 					(if (match.look-preposition)
 						(nop
-							(echo actor "[Looking (match.preposition) (match.object:the).]\n")
-							(echo actor "^(match.preposition) (match.object:the) (actor.formatter.list-objects-preposition match.object.(match.preposition) true true match.object)\n")
+							(echo actor "[Looking (match.preposition) ((load "look").choose-best-short actor match.object).]\n")
+							(echo actor "^(match.preposition)  ((load "look").choose-best-short actor match.object) (actor.formatter.list-objects-preposition match.object.(match.preposition) true true match.object)\n")
 						)
 						(if (and (notequal match.object actor.location.object) (notequal match.object.location.object actor.location.object))
 							(nop
-								(echo actor "[Looking at (match.object:a) from (match.object.location.list) (match.object.location.object:the).]\n")
+								(if (equal match.object.location.object actor)
+									(echo actor "[Looking at ((load "look").choose-best-short actor match.object).]\n")
+									(echo actor "[Looking at (match.object:a) from (match.object.location.list) ((load "look").choose-best-short actor match.object).]\n")
+								)
 								(echo actor "(match.object:description)\n")
 							)
 							(nop
-								(echo actor "[Looking at (match.object:a).]\n")
+								(echo actor "[Looking at ((load "look").choose-best-short actor match.object).]\n")
 								(echo actor "(match.object:description)\n")
 							)
 						)
@@ -59,3 +74,5 @@
 	
 	"Look at things in your environment"
 )
+
+(add-global-alias "read" "look")

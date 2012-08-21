@@ -16,7 +16,7 @@ namespace MISP
             functions.Add("hash", new Function("hash",
                 ArgumentInfo.ParseArguments(this, "string value", "string salt"),
                 "string: Hashes the string.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var encodedString = byteEncoding.GetBytes(ScriptObject.AsString(arguments[0])
                         + ScriptObject.AsString(arguments[1]));

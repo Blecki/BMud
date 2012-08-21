@@ -1,4 +1,6 @@
-﻿(defun "prop" ^("name" "value") (set this name value))
+﻿(defun "prop" ^("name" "value") (set @scope.@parent.this name value)) 
+	/* It's closing over this - therefore the prop is always added to 'object' */
+	/* Perhaps '@scope.@parent.this' ? */
 
 (prop "short" *"(this.@path)")
 (prop "nouns" ^("object"))
@@ -7,6 +9,7 @@
 (prop "description" "You see nothing special.")
 
 (prop "can-get" true)
+(prop "can-open" null)
 
 (defun "add-object" ^("object to" "string list" "object object") 
 	(nop
@@ -16,10 +19,10 @@
 )
 
 (defun "make-object" ^("code code")
-	(let ^(^("object" (record ^("@base" (load "object")))))
+	(let ^(^("this" (record ^("@base" (load "object")))))
 		(lastarg
-			(eval object :code)
-			object
+			(eval :code)
+			this
 		)
 	)
 )

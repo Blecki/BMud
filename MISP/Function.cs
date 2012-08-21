@@ -142,7 +142,7 @@ namespace MISP
 
     public class Function : ReflectionScriptObject
     {
-        private Func<Context, ScriptObject, ScriptList, Object> implementation = null;
+        private Func<Context, ScriptList, Object> implementation = null;
         public String name;
         public String shortHelp;
         public ScriptList closedValues = null;
@@ -155,7 +155,7 @@ namespace MISP
             String name,
             List<ArgumentInfo> arguments, 
             String shortHelp, 
-            Func<Context, ScriptObject, ScriptList, Object> func)
+            Func<Context, ScriptList, Object> func)
         {
             body = null;
             isSystem = true;
@@ -204,7 +204,7 @@ namespace MISP
                 return argumentInfo[index];
         }
 
-        public Object Invoke(Engine engine, Context context, ScriptObject thisObject, ScriptList arguments)
+        public Object Invoke(Engine engine, Context context, ScriptList arguments)
         {
             if (context.trace != null)
             {
@@ -217,54 +217,74 @@ namespace MISP
             //Check argument types
             if (argumentInfo.Count == 0 && arguments.Count != 0) throw new ScriptError("Function expects no arguments.", context.currentNode);
 
-
-            int argumentIndex = 0;               
-            for (int i = 0; i < argumentInfo.Count; ++i)
+            try
             {
-                var info = argumentInfo[i];
-
-                if (info.repeat)
+                int argumentIndex = 0;
+                for (int i = 0; i < argumentInfo.Count; ++i)
                 {
-                    var list = new ScriptList();
-                    while (argumentIndex < arguments.Count) //Handy side effect: If no argument is passed for an optional repeat
-                    {                                       //argument, it will get an empty list.
-                        list.Add(info.type.ProcessArgument(arguments[argumentIndex]));
+                    var info = argumentInfo[i];
+
+                    if (info.repeat)
+                    {
+                        var list = new ScriptList();
+                        while (argumentIndex < arguments.Count) //Handy side effect: If no argument is passed for an optional repeat
+                        {                                       //argument, it will get an empty list.
+                            list.Add(info.type.ProcessArgument(arguments[argumentIndex]));
+                            ++argumentIndex;
+                        }
+                        newArguments.Add(list);
+                    }
+                    else
+                    {
+                        if (argumentIndex < arguments.Count)
+                            newArguments.Add(info.type.ProcessArgument(arguments[argumentIndex]));
+                        else if (info.optional)
+                            newArguments.Add(info.type.CreateDefault());
+                        else throw new ScriptError("Not enough arguments to " + name, context.currentNode);
                         ++argumentIndex;
                     }
-                    newArguments.Add(list);
                 }
-                else
-                {
-                    if (argumentIndex < arguments.Count)
-                        newArguments.Add(info.type.ProcessArgument(arguments[argumentIndex]));
-                    else if (info.optional)
-                        newArguments.Add(info.type.CreateDefault());
-                    else throw new ScriptError("Not enough arguments to " + name, context.currentNode);
-                    ++argumentIndex;
-                }
+                if (argumentIndex < arguments.Count)
+                    throw new ScriptError("Too many arguments to " + name, context.currentNode);
             }
-            if (argumentIndex < arguments.Count)
-                throw new ScriptError("Too many arguments to " + name, context.currentNode);
+            catch (Exception e)
+            {
+                throw e;
+            }
 
             Object r = null;
 
             if (isSystem)
             {
-                r = implementation(context, thisObject, newArguments);
+                try
+                {
+                r = implementation(context, newArguments);
+                }
+                catch (Exception e)
+                {
+                    throw e;
+                }
             }
             else
             {
-                context.PushScope(declarationScope);
-                
-                for (int i = 0; i < argumentInfo.Count; ++i)
-                    context.Scope.PushVariable(argumentInfo[i].name, newArguments[i]);
+                try
+                {
+                    context.PushScope(declarationScope);
 
-                r = engine.Evaluate(context, body, thisObject, true);
+                    for (int i = 0; i < argumentInfo.Count; ++i)
+                        context.Scope.PushVariable(argumentInfo[i].name, newArguments[i]);
 
-                for (int i = 0; i < argumentInfo.Count; ++i)
-                    context.Scope.PopVariable(argumentInfo[i].name);
+                    r = engine.Evaluate(context, body, true);
 
-                context.PopScope();
+                    for (int i = 0; i < argumentInfo.Count; ++i)
+                        context.Scope.PopVariable(argumentInfo[i].name);
+
+                    context.PopScope();
+                }
+                catch (Exception e)
+                {
+                    throw e;
+                }
             }
 
             if (context.trace != null)

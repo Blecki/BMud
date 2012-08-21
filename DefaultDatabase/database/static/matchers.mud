@@ -312,4 +312,31 @@
 	"Usefull for creating objects that enable a verb only when they are held."
 )
 			
+(defun "m-standard-object" [] 
+	(m-filter-failures
+		(m-if-exclusive (m-nothing) 
+			(m-fail "Open what?\n")
+			(m-if-exclusive (m-complete (m-any-visible-object "object"))
+				(m-nop)
+				(m-if-exclusive	(m-flipper
+						(m-if-exclusive (m-flipper-nothing)
+							(m-fail *"Get what from (this.preposition) (this.supporter:the)?\n")
+							(m-if-exclusive (m-flipper-complete (m-relative-object))
+								(m-nop)
+								(m-sequence ^((m-flipper-rest) (m-fail *"I can't find that (this.preposition) (this.supporter:the).\n")))
+							)
+						)								
+						(m-from|preposition)
+						(m-if-exclusive (m-nothing)
+							(m-fail "Get from what?\n")
+							(m-complete (m-supporter *"You can't get things from (this.preposition) that.\n"))
+						)
+					)
+					(m-nop)
+					(m-fail "I don't see that here.\n")
+				)
+			)
+		)
+	)
+)
 			

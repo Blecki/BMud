@@ -6,7 +6,7 @@
 
 (defun "add-channel" [name can-subscribe description]
 	(nop
-		(let ^(^("chat" (load "chat")))
+		(let (^("chat" (load "chat")))
 			(prop-add chat "channels" (record ^("name" name) ^("can-subscribe" can-subscribe) ^("description" description)))
 		)
 		(add-global-verb name (m-if-exclusive (m-rest "text") (m-nop) (m-fail "And what message were you going to send to that channel?"))

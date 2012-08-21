@@ -1,5 +1,4 @@
-﻿(prop "@base" (load "object"))
-(prop "long" "Set the 'long' property to change this.")
+﻿(prop "long" "Set the 'long' property to change this.")
 
 (prop "description" 
 *"(this:short)

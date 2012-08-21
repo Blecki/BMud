@@ -9,8 +9,8 @@ namespace MISP
     {
         private void SetupBranchingFunctions()
         {
-            Func<Context, ScriptObject, ScriptList, Object> equalBody =
-                (context, thisObject, arguments) =>
+            Func<Context, ScriptList, Object> equalBody =
+                (context, arguments) =>
                 {
                     arguments = arguments[0] as ScriptList;
                     if (arguments.Count == 0) return null;
@@ -54,16 +54,16 @@ namespace MISP
             functions.Add("notequal", new Function("notequal",
                 ArgumentInfo.ParseArguments(this, "+value"),
                 "<n> : Null if all arguments equal, true otherwise.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
-                    if (equalBody(context, thisObject, arguments) == null) return true;
+                    if (equalBody(context, arguments) == null) return true;
                     return null;
                 }));
 
             functions.Add("and", new Function("and",
                 ArgumentInfo.ParseArguments(this, "+value"),
                 "<n> : True if all arguments true.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     foreach (var arg in arguments[0] as ScriptList) if (arg == null) return null;
                     return true;
@@ -73,7 +73,7 @@ namespace MISP
             functions.Add("atleast", new Function("atleast",
                 ArgumentInfo.ParseArguments(this, "A", "B"),
                 "A B : true if A >= B, null otherwise.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     if ((dynamic)arguments[0] >= (dynamic)arguments[1]) return true;
                     return null;
@@ -82,7 +82,7 @@ namespace MISP
             functions.Add("greaterthan", new Function("greaterthan",
                 ArgumentInfo.ParseArguments(this, "A", "B"),
                 "A B : true if A > B, null otherwise.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     if ((dynamic)arguments[0] > (dynamic)arguments[1]) return true;
                     return null;
@@ -91,7 +91,7 @@ namespace MISP
             functions.Add("nomorethan", new Function("nomorethan",
                 ArgumentInfo.ParseArguments(this, "A", "B"),
                 "A B : true if A <= B, null otherwise.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     if ((dynamic)arguments[0] <= (dynamic)arguments[1]) return true;
                     return null;
@@ -100,7 +100,7 @@ namespace MISP
             functions.Add("lessthan", new Function("lessthan",
                 ArgumentInfo.ParseArguments(this, "A", "B"),
                 "A B : true if A < B, null otherwise.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     if ((dynamic)arguments[0] < (dynamic)arguments[1]) return true;
                     return null;
@@ -109,7 +109,7 @@ namespace MISP
             functions.Add("not", new Function("not",
                 ArgumentInfo.ParseArguments(this, "value"),
                 "A : true if A is null, null otherwise.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     if (arguments[0] == null) return true;
                     else return null;
@@ -118,12 +118,12 @@ namespace MISP
             functions.Add("if", new Function("if",
                 ArgumentInfo.ParseArguments(this, "condition", "code then", "code ?else"),
                 "condition then else : If condition evaluates to true, evaluate and return then. Otherwise, evaluate and return else.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     if (arguments[0] != null)
-                        return Evaluate(context, arguments[1], thisObject, true);
+                        return Evaluate(context, arguments[1], true);
                     else
-                        return Evaluate(context, arguments[2], thisObject, true);
+                        return Evaluate(context, arguments[2], true);
                 }));
 
         }

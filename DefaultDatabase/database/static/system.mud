@@ -1,4 +1,18 @@
-﻿(defun "depend" ^("on") *(load on))
+﻿/* Turns a function into a member function - sets the 'this' value when the function is called. */
+(defun "thunk" ^("object new-this" "function func")
+	(lambda "" ^("+?arguments")
+		(let ^(^("save-this" func.declarationScope.this))
+			(nop
+				(set func.declarationScope "this" new-this)
+				(func $arguments)
+				(set func.declarationScope "this" save-this)
+			)
+		)
+	)
+)
+
+
+(defun "depend" ^("on") *(load on))
 (reload "move-object")
 (reload "lists")
 (reload "account")
@@ -39,3 +53,4 @@
 (reload "drop")
 (reload "go")
 (reload "chat")
+(reload "open-close")

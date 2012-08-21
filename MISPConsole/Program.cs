@@ -12,42 +12,42 @@ namespace MISPConsole
         {
             if (depth == 2)
             {
-                Console.Write(what == null ? "null" : what.ToString());
+                System.Console.Write(what == null ? "null" : what.ToString());
             }
             else
             {
                 if (what == null)
-                    Console.Write("null");
+                    System.Console.Write("null");
                 else if (what is ScriptList)
                 {
                     var l = what as ScriptList;
                     if (l.Count > 0)
                     {
-                        Console.Write("list [" + l.Count + "] (\n");
+                        System.Console.Write("list [" + l.Count + "] (\n");
                         foreach (var item in l)
                         {
-                            Console.Write(new String('.', depth * 3 + 1));
+                            System.Console.Write(new String('.', depth * 3 + 1));
                             PrettyPrint(item, depth + 1);
-                            Console.Write("\n");
+                            System.Console.Write("\n");
                         }
-                        Console.Write(new String('.', depth * 3) + ")\n");
+                        System.Console.Write(new String('.', depth * 3) + ")\n");
                     }
                     else
-                        Console.Write("list [0] ()\n");
+                        System.Console.Write("list [0] ()\n");
                 }
                 else if (what is ScriptObject)
                 {
                     var o = what as ScriptObject;
-                    Console.Write("object (\n");
+                    System.Console.Write("object (\n");
                     foreach (var item in o.ListProperties())
                     {
-                        Console.Write(new String('.', depth * 3 + 1) + item + ": ");
+                        System.Console.Write(new String('.', depth * 3 + 1) + item + ": ");
                         PrettyPrint(o.GetLocalProperty(item as String), depth + 1);
-                        Console.Write("\n");
+                        System.Console.Write("\n");
                     }
-                    Console.Write(new String('.', depth * 3) + ")\n");
+                    System.Console.Write(new String('.', depth * 3) + ")\n");
                 }
-                else Console.Write(what.ToString());
+                else System.Console.Write(what.ToString());
             }
         }
 
@@ -56,56 +56,65 @@ namespace MISPConsole
             Engine mispEngine = new Engine();
             Context mispContext = new Context();
             GenericScriptObject mispObject = new GenericScriptObject();
+            mispContext.limitExecutionTime = false;
 
             mispEngine.AddFunction("run-file", "Load and run a file.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     try
                     {
                         var text = System.IO.File.ReadAllText(ScriptObject.AsString(arguments[0]));
-                        return mispEngine.EvaluateString(context, thisObject, text, ScriptObject.AsString(arguments[0]), false);
+                        return mispEngine.EvaluateString(context, text, ScriptObject.AsString(arguments[0]), false);
                     }
                     catch (ScriptError e)
                     {
-                        Console.WriteLine("Error " + (e.generatedAt == null ? "" : "on line " + e.generatedAt.line) + ": " + e.Message);
+                        System.Console.WriteLine("Error " + (e.generatedAt == null ? "" : "on line " + e.generatedAt.line) + ": " + e.Message);
                         return null;
                     }
                 },
                 "string name");
 
-            Console.Write("MISP Console 1.0\n");
+            mispEngine.AddFunction("print", "Print something.",
+                (context, arguments) =>
+                {
+                    foreach (var item in arguments)
+                        PrettyPrint(item, 0);
+                    return null;
+                }, "?+item");
+
+            System.Console.Write("MISP Console 1.0\n");
 
             Action<String> Execute = (command) =>
             {
                 try
                 {
                     mispContext.ResetTimer();
-                    var result = mispEngine.EvaluateString(mispContext, mispObject, command, "");
+                    var result = mispEngine.EvaluateString(mispContext, command, "");
                     PrettyPrint(result, 0);
-                    Console.Write("\n");
+                    System.Console.Write("\n");
                 }
                 catch (Exception e)
                 {
-                    Console.Write(e.Message + "\n");
+                    System.Console.Write(e.Message + "\n");
                 }
             };
 
             if (args.Length > 0)
             {
                 var invoke = "(run-file \"" + args[0] + "\")";
-                Console.WriteLine(invoke);
+                System.Console.WriteLine(invoke);
                 Execute(invoke);
             }
 
             while (true)
             {
-                Console.Write(":>");
-                var command = Console.ReadLine();
+                System.Console.Write(":>");
+                var command = System.Console.ReadLine();
                 if (String.IsNullOrEmpty(command)) continue;
                 if (command[0] == '/')
                 {
                     if (command.StartsWith("/quit")) return;
-                    else Console.Write("I don't understand.\n");
+                    else System.Console.Write("I don't understand.\n");
                 }
                 else
                 {

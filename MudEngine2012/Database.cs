@@ -76,7 +76,9 @@ namespace MudEngine2012
                     var inFile = System.IO.File.ReadAllText(staticObjectPath);
                     var scriptContext = new MISP.Context();
                     scriptContext.limitExecutionTime = timeOut;
-                    core.scriptEngine.EvaluateString(scriptContext, mudObject, inFile, staticObjectPath, true);
+                    scriptContext.Scope.PushVariable("this", mudObject);
+                    core.scriptEngine.EvaluateString(scriptContext, inFile, staticObjectPath, true);
+                    scriptContext.Scope.PopVariable("this");
                 }
 
                 if (!hasData)
@@ -93,7 +95,11 @@ namespace MudEngine2012
             catch (Exception e)
             {
                 Console.WriteLine("Error loading object " + staticPath + path + ".");
-                if (e is MISP.ScriptError)
+                if (e is MISP.ParseError)
+                {
+                    Console.Write((e as MISP.ParseError).line + " ");
+                }
+                else if (e is MISP.ScriptError)
                 {
                     var node = (e as MISP.ScriptError).generatedAt;
                     if (node != null)

@@ -38,19 +38,17 @@ namespace MudEngine2012
     {
         internal MISP.Function function;
         internal MISP.ScriptList arguments;
-        internal MISP.ScriptObject thisObject;
 
-        internal InvokeFunctionAction(MISP.Function function, MISP.ScriptObject thisObject, MISP.ScriptList arguments, float secondsDelay)
+        internal InvokeFunctionAction(MISP.Function function, MISP.ScriptList arguments, float secondsDelay)
             : base(secondsDelay)
         {
             this.function = function;
-            this.thisObject = thisObject;
             this.arguments = arguments;
         }
 
         public override void Execute(MudCore core)
         {
-            function.Invoke(core.scriptEngine, new MISP.Context(), thisObject, arguments);    
+            function.Invoke(core.scriptEngine, new MISP.Context(), arguments);    
         }
     }
 
@@ -221,7 +219,7 @@ namespace MudEngine2012
             {
                 try
                 {
-                    (prop as MISP.Function).Invoke(scriptEngine, context, system, arguments);
+                    (prop as MISP.Function).Invoke(scriptEngine, context, arguments);
                     return true;
                 }
                 catch (MISP.ScriptError e)
@@ -250,7 +248,7 @@ namespace MudEngine2012
             {
                 try
                 {
-                    return (prop as MISP.Function).Invoke(scriptEngine, context, system, arguments);
+                    return (prop as MISP.Function).Invoke(scriptEngine, context, arguments);
                 }
                 catch (Exception e)
                 {

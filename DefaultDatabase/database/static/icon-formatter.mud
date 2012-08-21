@@ -28,7 +28,7 @@
 (defun "icon-formatter-list-links" ^("list links")
 	(strcat 
 		$(map "link" links 
-			"(link){:go (link)} "
+			"(link.name){:go (link)} (if link.door "[through (link.door:a)] " "")"
 		)
 	)
 )

@@ -11,31 +11,31 @@ namespace MISP
 
         private void SetupMathFunctions()
         {
-            AddFunction("add", "Add values", (context, thisObject, arguments) =>
+            AddFunction("add", "Add values", (context, arguments) =>
                 {
                     if (arguments[0] == null || arguments[1] == null) return null;
                     return (dynamic)arguments[0] + (dynamic)arguments[1];
                 }, "A", "B");
 
-            AddFunction("subtract", "Add values", (context, thisObject, arguments) =>
+            AddFunction("subtract", "Add values", (context, arguments) =>
             {
                 if (arguments[0] == null || arguments[1] == null) return null;
                 return (dynamic)arguments[0] - (dynamic)arguments[1];
             }, "A", "B");
 
-            AddFunction("multiply", "Add values", (context, thisObject, arguments) =>
+            AddFunction("multiply", "Add values", (context, arguments) =>
             {
                 if (arguments[0] == null || arguments[1] == null) return null;
                 return (dynamic)arguments[0] * (dynamic)arguments[1];
             }, "A", "B");
 
-            AddFunction("divide", "Add values", (context, thisObject, arguments) =>
+            AddFunction("divide", "Add values", (context, arguments) =>
             {
                 if (arguments[0] == null || arguments[1] == null) return null;
                 return (dynamic)arguments[0] / (dynamic)arguments[1];
             }, "A", "B");
 
-            AddFunction("mod", "Add values", (context, thisObject, arguments) =>
+            AddFunction("mod", "Add values", (context, arguments) =>
             {
                 if (arguments[0] == null || arguments[1] == null) return null;
                 return (dynamic)arguments[0] % (dynamic)arguments[1];
@@ -45,7 +45,7 @@ namespace MISP
             functions.Add("random", new Function("random",
                 ArgumentInfo.ParseArguments(this, "integer A", "integer B"),
                 "A B : return a random value in range (A,B).",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var first = arguments[0] as int?;
                     var second = arguments[1] as int?;

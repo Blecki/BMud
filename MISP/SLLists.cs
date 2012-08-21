@@ -12,7 +12,7 @@ namespace MISP
             functions.Add("length", new Function("length",
                 ArgumentInfo.ParseArguments(this, "list"),
                 "list : Returns length of list.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var list = arguments[0] as ScriptList;
                     return list == null ? 0 : list.Count;
@@ -21,7 +21,7 @@ namespace MISP
             functions.Add("count", new Function("count",
                 ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"),
                 "variable_name list code : Returns number of items in list for which code evaluated to true.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var vName = ArgumentType<String>(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
@@ -31,7 +31,7 @@ namespace MISP
                     var result = (int)list.Count((o) =>
                     {
                         context.Scope.ChangeVariable(vName, o);
-                        return Evaluate(context, func, thisObject, true) != null;
+                        return Evaluate(context, func, true) != null;
                     });
                     context.Scope.PopVariable(vName);
                     return result;
@@ -40,7 +40,7 @@ namespace MISP
             functions.Add("where", new Function("where",
     ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"),
     "variable_name list code : Returns new list containing only the items in list for which code evaluated to true.",
-    (context, thisObject, arguments) =>
+    (context, arguments) =>
     {
         var vName = ArgumentType<String>(arguments[0]);
         var list = ArgumentType<ScriptList>(arguments[1]);
@@ -50,7 +50,7 @@ namespace MISP
         var result = new ScriptList(list.Where((o) =>
         {
             context.Scope.ChangeVariable(vName, o);
-            return Evaluate(context, func, thisObject, true) != null;
+            return Evaluate(context, func, true) != null;
         }));
         context.Scope.PopVariable(vName);
         return result;
@@ -59,7 +59,7 @@ namespace MISP
             functions.Add("cat", new Function("cat",
                 ArgumentInfo.ParseArguments(this, "?+items"),
                 "<n> : Combine N lists into one",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var result = new ScriptList();
                     foreach (var arg in arguments[0] as ScriptList)
@@ -73,7 +73,7 @@ namespace MISP
             functions.Add("last", new Function("last",
                 ArgumentInfo.ParseArguments(this, "list list"),
                 "list : Returns last item in list.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     if (list.Count == 0) return null;
@@ -83,7 +83,7 @@ namespace MISP
             functions.Add("first", new Function("first",
                 ArgumentInfo.ParseArguments(this, "list list"),
                 "list : Returns first item in list.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     if (list.Count == 0) return null;
@@ -93,7 +93,7 @@ namespace MISP
             functions.Add("index", new Function("index",
                 ArgumentInfo.ParseArguments(this, "list list", "integer n"),
                 "list n : Returns nth element in list.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     var index = arguments[1] as int?;
@@ -105,7 +105,7 @@ namespace MISP
             functions.Add("sub-list", new Function("sub-list",
                 ArgumentInfo.ParseArguments(this, "list list", "integer start", "integer ?length"),
                 "list start length: Returns a elements in list between start and start+length.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     var start = arguments[1] as int?;
@@ -124,13 +124,13 @@ namespace MISP
             functions.Add("sort", new Function("sort",
                 ArgumentInfo.ParseArguments(this, "string variable_name", "list in", "code code"),
                 "vname list sort_func: Sorts elements according to sort func; sort func returns integer used to order items.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var vName = ScriptObject.AsString(arguments[0]);
                     var list = ArgumentType<ScriptList>(arguments[1]);
                     var sortFunc = ArgumentType<ParseNode>(arguments[2]);
 
-                    var comparer = new ListSortComparer(this, vName, sortFunc, context, thisObject);
+                    var comparer = new ListSortComparer(this, vName, sortFunc, context);
                     list.Sort(comparer);
                     return list;
                 }));
@@ -138,7 +138,7 @@ namespace MISP
             functions.Add("reverse", new Function("reverse",
                 ArgumentInfo.ParseArguments(this, "list list"),
                 "list: Reverse the list.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var list = ArgumentType<ScriptList>(arguments[0]);
                     list.Reverse();
@@ -149,25 +149,22 @@ namespace MISP
         private class ListSortComparer : IComparer<Object>
         {
             Engine evaluater;
-            ScriptObject thisObject;
             Context context;
             ParseNode func;
             String vName;
 
-            internal ListSortComparer(Engine evaluater,
-                String vName, ParseNode func, Context context, ScriptObject thisObject)
+            internal ListSortComparer(Engine evaluater, String vName, ParseNode func, Context context)
             {
                 this.evaluater = evaluater;
                 this.vName = vName;
                 this.func = func;
                 this.context = context;
-                this.thisObject = thisObject;
             }
 
             private int rank(Object o)
             {
                 context.Scope.PushVariable(vName, o);
-                var r = evaluater.Evaluate(context, func, thisObject, true) as int?;
+                var r = evaluater.Evaluate(context, func, true) as int?;
                 context.Scope.PopVariable(vName);
                 if (r != null && r.HasValue) return r.Value;
                 return 0;

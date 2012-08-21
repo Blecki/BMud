@@ -11,7 +11,7 @@ namespace MISP
         {
             functions.Add("members", new Function("members",
                 ArgumentInfo.ParseArguments(this, "object object"),
-                "object : List of names of object members.", (context, thisObject, arguments) =>
+                "object : List of names of object members.", (context, arguments) =>
                 {
                     var obj = ArgumentType<ScriptObject>(arguments[0]);
                     return obj.ListProperties();
@@ -20,7 +20,7 @@ namespace MISP
             functions.Add("record", new Function("record",
                 ArgumentInfo.ParseArguments(this, "list +?pairs"),
                 "<List of key-value pairs> : Returns a new generic script object.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var r = (new GenericScriptObject()) as ScriptObject;
                     foreach (var item in arguments[0] as ScriptList)
@@ -35,7 +35,7 @@ namespace MISP
             functions.Add("clone", new Function("clone",
                 ArgumentInfo.ParseArguments(this, "object record", "list +?pairs"),
                 "record <List of key-value pairs> : Returns a new generic script object cloned from [record]",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var from = ArgumentType<ScriptObject>(arguments[0]);
                     var r = new GenericScriptObject(from);
@@ -50,7 +50,7 @@ namespace MISP
 
             functions.Add("set", new Function("set",
                 ArgumentInfo.ParseArguments(this, "object object", "string property", "value"),
-                "object property value : Set the member of an object.", (context, thisObject, arguments) =>
+                "object property value : Set the member of an object.", (context, arguments) =>
                 {
                     var obj = ArgumentType<ScriptObject>(arguments[0]);
                     var vName = ScriptObject.AsString(arguments[1]);
@@ -61,7 +61,7 @@ namespace MISP
             functions.Add("multi-set", new Function("multi-set",
                 ArgumentInfo.ParseArguments(this, "object object", "list properties"),
                 "object properties: Set multiple members of an object.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var obj = ArgumentType<ScriptObject>(arguments[0]);
                     var vars = ArgumentType<ScriptList>(arguments[1]);
@@ -77,7 +77,7 @@ namespace MISP
             functions.Add("delete", new Function("delete",
                 ArgumentInfo.ParseArguments(this, "object object", "string property"),
                 "object property : Deletes a property from an object.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var obj = ArgumentType<ScriptObject>(arguments[0]);
                     var vname = ScriptObject.AsString(arguments[1]);

@@ -31,10 +31,10 @@ namespace MISP
 
         public Context() { Reset(); }
 
-        public Scope Scope { get { return scopeStack[scopeStack.Count - 1]; } }
+        public Scope Scope { get { return scopeStack.Count > 0 ? scopeStack[scopeStack.Count - 1] : null; } }
 
-        public void PushScope(Scope scope) { scopeStack.Add(scope); }
-        public void PopScope() { scopeStack.RemoveAt(scopeStack.Count - 1); }
+        public void PushScope(Scope scope) { scope.parentScope = Scope; scopeStack.Add(scope); }
+        public void PopScope() { Scope.parentScope = null; scopeStack.RemoveAt(scopeStack.Count - 1); }
 
        
     }

@@ -12,7 +12,7 @@ namespace MISP
             functions.Add("substr", new Function("substr",
                 ArgumentInfo.ParseArguments(this, "value", "integer start", "integer ?count"),
                 "string start ?count: returns sub-string of string starting at start.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var str = ScriptObject.AsString(arguments[0]);
                     var start = arguments[1] as int?;
@@ -29,7 +29,7 @@ namespace MISP
 
             functions.Add("strcat", new Function("strcat",
                 ArgumentInfo.ParseArguments(this, "?+item"), "<n> : Concatenate many strings into one.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var r = "";
                     foreach (var obj in arguments[0] as ScriptList)
@@ -40,7 +40,7 @@ namespace MISP
             functions.Add("strrepeat", new Function("strrepeat",
                 ArgumentInfo.ParseArguments(this, "integer n", "string part"),
                 "n part: Create a string consisting of part n times.",
-                    (context, thisObject, arguments) =>
+                    (context, arguments) =>
                     {
                         var count = arguments[0] as int?;
                         if (count == null | !count.HasValue) throw new ScriptError("Expected int", context.currentNode);
@@ -54,14 +54,14 @@ namespace MISP
             functions.Add("asstring", new Function("asstring",
                 ArgumentInfo.ParseArguments(this, "value", "integer B"),
                 "A B : convert A to a string to depth B.",
-                (context, thisObject, arguments) =>
+                (context, arguments) =>
                 {
                     var depth = arguments[1] as int?;
                     if (depth == null || !depth.HasValue) return ScriptObject.AsString(arguments[0]);
                     else return ScriptObject.AsString(arguments[0], depth.Value);
                 }));
 
-            AddFunction("path-leaf", "Get the leaf on a path", (context, thisObject, arguments) =>
+            AddFunction("path-leaf", "Get the leaf on a path", (context, arguments) =>
                 {
                     return System.IO.Path.GetFileName(arguments[0] as String);
                 }, "string path");

@@ -45,6 +45,8 @@ namespace MISP
                 allowed[(int)NodeType.Node, (int)Prefix.Quote] = true;
                 allowed[(int)NodeType.Node, (int)Prefix.Lookup] = true;
 
+                allowed[(int)NodeType.Token, (int)Prefix.Expand] = true;
+
                 allowed[(int)NodeType.StringExpression, (int)Prefix.Quote] = true;
                 allowed[(int)NodeType.String, (int)Prefix.Quote] = true;
 
@@ -81,7 +83,7 @@ namespace MISP
 
         public void DebugEmit(int depth)
         {
-            Console.WriteLine(new String(' ', depth) + type + ": [" + token + "]");
+            System.Console.WriteLine(new String(' ', depth) + type + ": [" + token + "]");
             foreach (var child in childNodes) child.DebugEmit(depth + 1);
         }
     }

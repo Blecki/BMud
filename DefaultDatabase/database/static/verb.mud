@@ -4,7 +4,7 @@
 )
 
 (defun "add-global-verb" ^("name" "matcher" "action" "help")
-	(let ^([system (load "system")])
+	(let ([system (load "system")])
 		(nop
 			(set system "verbs" (where "verb" system.verbs (notequal name verb.name)))
 			(add-verb system name matcher action help)
@@ -13,7 +13,7 @@
 )
 
 (defun "add-global-alias" ^("name" "verb")
-	(let ^(^("system" (load "system")))
+	(let (^("system" (load "system")))
 		(nop
 			(if (equal system.aliases null) *(set system "aliases" (record)))
 			(set system.aliases name verb)
@@ -22,7 +22,7 @@
 )
 
 (defun "find-all-visible-verbs" [actor]
-	(let ^([system (load "system")])
+	(let ([system (load "system")])
 		(cat
 			actor.location.object.verbs
 			$(map "object" (get-all-visible-objects actor) (object.verbs))
@@ -32,7 +32,7 @@
 )
 
 (defun "find-verb-list" [actor verb]
-	(let ^([system (load "system")])
+	(let ([system (load "system")])
 		(lastarg
 			(if system.aliases.(verb) *(var "verb" system.aliases.(verb)))
 			(cat
@@ -46,7 +46,7 @@
 
 (defun "handle-verb-command" [client full-command token switch]
 	(nop
-		(let ^(^("verb-records" (find-verb-list client.player token.word)))
+		(let (^("verb-records" (find-verb-list client.player token.word)))
 			(if (equal (length verb-records) 0)
 				(echo client.player "Huh?\n")
 				(while (notequal (length verb-records) 0)

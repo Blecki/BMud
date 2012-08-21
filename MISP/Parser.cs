@@ -7,7 +7,8 @@ namespace MISP
 {
     public class ParseError : ScriptError
     {
-        public ParseError(String msg) : base(msg, null) {}
+        public int line;
+        public ParseError(String msg, int line) : base(msg, null) { this.line = line; }
     }
 
     public class Parser
@@ -28,7 +29,7 @@ namespace MISP
             while (!state.AtEnd() && !(" \t\r\n:.)]".Contains(state.Next()))) state.Advance();
             result.end = state.start;
             result.token = state.source.Substring(result.start, result.end - result.start);
-            if (String.IsNullOrEmpty(result.token)) throw new ParseError("Empty token");
+            if (String.IsNullOrEmpty(result.token)) throw new ParseError("Empty token", state.currentLine);
             return result;
         }
 
@@ -39,6 +40,12 @@ namespace MISP
 
             while (!state.AtEnd())
             {
+                if (state.Next() == '-')
+                {
+                    if (result.start != state.start) break;
+                    state.Advance();
+                    continue;
+                }
                 if (state.Next() >= '0' && state.Next() <= '9')
                 {
                     state.Advance();
@@ -143,7 +150,7 @@ namespace MISP
             {
                 result = ParseNode(state);
             }
-            else if ("0123456789".Contains(state.Next()))
+            else if ("-0123456789".Contains(state.Next()))
             {
                 result = ParseNumber(state);
             }
@@ -172,7 +179,8 @@ namespace MISP
             }
 
             result.prefix = prefix;
-            if (!PrefixCheck.CheckPrefix(result)) throw new ParseError("Illegal prefix on expression of type " + result.type);
+            if (!PrefixCheck.CheckPrefix(result)) 
+                throw new ParseError("Illegal prefix on expression of type " + result.type, state.currentLine);
             return result;
         }
                         
@@ -181,7 +189,7 @@ namespace MISP
         public static ParseNode ParseNode(ParseState state, String start = "(", String end = ")")
         {
             var result = new ParseNode(NodeType.Node, state.start, state);
-            if (!state.MatchNext(start)) throw new ParseError("Expected " + start);
+            if (!state.MatchNext(start)) throw new ParseError("Expected " + start, state.currentLine);
             state.Advance(start.Length);
             while (!state.MatchNext(end))
             {
@@ -250,7 +258,7 @@ namespace MISP
                 return result;
             }
             
-            throw new ParseError("Unexpected end of script inside string expression.");
+            throw new ParseError("Unexpected end of script inside string expression.", state.currentLine);
         }
 
         public static int ParseComment(ParseState state)

@@ -13,8 +13,8 @@ namespace MISP
     public partial class Engine
     {
         private Dictionary<String, Function> functions = new Dictionary<String, Function>();
-        private Dictionary<String, Func<Context, ScriptObject, Object>> specialVariables
-            = new Dictionary<string, Func<Context, ScriptObject, object>>();
+        private Dictionary<String, Func<Context, Object>> specialVariables
+            = new Dictionary<string, Func<Context, object>>();
         internal Dictionary<String, Type> types = new Dictionary<string, Type>();
 
         public static T ArgumentType<T>(Object obj) where T : class
@@ -27,7 +27,7 @@ namespace MISP
             this.SetupStandardLibrary();
         }
 
-        public void AddFunction(String name, String comment, Func<Context, ScriptObject, ScriptList, Object> func,
+        public void AddFunction(String name, String comment, Func<Context, ScriptList, Object> func,
             params String[] arguments)
         {
             functions.Add(name, new Function(name,
@@ -36,25 +36,30 @@ namespace MISP
                 func));
         }
 
-        public void AddGlobalVariable(String name, Func<Context, ScriptObject, Object> getFunc)
+        public Function MakeLambda(String name, String comment, Func<Context, ScriptList, Object> func,
+            params String[] arguments)
+        {
+            return new Function(name, ArgumentInfo.ParseArguments(this, arguments), comment, func);
+        }
+
+        public void AddGlobalVariable(String name, Func<Context, Object> getFunc)
         {
             specialVariables.Add(name, getFunc);
         }
 
-        public Object EvaluateString(Context context, ScriptObject thisObject, String str, String fileName, bool discardResults = false)
+        public Object EvaluateString(Context context, String str, String fileName, bool discardResults = false)
         {
             var root = Parser.ParseRoot(str, fileName);
-            return Evaluate(context, root, thisObject, false, discardResults);
+            return Evaluate(context, root, false, discardResults);
         }
 
         public Object Evaluate(
             Context context,
             Object what,
-            ScriptObject thisObject,
             bool ignoreStar = false,
             bool discardResults = false)
         {
-            if (what is String) return EvaluateString(context, thisObject, what as String, "", discardResults);
+            if (what is String) return EvaluateString(context, what as String, "", discardResults);
             else if (!(what is ParseNode)) return what;
 
             var node = what as ParseNode;
@@ -79,41 +84,46 @@ namespace MISP
                             if (piece.type == NodeType.String)
                                 continue;
                             else
-                                Evaluate(context, piece, thisObject);
+                                Evaluate(context, piece);
                         }
                         result = null;
                     }
                     else
                     {
                         if (node.childNodes.Count == 1) //If there's only a single item, the result is that item.
-                            result = Evaluate(context, node.childNodes[0], thisObject);
+                            result = Evaluate(context, node.childNodes[0]);
                         else
                         {
                             var resultString = String.Empty;
                             foreach (var piece in node.childNodes)
-                                resultString += ScriptObject.AsString(Evaluate(context, piece, thisObject));
+                                resultString += ScriptObject.AsString(Evaluate(context, piece));
                             result = resultString;
                         }
                     }
                     break;
                 case NodeType.Token:
-                    result = LookupToken(context, node.token, thisObject);
+                    result = LookupToken(context, node.token);
                     break;
                 case NodeType.MemberAccess:
                     {
-                        var lhs = Evaluate(context, node.childNodes[0], thisObject);
+                        //SET THIS BEFORE EVALUATING MEMBER
+                        var lhs = Evaluate(context, node.childNodes[0]);
                         String rhs = "";
                         if (node.childNodes[1].type == NodeType.Token)
                             rhs = node.childNodes[1].token;
                         else
-                            rhs = ScriptObject.AsString(Evaluate(context, node.childNodes[1], thisObject, false));
+                            rhs = ScriptObject.AsString(Evaluate(context, node.childNodes[1], false));
 
                         if (lhs == null) result = null;
                         else if (lhs is ScriptObject)
                         {
                             result = (lhs as ScriptObject).GetProperty(ScriptObject.AsString(rhs));
-                            if (node.token == ":") 
-                                result = Evaluate(context, result, lhs as ScriptObject, true, false);
+                            if (node.token == ":")
+                            {
+                                context.Scope.PushVariable("this", lhs);
+                                result = Evaluate(context, result, true, false);
+                                context.Scope.PopVariable("this");
+                            }
                         }
                         //    else
                         //{
@@ -152,19 +162,23 @@ namespace MISP
                                         if (child.prefix == Prefix.Evaluate || child.prefix == Prefix.Lookup)
                                         {
                                             //Some prefixs override special behavior of code type.
-                                            arguments.Add(Evaluate(context, child, thisObject, true));
+                                            arguments.Add(Evaluate(context, child, true));
                                         }
                                         else if (child.prefix == Prefix.Quote || child.prefix == Prefix.None)
                                             arguments.Add(child);
-                                        else
-                                            throw new ScriptError("Prefix invalid in this context.", child);
+                                        else if (child.prefix == Prefix.List)
+                                        {
+                                            //raise warning
+                                            arguments.Add(child);
+                                        }
+                                        else throw new ScriptError("Prefix invalid in this context.", child);
                                         argumentProcessed = true;
                                     }
                                 }
 
                                 if (!argumentProcessed)
                                 {
-                                    var argument = Evaluate(context, child, thisObject);
+                                    var argument = Evaluate(context, child);
                                     if (child.prefix == Prefix.Expand && argument is ScriptList)
                                         arguments.AddRange(argument as ScriptList);
                                     else
@@ -193,7 +207,7 @@ namespace MISP
                             {
                                 try
                                 {
-                                    result = (arguments[0] as Function).Invoke(this, context, thisObject,
+                                    result = (arguments[0] as Function).Invoke(this, context,
                                         new ScriptList(arguments.GetRange(1, arguments.Count - 1)));
                                 }
                                 catch (ScriptError e)
@@ -222,7 +236,7 @@ namespace MISP
                         var r = new ScriptList();
                         foreach (var child in node.childNodes)
                             if (child.type == NodeType.Token) r.Add(child.token);
-                            else r.Add(Evaluate(context, child, thisObject));
+                            else r.Add(Evaluate(context, child));
                         result = r;
                     }
                     break;
@@ -232,16 +246,16 @@ namespace MISP
             }
 
             if (node.prefix == Prefix.Evaluate && !ignoreStar)
-                result = Evaluate(context, result, thisObject);
-            if (node.prefix == Prefix.Lookup) result = LookupToken(context, ScriptObject.AsString(result), thisObject);
+                result = Evaluate(context, result);
+            if (node.prefix == Prefix.Lookup) result = LookupToken(context, ScriptObject.AsString(result));
 
             return result;
         }
 
-        private object LookupToken(Context context, String value, ScriptObject thisObject)
+        private object LookupToken(Context context, String value)
         {
             value = value.ToLowerInvariant();
-            if (specialVariables.ContainsKey(value)) return specialVariables[value](context, thisObject);
+            if (specialVariables.ContainsKey(value)) return specialVariables[value](context);
             if (context.Scope.HasVariable(value)) return context.Scope.GetVariable(value);
             if (functions.ContainsKey(value)) return functions[value];
             if (value.StartsWith("@") && functions.ContainsKey(value.Substring(1))) return functions[value.Substring(1)];

@@ -1,0 +1,26 @@
+﻿/* Demonstration of MispGame */
+
+(net-module "MispGame.dll" "MispGame.Window")
+
+(let (
+	^("window" (mg-create-window 800 600))
+	^("logo" (record 
+			^("graphic" (window.load "logo.png"))
+			^("x" 32.0)
+			^("y" 32.0)
+	))
+	)
+	(nop
+		(print logo)
+		(window.bind-down "A" (lambda "" [] (set logo "x" (add logo.x -10))))
+		(set window "update" (lambda "" []
+			(nop
+				(set logo "x" (add logo.x (multiply 20 window.elapsed)))
+				(set logo "y" (add logo.y (multiply 20 window.elapsed)))
+				(window.draw-sprite logo.graphic logo.x logo.y)
+			)
+		))
+		(window.run)
+	)
+)
+
