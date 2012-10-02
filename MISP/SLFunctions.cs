@@ -19,7 +19,16 @@ namespace MISP
         {
             var functionName = ArgumentType<String>(arguments[0]);
 
-            var argumentInfo = ArgumentInfo.ParseArguments(this, ArgumentType<ScriptList>(arguments[1]));
+            List<ArgumentInfo> argumentInfo = null;
+            try
+            {
+                argumentInfo = ArgumentInfo.ParseArguments(this, ArgumentType<ScriptList>(arguments[1]));
+            }
+            catch (ScriptError e)
+            {
+                context.RaiseNewError(e.Message, context.currentNode);
+                return null;
+            }
 
             var functionBody = ArgumentType<ParseNode>(arguments[2]);
 
@@ -44,7 +53,7 @@ namespace MISP
                 "name arguments closures code", (context, arguments) =>
             {
                 var r = defunImple(context, arguments, false);
-                if (!String.IsNullOrEmpty((r as Function).name)) functions.Upsert((r as Function).name, r as Function);
+                if (context.evaluationState == EvaluationState.Normal && !String.IsNullOrEmpty((r as Function).name)) functions.Upsert((r as Function).name, r as Function);
                 return r;
             }));
 
@@ -60,7 +69,7 @@ namespace MISP
                 (context, arguments) =>
                 {
                     var r = defunImple(context, arguments, true);
-                    context.Scope.PushVariable(r.name, r);
+                    if (context.evaluationState == EvaluationState.Normal) context.Scope.PushVariable(r.name, r);
                     return r;
                 }, "string name", "list arguments", "code code", "?comment");
         }

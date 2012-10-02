@@ -71,10 +71,15 @@ namespace MudServer
                     websocketListener.OnDisconnect = (context) =>
                         {
                             var client = context.Data as WebsocketClient;
-                            client.context = null;
-                            context.Data = null;
-                            Console.WriteLine("Lost websocket client.");
-                            mudCore.ClientDisconnected(client);
+                            if (client != null)
+                            {
+                                client.context = null;
+                                context.Data = null;
+                                Console.WriteLine("Lost websocket client.");
+                                mudCore.ClientDisconnected(client);
+                            }
+                            else
+                                Console.WriteLine("Dafuq?");
                         };
                         
 

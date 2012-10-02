@@ -5,10 +5,29 @@ using System.Text;
 
 namespace MISP
 {
+    public enum EvaluationState
+    {
+        Normal,
+        UnwindingError,
+    }
+
     public class Context
     {
         private List<Scope> scopeStack = new List<Scope>();
         public ParseNode currentNode = null;
+        public EvaluationState evaluationState;
+        public ScriptObject errorObject = null;
+
+        public void RaiseNewError(String message, ParseNode location)
+        {
+            errorObject = new GenericScriptObject("message", message, "location", location, "stack-trace", new ScriptList());
+            evaluationState = EvaluationState.UnwindingError;
+        }
+
+        public void PushStackTrace(String message)
+        {
+            (errorObject.GetProperty("stack-trace") as ScriptList).Add(message);
+        }
 
         public DateTime executionStart;
         public bool limitExecutionTime = true;
@@ -22,6 +41,7 @@ namespace MISP
             scopeStack.Clear();
             PushScope(new Scope());
             ResetTimer();
+            evaluationState = EvaluationState.Normal;
         }
 
         public void ResetTimer()
@@ -29,7 +49,16 @@ namespace MISP
             executionStart = DateTime.Now;
         }
 
-        public Context() { Reset(); }
+        public Context(params object[] vars)
+        { 
+            Reset();
+            for (var i = 0; i < vars.Length; i += 2)
+            {
+                if (i + 1 >= vars.Length) throw new InvalidProgramException();
+                Scope.PushVariable(vars[i].ToString(), vars[i + 1]);
+            }
+        }
+
 
         public Scope Scope { get { return scopeStack.Count > 0 ? scopeStack[scopeStack.Count - 1] : null; } }
 

@@ -31,6 +31,7 @@ namespace MISP
                     var result = (int)list.Count((o) =>
                     {
                         context.Scope.ChangeVariable(vName, o);
+
                         return Evaluate(context, func, true) != null;
                     });
                     context.Scope.PopVariable(vName);

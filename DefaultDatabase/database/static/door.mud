@@ -6,7 +6,7 @@
 			(echo actor "^(door:the) is closed.\n")
 			(nop
 				(echo to.contents "^(actor:short) arrived.\n")
-				(move-object actor door.to "contents")
+				(move-object actor to "contents")
 				(echo previous.contents "^(actor:short) went (name). [Through (door:the)]\n")
 				(echo actor "You went (name). [Through (door:the)]\n")
 				(if on-follow (on-follow actor))
@@ -20,7 +20,7 @@
 	(lambda "lgo" ["matches" "actor"] (implement-door-link door (load door.to) name actor on-follow))
 )
 
-(lfun "make-door-record" [to] 
+(lfun "make-door-record" [to names] 
 	(record
 		^("short" "door")
 		^("nouns" ^("door"))
@@ -28,11 +28,12 @@
 		^("@base" (load "object"))
 		^("can-open" true)
 		^("open" null)
+		^("adjectives" names)
 	)
 )
 
 (defun "create-door" ^("from" "to" "names" "function ?on-follow")
-	(let ^(^("door" (make-door-record to)))
+	(let ^(^("door" (make-door-record to names)))
 	(lastarg
 		(prop-add from "links" (record ^("name" (first names)) ^("door" door)))
 		(for "name" names
@@ -66,7 +67,7 @@
 )
 
 (defun "create-direct-door" [from to names "function ?on-follow"]
-	(let ^(^("door" (make-door-record to)))
+	(let ^(^("door" (make-door-record to names)))
 	(lastarg
 		(prop-add from "links" (record ^("name" (first names)) ^("door" door)))
 		(for "name" names

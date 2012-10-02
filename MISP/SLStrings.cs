@@ -57,14 +57,28 @@ namespace MISP
                 (context, arguments) =>
                 {
                     var depth = arguments[1] as int?;
-                    if (depth == null || !depth.HasValue) return ScriptObject.AsString(arguments[0]);
-                    else return ScriptObject.AsString(arguments[0], depth.Value);
+                    if (depth == null || !depth.HasValue) return Console.PrettyPrint2(arguments[0], 0);
+                    else return Console.PrettyPrint2(arguments[0], depth.Value);
                 }));
 
             AddFunction("path-leaf", "Get the leaf on a path", (context, arguments) =>
                 {
                     return System.IO.Path.GetFileName(arguments[0] as String);
                 }, "string path");
+
+            AddFunction("itoa", "Change a number to a character",
+                (context, arguments) =>
+                {
+                    var i = arguments[0] as int?;
+                    if (i != null && i.HasValue) return new String((char)i.Value, 1);
+                    else return " ";
+                }, "integer i");
+
+            AddFunction("atoi", "",
+                (context, arguments) =>
+                {
+                    return (int)(arguments[0].ToString())[0];
+                }, "string s");
         }
     }
 }

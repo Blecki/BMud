@@ -44,7 +44,7 @@ namespace MudEngine2012
                     {
                         core.SendMessage(Executor,
                             MISP.ScriptObject.AsString(
-                                core.scriptEngine.EvaluateString(new MISP.Context(), _Command.Substring(6), "")), true);
+                                core.scriptEngine.EvaluateString(new MISP.Context("actor", Executor), _Command.Substring(6), "")), true);
                         core.SendPendingMessages();
                         return;
                     }

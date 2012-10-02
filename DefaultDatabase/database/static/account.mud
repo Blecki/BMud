@@ -2,6 +2,14 @@
 (defun "load-account" [name] (load "players/(name)/account"))
 (defun "load-player-character" [account-name character-name] (load "players/(account-name)/(character-name)"))
 
+(defun "create-account" [name password]
+	(let (^("account-object" (create "players/(name)/account")))
+		(lastarg
+			(set account-object "password" (hash password name))
+			account-object
+		)
+	)
+)
 
 (defun "create-player-character" [account name]
 	(let ^(^("result" (create "players/(account)/(name)")))

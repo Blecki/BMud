@@ -1,20 +1,27 @@
 ﻿
-(defun "first-noun" ["object object"] (first object.nouns))
+(defun "first-noun" ["object object"] 
+	("(if (notequal (length object.adjectives) 0) 
+		(strcat $(map "adjective" object.adjectives "(adjective) ")) 
+		""
+	) (first object.nouns)")
+)
+
+(lfun "explicit-object-name" ["object object"] (first-noun object))
 
 (defun "icon-formatter-list-objects" ^("list list" "prepend-isare" "list-on" "from")
 	(if (equal (length list) 1)
 		(if (prepend-isare) 
-			"is ((first list):a){:look (first-noun (first list))(if from " from (first-noun from)" "")}(icon-formatter-list-objects-on (first list) list-on)"
-			"((first list):a){:look (first-noun (first list))(if from " from (first-noun from)" "")}(icon-formatter-list-objects-on (first list) list-on)"
+			"is <:(explicit-object-name (first list))>((first list):list-short)<:>{:look (first-noun (first list))(if from " from (first-noun from)" "")}(icon-formatter-list-objects-on (first list) list-on)"
+			"<:(explicit-object-name (first list))>((first list):list-short)<:>{:look (first-noun (first list))(if from " from (first-noun from)" "")}(icon-formatter-list-objects-on (first list) list-on)"
 		)
-		(if (prepend-isare) "are (strcat 
+		"(if prepend-isare "are " "")(strcat 
 			$(mapi "i" list
 				(if (equal i (subtract (length list) 1)) 
-					"and ((index list i):a){:look (first-noun (index list i))(if from " from (first-noun from)" "")}(icon-formatter-list-objects-on (index list i) list-on)" 
-					"((index list i):a){:look (first-noun (index list i))(if from " from (first-noun from)" "")}(icon-formatter-list-objects-on (index list i) list-on), "
+					"and <:(explicit-object-name (index list i))>((index list i):list-short)<:>{:look (first-noun (index list i))(if from " from (first-noun from)" "")}(icon-formatter-list-objects-on (index list i) list-on)" 
+					"<:(explicit-object-name (index list i))>((index list i):list-short)<:>{:look (first-noun (index list i))(if from " from (first-noun from)" "")}(icon-formatter-list-objects-on (index list i) list-on), "
 				)
 			)
-		)")
+		)"
 	)
 )
 
@@ -28,7 +35,7 @@
 (defun "icon-formatter-list-links" ^("list links")
 	(strcat 
 		$(map "link" links 
-			"(link.name){:go (link)} (if link.door "[through (link.door:a)] " "")"
+			"<:(link.name)>(link.name)<:>{:go (link.name)} (if link.door "[through <:(explicit-object-name link.door)>(link.door:list-short)<:>] " "")"
 		)
 	)
 )

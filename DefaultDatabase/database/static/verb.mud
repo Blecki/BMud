@@ -37,7 +37,11 @@
 			(if system.aliases.(verb) *(var "verb" system.aliases.(verb)))
 			(cat
 				(where "potential-match" actor.location.object.verbs (equal potential-match.name verb))
-				$(map "object" (get-all-visible-objects actor) (where "potential-match" object.verbs (equal potential-match.name verb)))
+				$(map "object" (get-all-visible-objects actor) 
+					(map "match" (where "potential-match" object.verbs (equal potential-match.name verb))
+						(clone match ^("found-on" object))
+					)
+				)
 				(where "potential-match" system.verbs (equal potential-match.name verb))
 			)
 		)

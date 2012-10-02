@@ -37,6 +37,21 @@
 			writeToScreen('<span class="icon-action">' + action + '</span><br>');
 			socket.send(action);
 		}
+
+		function setverb(verb)
+		{
+			input.value = verb;
+		}
+
+		function append(txt)
+		{
+			input.value += txt;
+		}
+
+		function objectnameaction(name)
+		{
+			append(" " + name);
+		}
 		
 		function onMessage(evt)
 		{
@@ -57,7 +72,7 @@
 				else
 				{
 					var front = rest.substring(0, actionDirectiveStart);
-					var directive = rest.substring(actionDirectiveStart + 2, actionDirectiveEnd)
+					var directive = rest.substring(actionDirectiveStart + 2, actionDirectiveEnd);
 					var back = rest.substring(actionDirectiveEnd + 1);
 					message = message + front;
 					
@@ -72,7 +87,41 @@
 				actionDirectiveStart = rest.indexOf("{:");
 			}
 			message = message + rest;
-			writeToScreen('<span class="server-message">' + message +'</span><br>');
+
+			rest = message;
+			message = "";
+			var objectNameStart = rest.indexOf("<:");
+			while (objectNameStart != -1)
+			{
+				var objectNameEnd = rest.indexOf(">", objectNameStart);
+				if (objectNameEnd == -1)
+				{
+					message = message.concat(rest);
+					rest = "";
+				}
+				else
+				{
+					var front = rest.substring(0, objectNameStart);
+					var directive = rest.substring(objectNameStart + 2, objectNameEnd);
+					var back = rest.substring(objectNameEnd + 1);
+					message = message + front;
+
+					if (directive.length == 0)
+					{
+						message = message + "</a>";
+						rest = back;
+					}
+					else
+					{
+						message = message + '<a class="objectnamelink" onclick="objectnameaction(\'' + directive + '\')">';
+						rest = back;
+					}
+				}
+				objectNameStart = rest.indexOf("<:");
+			}
+			message = message + rest;
+
+			writeToScreen('<span class="server-message">' + message +'</span>');
 		}
 		
 		function writeToScreen(message)
@@ -92,6 +141,10 @@
 		.icon-action { color: blue; }
 		.server-message { color: green; }
 		.system-message { color: gray; }
+		.verb-button { color: white; border-style: solid; border-color: gray; border: 2px; border-radius: 4px; margin: 4px; float: left;}
+		.verb-button:hover { border-color: red;}
+		.objectnamelink { color: olive;}
+		.objectnamelink:hover { color: gold;}
 		
 		body 
 		{
@@ -102,15 +155,52 @@
 <body>
 
 <div stule="position: fixed; left: 10px; top: 10px; right: 10px;">
-	<input name="connect" type="submit" value="Connect" onclick="connect()">
+	<input name="connect" type="submit" value="connect" onclick="connect()">
 	<input name="server" id="server" type="text" style="width: 400px" value="72.209.212.88:8670">
+	<input name="clear" type="submit" value="clear output" onclick="while (output.hasChildNodes()) {output.removeChild(output.lastChild);}">
 </div>
-<div style="position: fixed; left: 10px; bottom: 10px; width: 100%; right: 10px;">
-	<input width="25px" name="submit" type="submit" value="Send" onclick="send()">
+<div style="position: fixed; left: 10px; bottom: 55px; width: 100%; right: 10px;">
+	<input width="25px" name="submit" type="submit" value="send" onclick="send()">
 	<input type="text" style="width: 600px; right: 10px;" id="input" onkeydown="if (event.which == 13) { send(); return false; } else return true;">
 </div>
- <div id="output" style="position: absolute; left: 10px; top: 40px; right: 10px; bottom: 40px; padding: 4px; border-style: solid; overflow-x: hidden; overflow-y: scroll; border-color: gray; border-radius: 16px;">
+<div id="output" style="position: absolute; left: 10px; top: 40px; right: 10px; bottom: 85px; padding: 4px; border-style: solid; overflow-x: hidden; overflow-y: scroll; border-color: gray; border-radius: 16px;">
 </div> 
+<div style="position: absolute; left: 10px; bottom: 5px; padding: 4px; width: 100px;">
+	<a class="objectnamelink" onclick="setverb('')">clear</a>
+	<a class="objectnamelink" onclick="doaction('format icon')">icon</a>
+</div>
+<div style="position: absolute; left: 110px; bottom: 5px; padding: 4px; width: 300px; border:0px; border-left: 1px; border-style: solid; border-color: gray;">
+	<a class="objectnamelink" onclick="setverb('look')">look</a>
+	<a class="objectnamelink" onclick="setverb('get')">get</a>
+	<a class="objectnamelink" onclick="setverb('drop')">drop</a>
+	<a class="objectnamelink" onclick="setverb('open')">open</a>
+	<a class="objectnamelink" onclick="setverb('close')">close</a>
+	<a class="objectnamelink" onclick="setverb('go')">go</a>
+	<a class="objectnamelink" onclick="setverb('wear')">wear</a>
+	<a class="objectnamelink" onclick="setverb('remove')">remove</a>
+	<a class="objectnamelink" onclick="setverb('say')">say</a>
+	<a class="objectnamelink" onclick="setverb('emote')">emote</a>
+	<a class="objectnamelink" onclick="setverb('sit')">sit</a>
+	<a class="objectnamelink" onclick="setverb('stand')">stand</a>
+</div>
+<div style="position: absolute; left: 410px; bottom: 5px; padding: 4px; width: 150px; border:0px; border-left: 1px; border-style: solid; border-color: gray;">
+	<a class="objectnamelink" onclick="append(' me')">me</a>
+	<a class="objectnamelink" onclick="append(' here')">here</a>
+	<a class="objectnamelink" onclick="append(' my')">my</a><br>
+	<a class="objectnamelink" onclick="append(' in')">in</a>
+	<a class="objectnamelink" onclick="append(' on')">on</a>
+	<a class="objectnamelink" onclick="append(' under')">under</a>
+	<a class="objectnamelink" onclick="append(' from')">from</a>
+</div>
+<div style="position: absolute; left: 560px; bottom: 5px; padding: 4px; width: 200px; border:0px; border-left: 1px; border-style: solid; border-color: gray;">
+	<a class="objectnamelink" onclick="setverb('verbs')">verbs</a>
+	<a class="objectnamelink" onclick="setverb('who')">who</a>
+	<a class="objectnamelink" onclick="setverb('channels')">channels</a>
+	<a class="objectnamelink" onclick="setverb('chat')">chat</a>
+	<a class="objectnamelink" onclick="setverb('subscribe')">subscribe</a>
+	<a class="objectnamelink" onclick="setverb('unsubscribe')">unsubscribe</a>
+</div>
+
 
 </body>
 </html>

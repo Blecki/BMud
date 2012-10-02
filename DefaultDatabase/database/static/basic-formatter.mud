@@ -1,18 +1,18 @@
 ﻿
 (defun "basic-formatter-list-objects" ^("list list" "prepend-isare" "list-on") 
 	(if (equal (length list) 1)
-		(if (prepend-isare) 
-			"is ((first list):a)(basic-formatter-list-objects-on (first list) list-on)"
-			"((first list):a)(basic-formatter-list-objects-on (first list) list-on)"
+		(if prepend-isare 
+			"is ((first list):list-short)(basic-formatter-list-objects-on (first list) list-on)"
+			"((first list):list-short)(basic-formatter-list-objects-on (first list) list-on)"
 		)
-		(if (prepend-isare) "are (strcat 
+		"(if prepend-isare "are " "")(strcat 
 			$(mapi "i" list
 				(if (equal i (subtract (length list) 1)) 
-					"and ((index list i):a)(basic-formatter-list-objects-on (index list i) list-on)" 
-					"((index list i):a)(basic-formatter-list-objects-on (index list i) list-on), "
+					"and ((index list i):list-short)(basic-formatter-list-objects-on (index list i) list-on)" 
+					"((index list i):list-short)(basic-formatter-list-objects-on (index list i) list-on), "
 				)
 			)
-		)")
+		)"
 	)
 )
 
@@ -26,7 +26,7 @@
 (defun "basic-formatter-list-links" ^("list links")
 	(strcat 
 		$(map "link" links 
-			"(link.name) (if link.door "[through (link.door:a)] " "")"
+			"(link.name) (if link.door "[through (link.door:list-short)] " "")"
 		)
 	)
 )

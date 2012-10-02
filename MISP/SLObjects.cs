@@ -52,9 +52,16 @@ namespace MISP
                 ArgumentInfo.ParseArguments(this, "object object", "string property", "value"),
                 "object property value : Set the member of an object.", (context, arguments) =>
                 {
-                    var obj = ArgumentType<ScriptObject>(arguments[0]);
-                    var vName = ScriptObject.AsString(arguments[1]);
-                    obj.SetProperty(vName, arguments[2]);
+                    try
+                    {
+                        var obj = ArgumentType<ScriptObject>(arguments[0]);
+                        var vName = ScriptObject.AsString(arguments[1]);
+                        obj.SetProperty(vName, arguments[2]);
+                    }
+                    catch (Exception e)
+                    {
+                        context.RaiseNewError("System Exception: " + e.Message, context.currentNode);
+                    }
                     return arguments[2];
                 }));
 

@@ -311,6 +311,30 @@
 	)
 	"Usefull for creating objects that enable a verb only when they are held."
 )
+
+(defun "m-definer-worn-by" [relative]
+	(lambda "lm-definer-worn-by" [matches]
+		(where "match" matches 
+			(and 
+				(equal match.verb.defined-on.location.object match.(relative))
+				(equal match.verb.defined-on.location.list "worn")
+			)
+		)
+	)
+	"Usefull for creating objects that enable a verb only when they are worn."
+)
+
+(defun "m-found-on-worn-by" [relative]
+	(lambda "lm-found-on-worn-by" [matches]
+		(where "match" matches 
+			(and 
+				(equal match.verb.found-on.location.object match.(relative))
+				(equal match.verb.found-on.location.list "worn")
+			)
+		)
+	)
+	"Usefull for creating objects that enable a verb only when they are worn."
+)
 			
 (defun "m-standard-object" [] 
 	(m-filter-failures

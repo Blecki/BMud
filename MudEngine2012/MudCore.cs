@@ -220,6 +220,11 @@ namespace MudEngine2012
                 try
                 {
                     (prop as MISP.Function).Invoke(scriptEngine, context, arguments);
+                    if (context.evaluationState == MISP.EvaluationState.UnwindingError)
+                    {
+                        SendMessage(executor, MISP.Console.PrettyPrint2(context.errorObject, 0), true);
+                        return false;
+                    }
                     return true;
                 }
                 catch (MISP.ScriptError e)
@@ -248,7 +253,13 @@ namespace MudEngine2012
             {
                 try
                 {
-                    return (prop as MISP.Function).Invoke(scriptEngine, context, arguments);
+                    var r = (prop as MISP.Function).Invoke(scriptEngine, context, arguments);
+                    if (context.evaluationState == MISP.EvaluationState.UnwindingError)
+                    {
+                        SendMessage(executor, MISP.ScriptObject.AsString(context.errorObject), true);
+                        return null;
+                    }
+                    return r;
                 }
                 catch (Exception e)
                 {

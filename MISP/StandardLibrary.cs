@@ -27,7 +27,7 @@ namespace MISP
             AddFunction("net-module", "Loads a module from a .net assembly",
                 (context, arguments) =>
                 {
-                    NetModule.LoadModule(this, ScriptObject.AsString(arguments[0]), ScriptObject.AsString(arguments[1]));
+                    NetModule.LoadModule(context, this, ScriptObject.AsString(arguments[0]), ScriptObject.AsString(arguments[1]));
                     return null;
                 }, "string assembly", "string module");
 

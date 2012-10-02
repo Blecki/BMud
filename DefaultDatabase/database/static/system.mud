@@ -21,7 +21,7 @@
 
 (prop "handle-new-client" (lambda "" [client]
 	(nop
-		(echo client "Welcome to BMud.\n")
+		(echo client "Welcome to BMud.\nIf you already have an account, login with 'login name password'. If you do not, register with 'register name password'.")
 		(set client "command-handler" handle-frontend-command)
 	)
 ))
@@ -54,3 +54,5 @@
 (reload "go")
 (reload "chat")
 (reload "open-close")
+(reload "wear-remove")
+(reload "sit-stand")

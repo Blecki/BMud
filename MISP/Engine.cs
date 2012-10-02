@@ -49,8 +49,16 @@ namespace MISP
 
         public Object EvaluateString(Context context, String str, String fileName, bool discardResults = false)
         {
-            var root = Parser.ParseRoot(str, fileName);
-            return Evaluate(context, root, false, discardResults);
+            try
+            {
+                var root = Parser.ParseRoot(str, fileName);
+                return Evaluate(context, root, false, discardResults);
+            }
+            catch (Exception e)
+            {
+                context.RaiseNewError("System Exception: " + e.Message, null);
+                return null;
+            }
         }
 
         public Object Evaluate(
@@ -59,6 +67,8 @@ namespace MISP
             bool ignoreStar = false,
             bool discardResults = false)
         {
+            if (context.evaluationState != EvaluationState.Normal) throw new ScriptError("Invalid Context", null);
+
             if (what is String) return EvaluateString(context, what as String, "", discardResults);
             else if (!(what is ParseNode)) return what;
 
@@ -66,7 +76,10 @@ namespace MISP
             context.currentNode = node;
 
             if (context.limitExecutionTime && (DateTime.Now - context.executionStart > context.allowedExecutionTime))
-                throw new TimeoutError(node);
+            {
+                context.RaiseNewError("Timeout.", node);
+                return null;
+            }
 
             if (node.prefix == Prefix.Quote && !ignoreStar) return node;
             object result = null;
@@ -84,35 +97,47 @@ namespace MISP
                             if (piece.type == NodeType.String)
                                 continue;
                             else
+                            {
                                 Evaluate(context, piece);
+                                if (context.evaluationState == EvaluationState.UnwindingError) return null;
+                            }
                         }
                         result = null;
                     }
                     else
                     {
                         if (node.childNodes.Count == 1) //If there's only a single item, the result is that item.
+                        {
                             result = Evaluate(context, node.childNodes[0]);
+                            if (context.evaluationState == EvaluationState.UnwindingError) return null;
+                        }
                         else
                         {
                             var resultString = String.Empty;
                             foreach (var piece in node.childNodes)
+                            {
                                 resultString += ScriptObject.AsString(Evaluate(context, piece));
+                                if (context.evaluationState == EvaluationState.UnwindingError) return null;
+                            }
                             result = resultString;
                         }
                     }
                     break;
                 case NodeType.Token:
                     result = LookupToken(context, node.token);
+                    if (context.evaluationState == EvaluationState.UnwindingError) return null;
                     break;
                 case NodeType.MemberAccess:
                     {
-                        //SET THIS BEFORE EVALUATING MEMBER
                         var lhs = Evaluate(context, node.childNodes[0]);
+                        if (context.evaluationState == EvaluationState.UnwindingError) return null;
                         String rhs = "";
+
                         if (node.childNodes[1].type == NodeType.Token)
                             rhs = node.childNodes[1].token;
                         else
                             rhs = ScriptObject.AsString(Evaluate(context, node.childNodes[1], false));
+                        if (context.evaluationState == EvaluationState.UnwindingError) return null;
 
                         if (lhs == null) result = null;
                         else if (lhs is ScriptObject)
@@ -123,14 +148,9 @@ namespace MISP
                                 context.Scope.PushVariable("this", lhs);
                                 result = Evaluate(context, result, true, false);
                                 context.Scope.PopVariable("this");
+                                if (context.evaluationState == EvaluationState.UnwindingError) return null;
                             }
                         }
-                        //    else
-                        //{
-                        //    try {
-                        //        var member = lhs.GetType().GetMember(ScriptObject.AsString(rhs));
-                        //        if (member.Length == 0) result = null;
-                                
                         else
                             result = null;
                     }
@@ -147,22 +167,26 @@ namespace MISP
 
                         var arguments = new ScriptList();
 
-                        try
-                        {
-                            foreach (var child in node.childNodes)
+                        foreach (var child in node.childNodes)
                             {
                                 bool argumentProcessed = false;
 
                                 if (eval && arguments.Count > 0 && (arguments[0] is Function)) //This is a function call
                                 {
                                     var func = arguments[0] as Function;
-                                    var argumentInfo = func.GetArgumentInfo(arguments.Count - 1);
+                                    var argumentInfo = func.GetArgumentInfo(context, arguments.Count - 1);
+                                    if (context.evaluationState == EvaluationState.UnwindingError) return null;
                                     if (argumentInfo.type == MISP.ArgumentInfo.CodeType)
                                     {
                                         if (child.prefix == Prefix.Evaluate || child.prefix == Prefix.Lookup)
                                         {
                                             //Some prefixs override special behavior of code type.
                                             arguments.Add(Evaluate(context, child, true));
+                                            if (context.evaluationState == EvaluationState.UnwindingError)
+                                            {
+                                                context.PushStackTrace("Arg for: " + func.name);
+                                                return null;
+                                            }
                                         }
                                         else if (child.prefix == Prefix.Quote || child.prefix == Prefix.None)
                                             arguments.Add(child);
@@ -171,7 +195,12 @@ namespace MISP
                                             //raise warning
                                             arguments.Add(child);
                                         }
-                                        else throw new ScriptError("Prefix invalid in this context.", child);
+                                        else
+                                        {
+                                            context.RaiseNewError("Prefix invalid in this context.", child);
+                                            context.PushStackTrace("Arg for: " + func.name);
+                                            return null;
+                                        }
                                         argumentProcessed = true;
                                     }
                                 }
@@ -179,46 +208,33 @@ namespace MISP
                                 if (!argumentProcessed)
                                 {
                                     var argument = Evaluate(context, child);
+                                    if (context.evaluationState == EvaluationState.UnwindingError)
+                                            {
+                                                context.PushStackTrace("Arg for: " + 
+                                                    ((arguments.Count > 0 && arguments[0] is Function) ? (arguments[0] as Function).name : "non-func"));
+                                                return null;
+                                            }
                                     if (child.prefix == Prefix.Expand && argument is ScriptList)
                                         arguments.AddRange(argument as ScriptList);
                                     else
                                         arguments.Add(argument);
                                 }
                             }
-                        }
-                        catch (ScriptError e)
-                        {
-                            if (arguments.Count > 0 && arguments[0] is Function)
-                                throw new ScriptError("[Arg for " + (arguments[0] as Function).name + "] " + e.Message,
-                                    e.generatedAt == null ? node : e.generatedAt);
-                            throw e;
-                        }
-                        catch (Exception e)
-                        {
-                            if (arguments.Count > 0 && arguments[0] is Function)
-                                throw new ScriptError("[Arg for " + (arguments[0] as Function).name + "] " + e.Message, node);
-                            throw e;
-                        }
-
+                        
                         if (node.prefix == Prefix.List) result = arguments;
                         else
                         {
                             if (arguments.Count > 0 && arguments[0] is Function)
                             {
-                                try
-                                {
+                               
                                     result = (arguments[0] as Function).Invoke(this, context,
                                         new ScriptList(arguments.GetRange(1, arguments.Count - 1)));
-                                }
-                                catch (ScriptError e)
-                                {
-                                    throw new ScriptError("[" + (arguments[0] as Function).name + "] " + e.Message,
-                                        e.generatedAt == null ? node : e.generatedAt);
-                                }
-                                catch (Exception e)
-                                {
-                                    throw new ScriptError("[" + (arguments[0] as Function).name + "] " + e.Message, node);
-                                }
+                                    if (context.evaluationState == EvaluationState.UnwindingError)
+                                    {
+                                        context.PushStackTrace((arguments[0] as Function).name);
+                                        return null;
+                                    }
+                                
                             }
                             else if (arguments.Count > 0)
                                 result = arguments[0];
@@ -228,27 +244,39 @@ namespace MISP
                     }
                     break;
                 case NodeType.Number:
-                    if (node.token.Contains('.')) result = Convert.ToSingle(node.token);
-                    else result = Convert.ToInt32(node.token);
-                    break;
+                    try
+                    {
+                        if (node.token.Contains('.')) result = Convert.ToSingle(node.token);
+                        else result = Convert.ToInt32(node.token);
+                    }
+                    catch (Exception e)
+                    {
+                        context.RaiseNewError("Number format error.", node);
+                        return null;
+                    }
+                        break;
                 case NodeType.DictionaryEntry:
                     {
                         var r = new ScriptList();
                         foreach (var child in node.childNodes)
                             if (child.type == NodeType.Token) r.Add(child.token);
-                            else r.Add(Evaluate(context, child));
+                            else
+                            {
+                                r.Add(Evaluate(context, child));
+                                if (context.evaluationState == EvaluationState.UnwindingError) return null;
+                            }
                         result = r;
                     }
                     break;
                 default:
-
-                    throw new ScriptError("Internal evaluator error", node);
+                    context.RaiseNewError("Internal evaluator error.", node);
+                    return null;
             }
 
             if (node.prefix == Prefix.Evaluate && !ignoreStar)
                 result = Evaluate(context, result);
+            if (context.evaluationState == EvaluationState.UnwindingError) return null;
             if (node.prefix == Prefix.Lookup) result = LookupToken(context, ScriptObject.AsString(result));
-
             return result;
         }
 
@@ -259,7 +287,8 @@ namespace MISP
             if (context.Scope.HasVariable(value)) return context.Scope.GetVariable(value);
             if (functions.ContainsKey(value)) return functions[value];
             if (value.StartsWith("@") && functions.ContainsKey(value.Substring(1))) return functions[value.Substring(1)];
-            throw new ScriptError("Could not find value with name " + value + ".", context.currentNode);
+            context.RaiseNewError("Could not find value with name " + value + ".", context.currentNode);
+            return null;
         }
     }
 }

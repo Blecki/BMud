@@ -1,4 +1,5 @@
-﻿
+﻿(add-global-alias "read" "look")
+
 (prop "choose-best-short" (lambda "" [actor object] 
 	(if (equal actor object) "yourself"
 		(if (equal actor object.location.object) "your (object:short)"

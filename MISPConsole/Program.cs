@@ -61,16 +61,8 @@ namespace MISPConsole
             mispEngine.AddFunction("run-file", "Load and run a file.",
                 (context, arguments) =>
                 {
-                    try
-                    {
-                        var text = System.IO.File.ReadAllText(ScriptObject.AsString(arguments[0]));
+                       var text = System.IO.File.ReadAllText(ScriptObject.AsString(arguments[0]));
                         return mispEngine.EvaluateString(context, text, ScriptObject.AsString(arguments[0]), false);
-                    }
-                    catch (ScriptError e)
-                    {
-                        System.Console.WriteLine("Error " + (e.generatedAt == null ? "" : "on line " + e.generatedAt.line) + ": " + e.Message);
-                        return null;
-                    }
                 },
                 "string name");
 
@@ -89,13 +81,22 @@ namespace MISPConsole
                 try
                 {
                     mispContext.ResetTimer();
+                    mispContext.evaluationState = EvaluationState.Normal;
                     var result = mispEngine.EvaluateString(mispContext, command, "");
-                    PrettyPrint(result, 0);
-                    System.Console.Write("\n");
+                    if (mispContext.evaluationState == EvaluationState.Normal)
+                    {
+                        PrettyPrint(result, 0);
+                        System.Console.Write("\n");
+                    }
+                    else
+                    {
+                        System.Console.WriteLine("Error:");
+                        PrettyPrint(mispContext.errorObject, 0);
+                    }
                 }
                 catch (Exception e)
                 {
-                    System.Console.Write(e.Message + "\n");
+                    System.Console.Write("System threw an exception: " + e.Message + "\n");
                 }
             };
 

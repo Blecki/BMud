@@ -15,7 +15,7 @@
 				(if actor.creation-finished (nop)
 					(nop
 						(echo actor "The voice says \"Proceed east from the locker room to the termination center for recycling.\"\n")
-						(invoke 10 voice-sequence actor)
+						/*(invoke 10 voice-sequence actor)*/
 					)
 				)
 			)
@@ -53,14 +53,14 @@
 			(lfun "start-scan-sequence" [actor] 
 				(nop
 					((load "stats").generate-character-stats actor)
-					(invoke 5 scan-sequence-one actor)
+					(invoke 5 scan-sequence-four actor)
 				)
 			)
 
 			(multi-set start-room [
 				[@base (load "room")]
 				[short "Dank tiled stall"]
-				[long "A thousand streams of dirty water run down the walls, which might once have been white tile, to a drain nearly clogged with muck and slime. A single florescent light flickers overhead."]
+				[long "A thousand streams of dirty water run down the walls, which might once have been white tile, to a drain nearly clogged with muck and slime. A single florescent light flickers overhead.\n[This area is designed to teach the basics of interacting with the game world. You might start with 'read sign', and then you can 'go left' or 'go right'.]"]
 				])
 			(open-direct-link start-room scanning-room ^("left" "l" "girl") 
 				(lambda "lchoose-girl" [actor] 
@@ -99,7 +99,7 @@
 			(multi-set locker-room [
 				[@base (load "room")]
 				[short "Musty Locker Room"]
-				[long ""]
+				[long "Lockers squat against the walls of this room. The floor is dirty and stained by old puddles.\n[You'll find items of clothing in the world that can be worn.]\n[If a command is ambiguous, or doesn't seem to be affecting the object you intend, try being more specific. For example, to exit this room, you'll need to 'open north door'.]"]
 				])
 
 			(set scanning-room "door" (create-direct-door scanning-room locker-room ^("north" "n")))
@@ -123,15 +123,27 @@
 			(multi-set locker-room.in-door [
 				["locked" true]
 				["short" "steel door"]
-				["adjectives" ^("steel")]
+				["adjectives" ^("steel" "south" "s")]
 				])
 
 			(multi-set (create-direct-door locker-room null ^("east" "e")) [
 				["locked" true]
 				["short" "striped door"]
 				["description" "This door is painted in diagonal yellow stripes."]
-				["adjectives" ^("striped")]
+				["adjectives" ^("striped" "east" "e")]
 				])
+
+			(add-object locker-room "contents" (record
+				[@base (load "object")]
+				[short "worn denim pants"]
+				[nouns ^("pants")]
+				[adjectives ^("worn" "denim")]
+				[can-wear true]
+			))
+
+			(add-object locker-room "contents" ((load "quantum-sink").create))
+			(create-door locker-room "new-haven/start-room" ^("north" "n")
+				(lambda "" [actor] (set actor "creation-finished" true)))
 
 		start-room)
 	)

@@ -4,6 +4,8 @@
 (prop "pronoun" "he")
 (prop "on-get" (defun "" ^("actor") *(echo actor "^(this:short) wouldn't appreciate that.\n")))
 (prop "prompt" ">")
+(prop "a" *"(this:short)")
+(prop "list-short" *"(if (equal this.location.action "sitting") "(this:short) [sitting on (this.location.action-object:a)]" "(this:short)")")
 
 (prop "compare-heights" (lambda "compare-heights" [a b] 
 	(let ^(^("c" (subtract ((load "stats").calculate-actual-height a) ((load "stats").calculate-actual-height b))))

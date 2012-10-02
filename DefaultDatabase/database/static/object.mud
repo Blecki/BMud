@@ -7,9 +7,12 @@
 (prop "a" *"a (this:short)") /* 'an object' would be correct, but inheriting objects are more likely to need 'a'. */
 (prop "the" *"the (this:short)")
 (prop "description" "You see nothing special.")
+(prop "list-short" *"(this:a)")
 
 (prop "can-get" true)
-(prop "can-open" null)
+(prop "can-open" false)
+(prop "can-wear" false)
+(prop "can-sit" false)
 
 (defun "add-object" ^("object to" "string list" "object object") 
 	(nop
@@ -26,3 +29,5 @@
 		)
 	)
 )
+
+(defun "make-instance" ^("object of") (record ^("@base" of)))

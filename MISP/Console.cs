@@ -56,6 +56,55 @@ namespace MISP
             }
         }
 
+        public static String PrettyPrint2(Object what, int depth)
+        {
+            var r = "";
+            Action<String> Write = (s) => { r += s; };
+
+            if (depth == 3)
+            {
+                Write(what == null ? "null" : what.ToString());
+            }
+            else
+            {
+                if (what == null)
+                    Write("null");
+                else if (what is ScriptList)
+                {
+                    var l = what as ScriptList;
+                    if (l.Count > 0)
+                    {
+                        Write("list [" + l.Count + "] (\n");
+                        foreach (var item in l)
+                        {
+                            Write(new String('.', depth * 3 + 1));
+                            Write(PrettyPrint2(item, depth + 1));
+                            Write("\n");
+                        }
+                        Write(new String('.', depth * 3) + ")\n");
+                    }
+                    else
+                        Write("list [0] ()\n");
+                }
+                else if (what is ScriptObject)
+                {
+                    var o = what as ScriptObject;
+                    Write("object (\n");
+                    foreach (var item in o.ListProperties())
+                    {
+                        Write(new String('.', depth * 3 + 1) + item + ": ");
+                        Write(PrettyPrint2(o.GetLocalProperty(item as String), depth + 1));
+                        Write("\n");
+                    }
+                    Write(new String('.', depth * 3) + ")\n");
+                }
+                else Write(what.ToString());
+            }
+
+            return r;
+        }
+
+
         public Console(Action<String> Write)
         {
             this.Write = Write;

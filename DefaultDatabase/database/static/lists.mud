@@ -1,7 +1,7 @@
 ﻿(depend "grammar")
 
 (defun "list-remove" ^("what" "list") *(where "item" (coalesce list ^()) *(notequal item what)))
-(defun "list-add" ^("what" "list") *(cat (coalesce list ^()) ^(what)))
+(defun "list-add" ^("what" "list list") *(cat (coalesce list ^()) ^(what)))
 
 (defun "prop-remove" ^("object" "property" "item")
 	*(set object property 
@@ -9,7 +9,13 @@
 	)
 )
 
-(defun "prop-add" ^("object" "property" "item") *(set object property (list-add item (coalesce (object.(property)) ^()))))
+(defun "prop-add" ^("object object" "string property" "item") 
+	(set object property 
+		(list-add item 
+			(coalesce object.(property) ^())
+		)
+	)
+)
 
 
 (defun "short_list" ^("list")

@@ -7,7 +7,7 @@ namespace MISP
 {
     public class Type
     {
-        public virtual Object ProcessArgument(Object obj) { return obj; }
+        public virtual Object ProcessArgument(Context context, Object obj) { return obj; }
         public virtual Object CreateDefault() { return null; }
         public static Type Anything = new Type();
     }
@@ -17,22 +17,20 @@ namespace MISP
         private System.Type type;
         private bool allowNull;
         public TypeGeneric(System.Type type, bool allowNull) { this.type = type; this.allowNull = allowNull; }
-        public override object ProcessArgument(object obj)
+        public override object ProcessArgument(Context context, object obj)
         {
             if (allowNull && obj == null) return obj;
-            try
+                Function.CheckArgumentType(context, obj, type);
+            if (context.evaluationState == EvaluationState.UnwindingError)
             {
-                Function.CheckArgumentType(obj, type);
-            }
-            catch (ScriptError e)
-            {
+                context.evaluationState = EvaluationState.Normal;
                 try
                 {
                     return Convert.ChangeType(obj, type);
                 }
                 catch (Exception exp)
                 {
-                    throw e;
+                    context.evaluationState = EvaluationState.UnwindingError;
                 }
             }
             return obj;
@@ -45,7 +43,7 @@ namespace MISP
 
     public class TypeString : Type
     {
-        public override object ProcessArgument(object obj)
+        public override object ProcessArgument(Context context, object obj)
         {
             if (obj == null) return "";
             else return ScriptObject.AsString(obj);
@@ -59,7 +57,7 @@ namespace MISP
 
     public class TypeList : Type
     {
-        public override object ProcessArgument(object obj)
+        public override object ProcessArgument(Context context, object obj)
         {
             if (obj == null) return new ScriptList();
             else if (!(obj is ScriptList)) return new ScriptList(obj);
@@ -145,7 +143,6 @@ namespace MISP
         private Func<Context, ScriptList, Object> implementation = null;
         public String name;
         public String shortHelp;
-        public ScriptList closedValues = null;
         public List<ArgumentInfo> argumentInfo = null;
         public Scope declarationScope;
         public bool isSystem = true;
@@ -182,23 +179,29 @@ namespace MISP
             this.declarationScope = declarationScope ?? new Scope();
         }
 
-        public static void CheckArgumentType(Object obj, System.Type type)
+        public static void CheckArgumentType(Context context, Object obj, System.Type type)
         {
             if (obj == null)
-                throw new ScriptError("Expecting argument of type " + type + ", got null. ", null);
+            {
+                context.RaiseNewError("Expecting argument of type " + type + ", got null. ", null);
+                return;
+            }
             if (obj.GetType() == type || obj.GetType().IsSubclassOf(type)) return;
-            throw new ScriptError("Function argument is the wrong type. Expected type "
+            context.RaiseNewError("Function argument is the wrong type. Expected type "
                     + type + ", got " + obj.GetType() + ". ", null);
         }
 
-        public ArgumentInfo GetArgumentInfo(int index)
+        public ArgumentInfo GetArgumentInfo(Context context, int index)
         {
             if (index >= argumentInfo.Count)
             {
                 if (argumentInfo.Count > 0 && argumentInfo[argumentInfo.Count - 1].repeat)
                     return argumentInfo[argumentInfo.Count - 1];
                 else
-                    throw new ScriptError("Argument out of bounds", null);
+                {
+                    context.RaiseNewError("Argument out of bounds", null);
+                    return null;
+                }
             }
             else
                 return argumentInfo[index];
@@ -208,17 +211,18 @@ namespace MISP
         {
             if (context.trace != null)
             {
-                context.trace(new String('.', context.traceDepth) + "Entering " + name + " ( " + String.Join(", ", arguments.Select((o) => ScriptObject.AsString(o, 2))) + " )\n");
-                if (closedValues != null && closedValues.Count > 0) context.trace(new String('.', context.traceDepth) + " closed: " + ScriptObject.AsString(closedValues, 2) + "\n");
+                context.trace(new String('.', context.traceDepth) + "Entering " + name +"\n");
                 context.traceDepth += 1;
             }
 
             var newArguments = new ScriptList();
             //Check argument types
-            if (argumentInfo.Count == 0 && arguments.Count != 0) throw new ScriptError("Function expects no arguments.", context.currentNode);
-
-            try
+            if (argumentInfo.Count == 0 && arguments.Count != 0)
             {
+                context.RaiseNewError("Function expects no arguments.", context.currentNode);
+                return null;
+            }
+
                 int argumentIndex = 0;
                 for (int i = 0; i < argumentInfo.Count; ++i)
                 {
@@ -229,7 +233,8 @@ namespace MISP
                         var list = new ScriptList();
                         while (argumentIndex < arguments.Count) //Handy side effect: If no argument is passed for an optional repeat
                         {                                       //argument, it will get an empty list.
-                            list.Add(info.type.ProcessArgument(arguments[argumentIndex]));
+                            list.Add(info.type.ProcessArgument(context, arguments[argumentIndex]));
+                            if (context.evaluationState == EvaluationState.UnwindingError) return null;
                             ++argumentIndex;
                         }
                         newArguments.Add(list);
@@ -237,20 +242,26 @@ namespace MISP
                     else
                     {
                         if (argumentIndex < arguments.Count)
-                            newArguments.Add(info.type.ProcessArgument(arguments[argumentIndex]));
+                        {
+                            newArguments.Add(info.type.ProcessArgument(context, arguments[argumentIndex]));
+                            if (context.evaluationState == EvaluationState.UnwindingError) return null;
+                        }
                         else if (info.optional)
                             newArguments.Add(info.type.CreateDefault());
-                        else throw new ScriptError("Not enough arguments to " + name, context.currentNode);
+                        else
+                        {
+                            context.RaiseNewError("Not enough arguments to " + name, context.currentNode);
+                            return null;
+                        }
                         ++argumentIndex;
                     }
                 }
                 if (argumentIndex < arguments.Count)
-                    throw new ScriptError("Too many arguments to " + name, context.currentNode);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+                {
+                    context.RaiseNewError("Too many arguments to " + name, context.currentNode);
+                    return null;
+                }
+            
 
             Object r = null;
 
@@ -262,13 +273,12 @@ namespace MISP
                 }
                 catch (Exception e)
                 {
-                    throw e;
+                    context.RaiseNewError("System Exception: " + e.Message, context.currentNode);
+                    return null;
                 }
             }
             else
             {
-                try
-                {
                     context.PushScope(declarationScope);
 
                     for (int i = 0; i < argumentInfo.Count; ++i)
@@ -280,17 +290,15 @@ namespace MISP
                         context.Scope.PopVariable(argumentInfo[i].name);
 
                     context.PopScope();
-                }
-                catch (Exception e)
-                {
-                    throw e;
-                }
             }
 
             if (context.trace != null)
             {
                 context.traceDepth -= 1;
-                context.trace(new String('.', context.traceDepth) + "Leaving " + name + "\n");
+                context.trace(new String('.', context.traceDepth) + "Leaving " + name +
+                    (context.evaluationState == EvaluationState.UnwindingError ?
+                    (" -Error: " + context.errorObject.GetLocalProperty("message").ToString()) :
+                    "") + "\n");
             }
 
             return r;

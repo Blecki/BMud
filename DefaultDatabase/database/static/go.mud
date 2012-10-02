@@ -20,7 +20,7 @@
 /* Opens an indirect link */
 (defun "open-link" ^("from" "to" "names" "function ?on-follow")
 	*(nop
-		(prop-add from "links" (first names))
+		(prop-add from "links" (record ^("name" (first names))))
 		(for "name" names
 			*(nop
 				(add-verb from name (m-nothing)

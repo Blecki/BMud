@@ -20,8 +20,15 @@ namespace MISP
                 "name value : Assign value to a variable named [name].", (context, arguments) =>
                 {
                     if (specialVariables.ContainsKey(ScriptObject.AsString(arguments[0])))
-                        throw new ScriptError("Can't assign to protected variable name.", context.currentNode);
-                    context.Scope.ChangeVariable(ScriptObject.AsString(arguments[0]), arguments[1]);
+                        context.RaiseNewError("Can't assign to protected variable name.", context.currentNode);
+                    else
+                    {
+                        try
+                        {
+                            context.Scope.ChangeVariable(ScriptObject.AsString(arguments[0]), arguments[1]);
+                        }
+                        catch (Exception e) { context.RaiseNewError(e.Message, context.currentNode); }
+                    }
                     return arguments[1];
                 }));
 
@@ -35,19 +42,25 @@ namespace MISP
 
                     var code = ArgumentType<ParseNode>(arguments[1]);
                     var cleanUp = new List<LetVariable>();
+                    Object result = null;
 
                     foreach (var item in variables.childNodes)
                     {
                         var def = ArgumentType<ScriptList>(Evaluate(context, item));
-                        if (def.Count != 2 && def.Count != 3) 
-                            throw new ScriptError("Variable defs to let should have only 2 or 3 items.", context.currentNode);
+                        if (context.evaluationState == EvaluationState.UnwindingError) goto RUN_CLEANUP;
+                        if (def.Count != 2 && def.Count != 3)
+                        {
+                            context.RaiseNewError("Variable defs to let should have only 2 or 3 items.", context.currentNode);
+                            goto RUN_CLEANUP;
+                        }
                         var name = ArgumentType<String>(def[0]);
                         context.Scope.PushVariable(name, def[1]);
                         cleanUp.Add(new LetVariable { name = name, cleanupCode = def.Count == 3 ? def[2] : null });
                     }
 
-                    var result = Evaluate(context, code, true);
+                    result = Evaluate(context, code, true);
 
+                    RUN_CLEANUP:
                     foreach (var item in cleanUp)
                     {
                         if (item.cleanupCode != null) Evaluate(context, item.cleanupCode, true, true);
