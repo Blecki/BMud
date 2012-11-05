@@ -61,6 +61,15 @@ namespace MudEngine2012
                 },
                 "string name");
 
+            scriptEngine.AddFunction("create-uniquely-named", "base-path: Directory to create new object in.",
+                (context, arguments) =>
+                {
+                    var basePath = MISP.ScriptObject.AsString(arguments[0]);
+                    try { return database.CreateUniquelyNamedObject(basePath); }
+                    catch (Exception e) { return null; }
+                },
+                "string base-path");
+
             scriptEngine.AddFunction("save", "name: Save a named object.",
                (context, arguments) =>
                {

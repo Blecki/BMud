@@ -159,9 +159,6 @@
     <None Include="database\static\matchers.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="database\static\players\god\god.mud">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="database\static\room.mud">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

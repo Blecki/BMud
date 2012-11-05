@@ -26,6 +26,20 @@ namespace MudEngine2012
             return namedObjects[path];
         }
 
+        public MISP.ScriptObject CreateUniquelyNamedObject(String basePath)
+        {
+            while (true)
+            {
+                var randomPart = Guid.NewGuid();
+                var path = basePath + "/" + randomPart.ToString();
+                if (LoadObject(path) == null)
+                {
+                    namedObjects.Upsert(path, new MISP.GenericScriptObject("@path", path));
+                    return namedObjects[path];
+                }
+            }
+        }
+
         public MISP.ScriptObject LoadObject(String path, bool timeOut = true)
         {
             if (namedObjects.ContainsKey(path)) return namedObjects[path];

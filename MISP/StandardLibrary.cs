@@ -65,6 +65,29 @@ namespace MISP
                     return arguments[0];
                 }));
 
+            functions.Add("raise-error", new Function("raise-error",
+                ArgumentInfo.ParseArguments(this, "string msg"),
+                "",
+                (context, arguments) =>
+                {
+                    context.RaiseNewError(MISP.ScriptObject.AsString(arguments[0]), context.currentNode);
+                    return null;
+                }));
+
+            functions.Add("catch-error", new Function("catch-error",
+                ArgumentInfo.ParseArguments(this, "code good", "code bad"),
+                "",
+                (context, arguments) =>
+                {
+                    var result = Evaluate(context, arguments[0], true, false);
+                    if (context.evaluationState == EvaluationState.UnwindingError)
+                    {
+                        context.evaluationState = EvaluationState.Normal;
+                        return Evaluate(context, arguments[1], true, false);
+                    }
+                    return result;
+                }));
+
 
             SetupVariableFunctions();
             SetupObjectFunctions();
