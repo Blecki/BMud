@@ -5,31 +5,17 @@
 (prop "on-get" (defun "" ^("actor") *(echo actor "^(this:short) wouldn't appreciate that.\n")))
 (prop "prompt" ">")
 (prop "a" *"(this:short)")
-(prop "list-short" *"(if (equal this.location.action "sitting") "(this:short) [sitting on (this.location.action-object:a)]" "(this:short)")")
-
-(prop "compare-heights" (lambda "compare-heights" [a b] 
-	(let ^(^("c" (subtract ((load "stats").calculate-actual-height a) ((load "stats").calculate-actual-height b))))
-		(index ^(
-			"much taller than you" 
-			"a little taller than you" 
-			"about your height" 
-			"a little shorter than you"
-			"much shorter than you")
-			(if (greaterthan c 12) 0
-				(if (greaterthan c 6) 1
-					(if (greaterthan c -6) 2
-						(if (greaterthan c -12) 3
-							4)
-					)
-				)
-			)
-		)
-	)
-))
+(prop "short" *"(this.account-name) [a (this.@base.label)]")
+(prop "list-short" 
+	*"(if 
+		(equal this.location.action "sitting") 
+		"(this:short) [sitting on (this.location.action-object:a)]" 
+		"(this:short)"
+	)"
+)
 
 (prop "other-description" *"(this:short)
 (this:long)
-^(this:pronoun) is (this.compare-heights this actor).
 (if (equal (length this.held) 0)
 	"^(this:pronoun) is empty-handed."
 	"^(this:pronoun) is holding (actor.formatter.list-objects-preposition this.held null null this)."

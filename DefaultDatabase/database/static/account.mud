@@ -11,14 +11,15 @@
 	)
 )
 
-(defun "create-player-character" [account name]
-	(let ^(^("result" (create "players/(account)/(name)")))
+(defun "create-player-character" [account template]
+	(let ^(
+		^("result" (create-uniquely-named "players/(account)")))
 		(lastarg
 			(multi-set result ^(
-				^("@base" (load "player"))
+				^("@base" (load template))
 				^("channels" ^("chat")) /* Subscribe new players to 'chat' channel */
-				^("short" name)
-				^("nouns" ^(name))
+				^("nouns" ^(account))
+				^("account-name" account)
 			))
 			result
 		)

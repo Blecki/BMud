@@ -67,7 +67,7 @@
 	(menu-choices 
 		client
 		(cat 
-			(build-menu (lambda "" [item] (path-leaf item)) (list-player-characters client.account-name)) 
+			(build-menu (lambda "" [item] ((load-player-character client.account-name item):short)) (list-player-characters client.account-name)) 
 			^((menu-option "0" "Create new character" null))
 		)
 		(lambda "callback" [client choice]
